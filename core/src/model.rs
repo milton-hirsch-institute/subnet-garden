@@ -6,9 +6,12 @@ use cidr::IpCidr;
 
 pub type CreateResult<T> = std::result::Result<T, CreateError>;
 
+pub trait Space {
+    fn cidr(&self) -> &IpCidr;
+}
 pub trait SubnetGarden {
     fn space_count(&self) -> usize;
-    fn new_space(&mut self, name: &str, cidr: &IpCidr) -> CreateResult<()>;
+    fn new_space(&mut self, name: &str, cidr: &IpCidr) -> CreateResult<&dyn Space>;
 
-    fn space_cidr(&self, name: &str) -> Option<&IpCidr>;
+    fn space(&self, name: &str) -> Option<&dyn Space>;
 }

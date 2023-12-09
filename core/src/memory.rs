@@ -3,13 +3,18 @@
 
 use crate::errors::CreateError;
 use crate::model;
-use crate::model::CreateResult;
 use std::collections::HashMap;
 
 use cidr::IpCidr;
 
 struct Space {
     cidr: IpCidr,
+}
+
+impl model::Space for Space {
+    fn cidr(&self) -> &IpCidr {
+        &self.cidr
+    }
 }
 
 struct Memory {
@@ -28,18 +33,18 @@ impl model::SubnetGarden for Memory {
     fn space_count(&self) -> usize {
         self.spaces.len()
     }
-    fn new_space(&mut self, name: &str, cidr: &IpCidr) -> CreateResult<()> {
+    fn new_space(&mut self, name: &str, cidr: &IpCidr) -> model::CreateResult<&dyn model::Space> {
         if self.spaces.contains_key(name) {
             return Err(CreateError::DuplicateObject);
         }
         let space = Space { cidr: cidr.clone() };
         self.spaces.insert(name.to_string(), space);
-        Ok(())
+        return Ok(self.spaces.get_mut(name).unwrap());
     }
 
-    fn space_cidr(&self, name: &str) -> Option<&IpCidr> {
+    fn space(&self, name: &str) -> Option<&dyn model::Space> {
         match self.spaces.get(name) {
-            Some(space) => Some(&space.cidr),
+            Some(space) => Some(space),
             None => None,
         }
     }
@@ -78,14 +83,18 @@ mod tests {
         assert_eq!(instance.space_count(), 1);
     }
     #[test]
-    fn space_cidr_success() {
+    fn space_success() {
         let mut instance = Memory::new();
         instance.new_space("test", &TEST_CIDR4).unwrap();
-        assert_eq!(instance.space_cidr("test"), Some(&TEST_CIDR4));
+        let space = instance.space("test").unwrap();
+        assert_eq!(*space.cidr(), TEST_CIDR4);
     }
     #[test]
-    fn space_cidr_not_found() {
+    fn space_not_found() {
         let instance = Memory::new();
-        assert_eq!(instance.space_cidr("test"), None);
+        match instance.space("test") {
+            None => (),
+            _ => panic!("Expected space not found"),
+        }
     }
 }
