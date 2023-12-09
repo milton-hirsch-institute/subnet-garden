@@ -84,10 +84,7 @@ mod tests {
     fn new_space_duplicate_object() {
         let mut instance = new_test_space();
         let result = instance.new_space("test", &TEST_CIDR4);
-        match result {
-            Err(CreateError::DuplicateObject) => (),
-            _ => panic!("Expected duplicate object error"),
-        }
+        assert_eq!(result.err(), Some(CreateError::DuplicateObject));
     }
     #[test]
     fn new_space_success() {
@@ -98,10 +95,7 @@ mod tests {
     fn remove_space_no_such_object() {
         let mut instance = new_test_space();
         let result = instance.remove_space("does-not-exist");
-        match result {
-            Err(RemoveError::NoSuchObject) => (),
-            _ => panic!("Expected no such object error"),
-        }
+        assert_eq!(result.err(), Some(RemoveError::NoSuchObject));
     }
     #[test]
     fn remove_space_success() {
@@ -118,9 +112,6 @@ mod tests {
     #[test]
     fn space_not_found() {
         let instance = new_test_space();
-        match instance.space("does-not-exist") {
-            None => (),
-            _ => panic!("Expected space not found"),
-        }
+        assert!(instance.space("does-not-exist").is_none());
     }
 }

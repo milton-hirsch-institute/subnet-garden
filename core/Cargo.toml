@@ -8,3 +8,6 @@ edition = "2021"
 
 [dependencies]
 cidr = "^0.2"
+
+[dev-dependencies]
+grcov = "^0.8"
