@@ -27,6 +27,7 @@ impl std::fmt::Display for RemoveError {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
 

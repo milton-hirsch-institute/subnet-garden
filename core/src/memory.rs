@@ -17,12 +17,12 @@ impl model::Space for Space {
     }
 }
 
-struct Memory {
+pub struct Memory {
     spaces: HashMap<String, Space>,
 }
 
 impl Memory {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Memory {
             spaces: HashMap::new(),
         }
@@ -57,6 +57,7 @@ impl model::SubnetGarden for Memory {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
     use crate::model::SubnetGarden;
