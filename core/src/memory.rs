@@ -1,7 +1,7 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::errors::CreateError;
+use crate::errors::{CreateError, RemoveError};
 use crate::model;
 use std::collections::HashMap;
 
@@ -40,6 +40,13 @@ impl model::SubnetGarden for Memory {
         let space = Space { cidr: cidr.clone() };
         self.spaces.insert(name.to_string(), space);
         return Ok(self.spaces.get_mut(name).unwrap());
+    }
+
+    fn remove_space(&mut self, name: &str) -> model::RemoveResult<()> {
+        match self.spaces.remove(name) {
+            Some(_) => Ok(()),
+            None => Err(RemoveError::NoSuchObject),
+        }
     }
 
     fn space(&self, name: &str) -> Option<&dyn model::Space> {
@@ -81,6 +88,22 @@ mod tests {
         let mut instance = Memory::new();
         instance.new_space("test", &TEST_CIDR4).unwrap();
         assert_eq!(instance.space_count(), 1);
+    }
+    #[test]
+    fn remove_space_no_such_object() {
+        let mut instance = Memory::new();
+        let result = instance.remove_space("test");
+        match result {
+            Err(RemoveError::NoSuchObject) => (),
+            _ => panic!("Expected no such object error"),
+        }
+    }
+    #[test]
+    fn remove_space_success() {
+        let mut instance = Memory::new();
+        instance.new_space("test", &TEST_CIDR4).unwrap();
+        instance.remove_space("test").unwrap();
+        assert_eq!(instance.space_count(), 0);
     }
     #[test]
     fn space_success() {
