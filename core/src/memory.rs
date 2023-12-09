@@ -69,6 +69,12 @@ mod tests {
         _ => panic!("Failed to create test cidr"),
     });
 
+    fn new_test_space() -> Memory {
+        let mut instance = Memory::new();
+        instance.new_space("test", &TEST_CIDR4).unwrap();
+        return instance;
+    }
+
     #[test]
     fn new_garden() {
         let instance = Memory::new();
@@ -76,8 +82,7 @@ mod tests {
     }
     #[test]
     fn new_space_duplicate_object() {
-        let mut instance = Memory::new();
-        instance.new_space("test", &TEST_CIDR4).unwrap();
+        let mut instance = new_test_space();
         let result = instance.new_space("test", &TEST_CIDR4);
         match result {
             Err(CreateError::DuplicateObject) => (),
@@ -86,14 +91,13 @@ mod tests {
     }
     #[test]
     fn new_space_success() {
-        let mut instance = Memory::new();
-        instance.new_space("test", &TEST_CIDR4).unwrap();
+        let instance = new_test_space();
         assert_eq!(instance.space_count(), 1);
     }
     #[test]
     fn remove_space_no_such_object() {
-        let mut instance = Memory::new();
-        let result = instance.remove_space("test");
+        let mut instance = new_test_space();
+        let result = instance.remove_space("does-not-exist");
         match result {
             Err(RemoveError::NoSuchObject) => (),
             _ => panic!("Expected no such object error"),
@@ -101,22 +105,20 @@ mod tests {
     }
     #[test]
     fn remove_space_success() {
-        let mut instance = Memory::new();
-        instance.new_space("test", &TEST_CIDR4).unwrap();
+        let mut instance = new_test_space();
         instance.remove_space("test").unwrap();
         assert_eq!(instance.space_count(), 0);
     }
     #[test]
     fn space_success() {
-        let mut instance = Memory::new();
-        instance.new_space("test", &TEST_CIDR4).unwrap();
+        let instance = new_test_space();
         let space = instance.space("test").unwrap();
         assert_eq!(*space.cidr(), TEST_CIDR4);
     }
     #[test]
     fn space_not_found() {
-        let instance = Memory::new();
-        match instance.space("test") {
+        let instance = new_test_space();
+        match instance.space("does-not-exist") {
             None => (),
             _ => panic!("Expected space not found"),
         }
