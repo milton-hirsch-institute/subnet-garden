@@ -18,6 +18,8 @@ pub trait Space {
     fn allocate(&mut self, host_length: Bits) -> AllocateResult<&IpCidr>;
 
     fn list_cidrs(&self) -> Vec<&IpCidr>;
+
+    fn claim(&mut self, cidr: &IpCidr) -> AllocateResult<()>;
 }
 pub trait SubnetGarden {
     fn space_count(&self) -> usize;

@@ -5,7 +5,7 @@ use crate::errors::{AllocateError, CreateError, RemoveError};
 use crate::model;
 use std::collections::HashMap;
 
-use crate::model::Bits;
+use crate::model::{AllocateResult, Bits};
 use cidr::IpCidr;
 use cidr_utils::separator as cidr_separator;
 
@@ -44,6 +44,7 @@ impl Subspace {
     }
 
     fn split(self: &mut Self) {
+        self.state = State::Unavailable;
         let new_network_length = self.cidr.network_length() + 1;
         let low_cidr: IpCidr;
         let high_cidr: IpCidr;
@@ -76,7 +77,6 @@ impl Subspace {
                 self.state = State::Allocated;
                 return Some(self);
             } else {
-                self.state = State::Unavailable;
                 self.split();
             }
         }
@@ -90,6 +90,32 @@ impl Subspace {
             }
         }
         return None;
+    }
+
+    fn claim(&mut self, cidr: &IpCidr) -> bool {
+        let first = cidr.first_address();
+        let last = cidr.last_address();
+        if !(self.cidr.contains(&first) && self.cidr.contains(&last)) {
+            return false;
+        }
+
+        match self.state {
+            State::Allocated => return false,
+            State::Free => {
+                if self.cidr == *cidr {
+                    self.state = State::Allocated;
+                    return true;
+                }
+                self.split();
+            }
+            State::Unavailable => {}
+        }
+
+        if self.low.as_deref_mut().unwrap().claim(cidr) {
+            return true;
+        }
+
+        self.high.as_deref_mut().unwrap().claim(cidr)
     }
 }
 
@@ -125,6 +151,13 @@ impl model::Space for Space {
             }
         }
         return cidrs;
+    }
+
+    fn claim(&mut self, cidr: &IpCidr) -> AllocateResult<()> {
+        if self.root.claim(cidr) {
+            return Ok(());
+        }
+        return Err(AllocateError::NoSpaceAvailable);
     }
 }
 
@@ -360,6 +393,43 @@ mod tests {
                 &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 112), 28).unwrap()),
                 cidrs[5],
             );
+        }
+        #[test]
+        fn claim_out_of_range() {
+            let mut instance = new_test_space();
+            let space = instance.space_mut("test4").unwrap();
+            let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 21, 0, 0), 28).unwrap());
+            let result = space.claim(&cidr);
+            assert_eq!(result, Err(AllocateError::NoSpaceAvailable));
+        }
+
+        #[test]
+        fn claim_already_claimed() {
+            let mut instance = new_test_space();
+            let space = instance.space_mut("test4").unwrap();
+            let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
+            space.claim(&cidr).unwrap();
+            let result = space.claim(&cidr);
+            assert_eq!(result, Err(AllocateError::NoSpaceAvailable));
+        }
+
+        #[test]
+        fn claim_already_allocated() {
+            let mut instance = new_test_space();
+            let space = instance.space_mut("test4").unwrap();
+            let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
+            space.allocate(16).unwrap();
+            let result = space.claim(&cidr);
+            assert_eq!(result, Err(AllocateError::NoSpaceAvailable));
+        }
+
+        #[test]
+        fn claim_success() {
+            let mut instance = new_test_space();
+            let space = instance.space_mut("test4").unwrap();
+            let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
+            let result = space.claim(&cidr);
+            assert_eq!(result, Ok(()));
         }
     }
 }
