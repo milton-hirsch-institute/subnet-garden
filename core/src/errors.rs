@@ -27,6 +27,12 @@ impl std::fmt::Display for RemoveError {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum AllocateError {
+    DuplicateName,
+    NoSpaceAvailable,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
