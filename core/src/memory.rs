@@ -44,18 +44,20 @@ impl Subspace {
     }
 
     fn split(self: &mut Self) {
-        let new_bits = self.cidr.network_length() + 1;
+        let new_network_length = self.cidr.network_length() + 1;
         let low_cidr: IpCidr;
         let high_cidr: IpCidr;
         match self.cidr {
             IpCidr::V4(cidr) => {
-                let subnets = cidr_separator::Ipv4CidrSeparator::sub_networks(&cidr, new_bits);
+                let subnets =
+                    cidr_separator::Ipv4CidrSeparator::sub_networks(&cidr, new_network_length);
                 let subnets_vec = subnets.unwrap();
                 low_cidr = IpCidr::V4(*subnets_vec.get(0).unwrap());
                 high_cidr = IpCidr::V4(*subnets_vec.get(1).unwrap());
             }
             IpCidr::V6(cidr) => {
-                let subnets = cidr_separator::Ipv6CidrSeparator::sub_networks(&cidr, new_bits);
+                let subnets =
+                    cidr_separator::Ipv6CidrSeparator::sub_networks(&cidr, new_network_length);
                 let subnets_vec = subnets.unwrap();
                 low_cidr = IpCidr::V6(*subnets_vec.get(0).unwrap());
                 high_cidr = IpCidr::V6(*subnets_vec.get(1).unwrap());
@@ -66,6 +68,9 @@ impl Subspace {
     }
 
     fn find_space(&mut self, host_length: model::Bits) -> Option<&mut Self> {
+        if host_length > self.host_length() {
+            return None;
+        }
         if self.state == State::Free {
             if host_length == self.host_length() {
                 self.state = State::Allocated;
@@ -98,13 +103,28 @@ impl model::Space for Space {
     }
 
     fn allocate(&mut self, bits: Bits) -> model::AllocateResult<&IpCidr> {
-        if bits > self.root.host_length() {
-            return Err(AllocateError::NoSpaceAvailable);
-        }
         match self.root.find_space(bits) {
             Some(subspace) => Ok(&subspace.cidr),
             None => Err(AllocateError::NoSpaceAvailable),
         }
+    }
+
+    fn list_cidrs(&self) -> Vec<&IpCidr> {
+        let mut cidrs = Vec::new();
+        let mut stack = Vec::new();
+        stack.push(&self.root);
+        while !stack.is_empty() {
+            let subspace = stack.pop().unwrap();
+            match subspace.state {
+                State::Allocated => cidrs.push(&subspace.cidr),
+                State::Free => {}
+                State::Unavailable => {
+                    stack.push(subspace.high.as_deref().unwrap());
+                    stack.push(subspace.low.as_deref().unwrap());
+                }
+            }
+        }
+        return cidrs;
     }
 }
 
@@ -259,6 +279,21 @@ mod tests {
                 &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap())
             );
         }
+        #[test]
+        fn allocate_multi_sizes() {
+            let mut instance = new_test_space();
+            let space = instance.space_mut("test4").unwrap();
+            let result1 = space.allocate(4).unwrap();
+            assert_eq!(
+                result1,
+                &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap())
+            );
+            let result2 = space.allocate(8).unwrap();
+            assert_eq!(
+                result2,
+                &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 1, 0), 24).unwrap())
+            );
+        }
 
         #[test]
         fn allocate_success_v6() {
@@ -279,6 +314,51 @@ mod tests {
             assert_eq!(
                 result,
                 &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 16).unwrap())
+            );
+        }
+
+        #[test]
+        fn list_empty_cidrs() {
+            let mut instance = new_test_space();
+            let space = instance.space_mut("test4").unwrap();
+            let cidrs = space.list_cidrs();
+            assert_eq!(cidrs.len(), 0);
+        }
+        #[test]
+        fn list_cidrs() {
+            let mut instance = new_test_space();
+            let space = instance.space_mut("test4").unwrap();
+            space.allocate(4).unwrap();
+            space.allocate(5).unwrap();
+            space.allocate(5).unwrap();
+            space.allocate(4).unwrap();
+            space.allocate(4).unwrap();
+            space.allocate(4).unwrap();
+            let cidrs = space.list_cidrs();
+            assert_eq!(cidrs.len(), 6);
+            assert_eq!(
+                &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap()),
+                cidrs[0],
+            );
+            assert_eq!(
+                &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 16), 28).unwrap()),
+                cidrs[1],
+            );
+            assert_eq!(
+                &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 32), 27).unwrap()),
+                cidrs[2],
+            );
+            assert_eq!(
+                &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 64), 27).unwrap()),
+                cidrs[3],
+            );
+            assert_eq!(
+                &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 96), 28).unwrap()),
+                cidrs[4],
+            );
+            assert_eq!(
+                &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 112), 28).unwrap()),
+                cidrs[5],
             );
         }
     }
