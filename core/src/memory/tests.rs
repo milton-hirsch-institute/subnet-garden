@@ -18,8 +18,8 @@ static TEST_CIDR6: IpCidr = IpCidr::V6(
     },
 );
 
-fn new_test_space() -> Memory {
-    let mut instance = Memory::new();
+fn new_test_space() -> MemorySubnetGarden {
+    let mut instance = MemorySubnetGarden::new();
     instance.new_space("test4", TEST_CIDR4).unwrap();
     instance.new_space("test6", TEST_CIDR6).unwrap();
     return instance;
@@ -32,7 +32,7 @@ mod memory_garden {
         use super::*;
         #[test]
         fn new_memory_garden() {
-            let instance = Memory::new();
+            let instance = MemorySubnetGarden::new();
             assert_eq!(instance.space_count(), 0);
         }
     }
@@ -415,12 +415,11 @@ mod space {
 
         mod serialize {
             use super::*;
-            use crate::model::Space;
             use serde_json::to_string;
 
             #[test]
             fn success() {
-                let mut space = crate::memory::Space::new(TEST_CIDR4);
+                let mut space = crate::memory::MemorySpace::new(TEST_CIDR4);
                 space.allocate(4, Some("a-name")).unwrap();
                 space.allocate(4, Some("b-name")).unwrap();
                 space.allocate(4, None).unwrap();

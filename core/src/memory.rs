@@ -6,7 +6,7 @@ mod tests;
 
 use crate::errors::{AllocateError, CreateError, RemoveError};
 use crate::model;
-use crate::model::{AllocateResult, Bits};
+use crate::model::{AllocateResult, Bits, Space};
 use cidr::IpCidr;
 use cidr_utils::separator as cidr_separator;
 use serde::ser::SerializeMap;
@@ -119,14 +119,14 @@ impl Subspace {
     }
 }
 
-pub struct Space {
+pub struct MemorySpace {
     root: Subspace,
     names: HashMap<String, IpCidr>,
 }
 
-impl Space {
+impl MemorySpace {
     fn new(cidr: IpCidr) -> Self {
-        Space {
+        MemorySpace {
             root: Subspace::new(cidr),
             names: HashMap::new(),
         }
@@ -139,7 +139,7 @@ impl Space {
     }
 }
 
-impl model::Space for Space {
+impl Space for MemorySpace {
     fn cidr(&self) -> &IpCidr {
         &self.root.cidr
     }
@@ -211,10 +211,10 @@ impl model::Space for Space {
     }
 
     fn entries(&self) -> Vec<(String, IpCidr)> {
-        Space::entries(self)
+        MemorySpace::entries(self)
     }
 }
-impl serde::Serialize for Space {
+impl serde::Serialize for MemorySpace {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut entries = self.entries();
         entries.sort_by(|(name1, _), (name2, _)| name1.cmp(name2));
@@ -227,31 +227,27 @@ impl serde::Serialize for Space {
     }
 }
 
-pub struct Memory {
-    spaces: HashMap<String, Space>,
+pub struct MemorySubnetGarden {
+    spaces: HashMap<String, MemorySpace>,
 }
 
-impl Memory {
+impl MemorySubnetGarden {
     pub fn new() -> Self {
-        Memory {
+        MemorySubnetGarden {
             spaces: HashMap::new(),
         }
     }
 }
 
-impl model::SubnetGarden for Memory {
+impl model::SubnetGarden for MemorySubnetGarden {
     fn space_count(&self) -> usize {
         self.spaces.len()
     }
-    fn new_space(
-        &mut self,
-        name: &str,
-        cidr: IpCidr,
-    ) -> model::CreateResult<&mut dyn model::Space> {
+    fn new_space(&mut self, name: &str, cidr: IpCidr) -> model::CreateResult<&mut dyn Space> {
         if self.spaces.contains_key(name) {
             return Err(CreateError::DuplicateObject);
         }
-        let space = Space::new(cidr);
+        let space = MemorySpace::new(cidr);
         self.spaces.insert(name.to_string(), space);
         return Ok(self.spaces.get_mut(name).unwrap());
     }
@@ -263,7 +259,7 @@ impl model::SubnetGarden for Memory {
         }
     }
 
-    fn space_mut(&mut self, name: &str) -> Option<&mut dyn model::Space> {
+    fn space_mut(&mut self, name: &str) -> Option<&mut dyn Space> {
         match self.spaces.get_mut(name) {
             Some(space) => Some(space),
             None => None,
@@ -274,17 +270,17 @@ impl model::SubnetGarden for Memory {
         self.spaces.keys().cloned().collect()
     }
 
-    fn spaces(&self) -> Vec<&dyn model::Space> {
+    fn spaces(&self) -> Vec<&dyn Space> {
         self.spaces
             .values()
-            .map(|space| space as &dyn model::Space)
+            .map(|space| space as &dyn Space)
             .collect()
     }
 
-    fn entries(&self) -> Vec<(String, &dyn model::Space)> {
+    fn entries(&self) -> Vec<(String, &dyn Space)> {
         self.spaces
             .iter()
-            .map(|(name, space)| (name.clone(), space as &dyn model::Space))
+            .map(|(name, space)| (name.clone(), space as &dyn Space))
             .collect()
     }
 }
