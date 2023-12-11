@@ -100,7 +100,7 @@ mod space {
         fn too_many_bits() {
             let mut instance = new_test_space();
             let space = instance.space_mut("test4").unwrap();
-            let result = space.allocate(17);
+            let result = space.allocate(17, None);
             assert_eq!(result.err(), Some(AllocateError::NoSpaceAvailable));
         }
 
@@ -108,19 +108,46 @@ mod space {
         fn no_space_available() {
             let mut instance = new_test_space();
             let space = instance.space_mut("test4").unwrap();
-            space.allocate(16).unwrap();
-            let result = space.allocate(16);
+            space.allocate(16, None).unwrap();
+            let result = space.allocate(16, None);
             assert_eq!(result.err(), Some(AllocateError::NoSpaceAvailable));
+        }
+
+        #[test]
+        fn allocate_name_already_exists() {
+            let mut instance = new_test_space();
+            let space = instance.space_mut("test4").unwrap();
+            space.allocate(4, Some("a-name")).unwrap();
+            let result = space.allocate(4, Some("a-name"));
+            assert_eq!(result.err(), Some(AllocateError::DuplicateName));
+        }
+
+        #[test]
+        fn allocate_cidr_already_exists() {
+            let mut instance = new_test_space();
+            let space = instance.space_mut("test4").unwrap();
+            space.allocate(4, Some("10.20.0.16/28")).unwrap();
+            let result = space.allocate(4, None);
+            assert_eq!(result.err(), Some(AllocateError::DuplicateName));
+        }
+
+        #[test]
+        fn allocate_named() {
+            let mut instance = new_test_space();
+            let space = instance.space_mut("test4").unwrap();
+            let result = space.allocate(4, Some("a-name")).unwrap();
+            let looked_up = space.get("a-name").unwrap();
+            assert_eq!(looked_up, result);
         }
 
         #[test]
         fn allocate_success_v4() {
             let mut instance = new_test_space();
             let space = instance.space_mut("test4").unwrap();
-            let result = space.allocate(4).unwrap();
+            let result = space.allocate(4, None).unwrap();
             assert_eq!(
                 result,
-                &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap())
+                IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap())
             );
         }
 
@@ -128,10 +155,10 @@ mod space {
         fn allocate_success_v6() {
             let mut instance = new_test_space();
             let space = instance.space_mut("test6").unwrap();
-            let result = space.allocate(4).unwrap();
+            let result = space.allocate(4, None).unwrap();
             assert_eq!(
                 result,
-                &IpCidr::V6(Ipv6Cidr::new(Ipv6Addr::new(1, 2, 3, 4, 10, 20, 0, 0), 124).unwrap())
+                IpCidr::V6(Ipv6Cidr::new(Ipv6Addr::new(1, 2, 3, 4, 10, 20, 0, 0), 124).unwrap())
             );
         }
 
@@ -139,15 +166,15 @@ mod space {
         fn allocate_multi_sizes() {
             let mut instance = new_test_space();
             let space = instance.space_mut("test4").unwrap();
-            let result1 = space.allocate(4).unwrap();
+            let result1 = space.allocate(4, None).unwrap();
             assert_eq!(
                 result1,
-                &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap())
+                IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap())
             );
-            let result2 = space.allocate(8).unwrap();
+            let result2 = space.allocate(8, None).unwrap();
             assert_eq!(
                 result2,
-                &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 1, 0), 24).unwrap())
+                IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 1, 0), 24).unwrap())
             );
         }
 
@@ -155,10 +182,10 @@ mod space {
         fn max_bits() {
             let mut instance = new_test_space();
             let space = instance.space_mut("test4").unwrap();
-            let result = space.allocate(16).unwrap();
+            let result = space.allocate(16, None).unwrap();
             assert_eq!(
                 result,
-                &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 16).unwrap())
+                IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 16).unwrap())
             );
         }
     }
@@ -176,12 +203,12 @@ mod space {
         fn some() {
             let mut instance = new_test_space();
             let space = instance.space_mut("test4").unwrap();
-            space.allocate(4).unwrap();
-            space.allocate(5).unwrap();
-            space.allocate(5).unwrap();
-            space.allocate(4).unwrap();
-            space.allocate(4).unwrap();
-            space.allocate(4).unwrap();
+            space.allocate(4, None).unwrap();
+            space.allocate(5, None).unwrap();
+            space.allocate(5, None).unwrap();
+            space.allocate(4, None).unwrap();
+            space.allocate(4, None).unwrap();
+            space.allocate(4, None).unwrap();
             let cidrs = space.list_cidrs();
             assert_eq!(cidrs.len(), 6);
             assert_eq!(
@@ -234,11 +261,23 @@ mod space {
         }
 
         #[test]
+        fn alread_named() {
+            let mut instance = new_test_space();
+            let space = instance.space_mut("test4").unwrap();
+            let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
+            space
+                .allocate(4, Some(format!("{}", cidr).as_str()))
+                .unwrap();
+            let result = space.claim(&cidr);
+            assert_eq!(result, Err(AllocateError::DuplicateName));
+        }
+
+        #[test]
         fn already_allocated() {
             let mut instance = new_test_space();
             let space = instance.space_mut("test4").unwrap();
             let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
-            space.allocate(16).unwrap();
+            space.allocate(16, None).unwrap();
             let result = space.claim(&cidr);
             assert_eq!(result, Err(AllocateError::NoSpaceAvailable));
         }

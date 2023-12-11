@@ -71,24 +71,23 @@ impl Subspace {
         self.high = Some(Box::new(Subspace::new(high_cidr)));
     }
 
-    fn find_space(&mut self, host_length: model::Bits) -> Option<&mut Self> {
+    fn find_free_space(&mut self, host_length: model::Bits) -> Option<&mut Self> {
         if host_length > self.host_length() {
             return None;
         }
         if self.state == State::Free {
             if host_length == self.host_length() {
-                self.state = State::Allocated;
                 return Some(self);
             } else {
                 self.split();
             }
         }
         if self.state == State::Unavailable {
-            let found_low = self.low.as_deref_mut()?.find_space(host_length);
+            let found_low = self.low.as_deref_mut()?.find_free_space(host_length);
             match found_low {
                 Some(_) => return found_low,
                 None => {
-                    return self.high.as_deref_mut()?.find_space(host_length);
+                    return self.high.as_deref_mut()?.find_free_space(host_length);
                 }
             }
         }
@@ -124,6 +123,7 @@ impl Subspace {
 
 struct Space {
     root: Subspace,
+    names: HashMap<String, IpCidr>,
 }
 
 impl model::Space for Space {
@@ -131,9 +131,32 @@ impl model::Space for Space {
         &self.root.cidr
     }
 
-    fn allocate(&mut self, bits: Bits) -> model::AllocateResult<&IpCidr> {
-        match self.root.find_space(bits) {
-            Some(subspace) => Ok(&subspace.cidr),
+    fn get(&self, host: &str) -> Option<IpCidr> {
+        self.names.get(host).copied()
+    }
+
+    fn allocate(&mut self, bits: Bits, name: Option<&str>) -> model::AllocateResult<IpCidr> {
+        match self.root.find_free_space(bits) {
+            Some(subspace) => {
+                let new_name: String;
+                match name {
+                    Some(name) => {
+                        if self.names.contains_key(name) {
+                            return Err(AllocateError::DuplicateName);
+                        }
+                        new_name = name.to_string();
+                    }
+                    None => {
+                        new_name = format!("{}", subspace.cidr);
+                    }
+                }
+                if self.names.contains_key(&new_name) {
+                    return Err(AllocateError::DuplicateName);
+                }
+                self.names.insert(new_name, subspace.cidr);
+                subspace.state = State::Allocated;
+                Ok(subspace.cidr)
+            }
             None => Err(AllocateError::NoSpaceAvailable),
         }
     }
@@ -157,6 +180,9 @@ impl model::Space for Space {
     }
 
     fn claim(&mut self, cidr: &IpCidr) -> AllocateResult<()> {
+        if self.names.contains_key(format!("{}", cidr).as_str()) {
+            return Err(AllocateError::DuplicateName);
+        }
         if self.root.claim(cidr) {
             return Ok(());
         }
@@ -190,6 +216,7 @@ impl model::SubnetGarden for Memory {
         }
         let space = Space {
             root: Subspace::new(cidr),
+            names: HashMap::new(),
         };
         self.spaces.insert(name.to_string(), space);
         return Ok(self.spaces.get_mut(name).unwrap());
