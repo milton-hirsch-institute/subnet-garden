@@ -131,12 +131,6 @@ impl MemorySpace {
             names: HashMap::new(),
         }
     }
-    fn entries(&self) -> Vec<(String, IpCidr)> {
-        self.names
-            .iter()
-            .map(|(name, cidr)| (name.clone(), cidr.clone()))
-            .collect()
-    }
 }
 
 impl Space for MemorySpace {
@@ -211,7 +205,10 @@ impl Space for MemorySpace {
     }
 
     fn entries(&self) -> Vec<(String, IpCidr)> {
-        MemorySpace::entries(self)
+        self.names
+            .iter()
+            .map(|(name, cidr)| (name.clone(), cidr.clone()))
+            .collect()
     }
 }
 impl serde::Serialize for MemorySpace {
