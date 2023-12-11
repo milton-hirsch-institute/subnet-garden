@@ -25,7 +25,7 @@ fn new_test_space() -> Memory {
     return instance;
 }
 
-mod memory_garde {
+mod memory_garden {
     use super::*;
 
     mod new {
@@ -86,6 +86,42 @@ mod memory_garde {
         fn space_not_found() {
             let mut instance = new_test_space();
             assert!(instance.space_mut("does-not-exist").is_none());
+        }
+    }
+
+    mod space_names {
+        use super::*;
+
+        #[test]
+        fn space_names_success() {
+            let instance = new_test_space();
+            let mut names = instance.space_names();
+            names.sort();
+            assert_eq!(names.len(), 2);
+            assert_eq!(names[0], "test4");
+            assert_eq!(names[1], "test6");
+        }
+
+        #[test]
+        fn spaces_success() {
+            let instance = new_test_space();
+            let mut spaces = instance.spaces();
+            spaces.sort_by(|a, b| a.cidr().cmp(b.cidr()));
+            assert_eq!(spaces.len(), 2);
+            assert_eq!(*spaces[0].cidr(), TEST_CIDR4);
+            assert_eq!(*spaces[1].cidr(), TEST_CIDR6);
+        }
+
+        #[test]
+        fn entries_success() {
+            let instance = new_test_space();
+            let mut entries = instance.entries();
+            entries.sort_by(|a, b| a.0.cmp(&b.0));
+            assert_eq!(entries.len(), 2);
+            assert_eq!(entries[0].0, "test4");
+            assert_eq!(*entries[0].1.cidr(), TEST_CIDR4);
+            assert_eq!(entries[1].0, "test6");
+            assert_eq!(*entries[1].1.cidr(), TEST_CIDR6);
         }
     }
 }

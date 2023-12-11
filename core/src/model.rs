@@ -36,4 +36,10 @@ pub trait SubnetGarden {
     fn remove_space(&mut self, name: &str) -> RemoveResult<()>;
 
     fn space_mut(&mut self, name: &str) -> Option<&mut dyn Space>;
+
+    fn space_names(&self) -> Vec<String>;
+
+    fn spaces(&self) -> Vec<&dyn Space>;
+
+    fn entries(&self) -> Vec<(String, &dyn Space)>;
 }

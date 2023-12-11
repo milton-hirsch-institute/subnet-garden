@@ -250,4 +250,22 @@ impl model::SubnetGarden for Memory {
             None => None,
         }
     }
+
+    fn space_names(&self) -> Vec<String> {
+        self.spaces.keys().cloned().collect()
+    }
+
+    fn spaces(&self) -> Vec<&dyn model::Space> {
+        self.spaces
+            .values()
+            .map(|space| space as &dyn model::Space)
+            .collect()
+    }
+
+    fn entries(&self) -> Vec<(String, &dyn model::Space)> {
+        self.spaces
+            .iter()
+            .map(|(name, space)| (name.clone(), space as &dyn model::Space))
+            .collect()
+    }
 }
