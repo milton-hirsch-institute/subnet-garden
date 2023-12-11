@@ -22,6 +22,12 @@ pub trait Space {
     fn list_cidrs(&self) -> Vec<&IpCidr>;
 
     fn claim(&mut self, cidr: &IpCidr) -> AllocateResult<()>;
+
+    fn names(&self) -> Vec<String>;
+
+    fn cidrs(&self) -> Vec<IpCidr>;
+
+    fn entries(&self) -> Vec<(String, IpCidr)>;
 }
 pub trait SubnetGarden {
     fn space_count(&self) -> usize;

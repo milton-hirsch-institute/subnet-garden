@@ -192,6 +192,7 @@ mod space {
 
     mod list_cidrs {
         use super::*;
+
         #[test]
         fn no_cidrs() {
             let mut instance = new_test_space();
@@ -199,6 +200,7 @@ mod space {
             let cidrs = space.list_cidrs();
             assert_eq!(cidrs.len(), 0);
         }
+
         #[test]
         fn some() {
             let mut instance = new_test_space();
@@ -289,6 +291,90 @@ mod space {
             let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
             let result = space.claim(&cidr);
             assert_eq!(result, Ok(()));
+        }
+    }
+
+    mod names {
+        use super::*;
+
+        #[test]
+        fn success() {
+            let mut instance = new_test_space();
+            let space = instance.space_mut("test4").unwrap();
+            space.allocate(4, Some("a-name")).unwrap();
+            space.allocate(4, Some("b-name")).unwrap();
+            space.allocate(4, None).unwrap();
+            let mut names = space.names();
+            names.sort();
+            assert_eq!(names.len(), 3);
+            assert_eq!(names[0], "10.20.0.32/28");
+            assert_eq!(names[1], "a-name");
+            assert_eq!(names[2], "b-name");
+        }
+    }
+
+    mod cidrs {
+        use super::*;
+
+        #[test]
+        fn success() {
+            let mut instance = new_test_space();
+            let space = instance.space_mut("test4").unwrap();
+            space.allocate(4, Some("a-name")).unwrap();
+            space.allocate(4, Some("b-name")).unwrap();
+            space.allocate(4, None).unwrap();
+            let mut names = space.cidrs();
+            names.sort();
+            assert_eq!(names.len(), 3);
+            assert_eq!(
+                names[0],
+                IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap())
+            );
+            assert_eq!(
+                names[1],
+                IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 16), 28).unwrap())
+            );
+            assert_eq!(
+                names[2],
+                IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 32), 28).unwrap())
+            );
+        }
+    }
+
+    mod entries {
+        use super::*;
+
+        #[test]
+        fn success() {
+            let mut instance = new_test_space();
+            let space = instance.space_mut("test4").unwrap();
+            space.allocate(4, Some("a-name")).unwrap();
+            space.allocate(4, Some("b-name")).unwrap();
+            space.allocate(4, None).unwrap();
+            let mut entries = space.entries();
+            entries.sort();
+            assert_eq!(entries.len(), 3);
+            assert_eq!(
+                entries[0],
+                (
+                    String::from("10.20.0.32/28"),
+                    IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 32), 28).unwrap())
+                )
+            );
+            assert_eq!(
+                entries[1],
+                (
+                    String::from("a-name"),
+                    IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap())
+                )
+            );
+            assert_eq!(
+                entries[2],
+                (
+                    String::from("b-name"),
+                    IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 16), 28).unwrap())
+                )
+            );
         }
     }
 }

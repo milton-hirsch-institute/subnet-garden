@@ -188,6 +188,21 @@ impl model::Space for Space {
         }
         return Err(AllocateError::NoSpaceAvailable);
     }
+
+    fn names(&self) -> Vec<String> {
+        self.names.keys().cloned().collect()
+    }
+
+    fn cidrs(&self) -> Vec<IpCidr> {
+        self.names.values().map(|&cidr| cidr.clone()).collect()
+    }
+
+    fn entries(&self) -> Vec<(String, IpCidr)> {
+        self.names
+            .iter()
+            .map(|(name, cidr)| (name.clone(), cidr.clone()))
+            .collect()
+    }
 }
 
 pub struct Memory {
