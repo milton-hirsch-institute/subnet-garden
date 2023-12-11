@@ -412,5 +412,29 @@ mod space {
                 )
             );
         }
+
+        mod serialize {
+            use super::*;
+            use crate::model::Space;
+            use serde_json::to_string;
+
+            #[test]
+            fn success() {
+                let mut space = crate::memory::Space::new(TEST_CIDR4);
+                space.allocate(4, Some("a-name")).unwrap();
+                space.allocate(4, Some("b-name")).unwrap();
+                space.allocate(4, None).unwrap();
+
+                let json = to_string(&space).unwrap();
+                assert_eq!(
+                    json,
+                    "{\
+                    \"10.20.0.32/28\":\"10.20.0.32/28\",\
+                    \"a-name\":\"10.20.0.0/28\",\
+                    \"b-name\":\"10.20.0.16/28\"\
+                    }"
+                );
+            }
+        }
     }
 }

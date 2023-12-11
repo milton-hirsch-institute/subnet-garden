@@ -6,11 +6,11 @@ mod tests;
 
 use crate::errors::{AllocateError, CreateError, RemoveError};
 use crate::model;
-use std::collections::HashMap;
-
 use crate::model::{AllocateResult, Bits};
 use cidr::IpCidr;
 use cidr_utils::separator as cidr_separator;
+use serde::ser::SerializeMap;
+use std::collections::HashMap;
 
 #[derive(Debug, PartialEq)]
 enum State {
@@ -19,18 +19,18 @@ enum State {
     Unavailable,
 }
 
+fn max_bits(cidr: &IpCidr) -> Bits {
+    match cidr {
+        IpCidr::V4(_) => 32,
+        IpCidr::V6(_) => 128,
+    }
+}
+
 struct Subspace {
     cidr: IpCidr,
     high: Option<Box<Self>>,
     low: Option<Box<Self>>,
     state: State,
-}
-
-fn max_bits(cidr: &IpCidr) -> model::Bits {
-    match cidr {
-        IpCidr::V4(_) => 32,
-        IpCidr::V6(_) => 128,
-    }
 }
 
 impl Subspace {
@@ -71,7 +71,7 @@ impl Subspace {
         self.high = Some(Box::new(Subspace::new(high_cidr)));
     }
 
-    fn find_free_space(&mut self, host_length: model::Bits) -> Option<&mut Self> {
+    fn find_free_space(&mut self, host_length: Bits) -> Option<&mut Self> {
         if host_length > self.host_length() {
             return None;
         }
@@ -84,12 +84,10 @@ impl Subspace {
         }
         if self.state == State::Unavailable {
             let found_low = self.low.as_deref_mut()?.find_free_space(host_length);
-            match found_low {
-                Some(_) => return found_low,
-                None => {
-                    return self.high.as_deref_mut()?.find_free_space(host_length);
-                }
-            }
+            return match found_low {
+                Some(_) => found_low,
+                None => self.high.as_deref_mut()?.find_free_space(host_length),
+            };
         }
         return None;
     }
@@ -121,9 +119,24 @@ impl Subspace {
     }
 }
 
-struct Space {
+pub struct Space {
     root: Subspace,
     names: HashMap<String, IpCidr>,
+}
+
+impl Space {
+    fn new(cidr: IpCidr) -> Self {
+        Space {
+            root: Subspace::new(cidr),
+            names: HashMap::new(),
+        }
+    }
+    fn entries(&self) -> Vec<(String, IpCidr)> {
+        self.names
+            .iter()
+            .map(|(name, cidr)| (name.clone(), cidr.clone()))
+            .collect()
+    }
 }
 
 impl model::Space for Space {
@@ -135,7 +148,7 @@ impl model::Space for Space {
         self.names.get(host).copied()
     }
 
-    fn allocate(&mut self, bits: Bits, name: Option<&str>) -> model::AllocateResult<IpCidr> {
+    fn allocate(&mut self, bits: Bits, name: Option<&str>) -> AllocateResult<IpCidr> {
         match self.root.find_free_space(bits) {
             Some(subspace) => {
                 let new_name: String;
@@ -198,10 +211,19 @@ impl model::Space for Space {
     }
 
     fn entries(&self) -> Vec<(String, IpCidr)> {
-        self.names
-            .iter()
-            .map(|(name, cidr)| (name.clone(), cidr.clone()))
-            .collect()
+        Space::entries(self)
+    }
+}
+impl serde::Serialize for Space {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut entries = self.entries();
+        entries.sort_by(|(name1, _), (name2, _)| name1.cmp(name2));
+        let mut map = serializer.serialize_map(None)?;
+        for (name, cidr) in entries {
+            let cidr_string = cidr.to_string();
+            map.serialize_entry(&name, &cidr_string)?;
+        }
+        map.end()
     }
 }
 
@@ -229,10 +251,7 @@ impl model::SubnetGarden for Memory {
         if self.spaces.contains_key(name) {
             return Err(CreateError::DuplicateObject);
         }
-        let space = Space {
-            root: Subspace::new(cidr),
-            names: HashMap::new(),
-        };
+        let space = Space::new(cidr);
         self.spaces.insert(name.to_string(), space);
         return Ok(self.spaces.get_mut(name).unwrap());
     }
