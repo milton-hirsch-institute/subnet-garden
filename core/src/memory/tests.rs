@@ -365,21 +365,21 @@ mod space {
             assert_eq!(
                 entries[0],
                 (
-                    String::from("10.20.0.32/28"),
+                    Some(String::from("10.20.0.32/28")),
                     IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 32), 28).unwrap())
                 )
             );
             assert_eq!(
                 entries[1],
                 (
-                    String::from("a-name"),
+                    Some(String::from("a-name")),
                     IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap())
                 )
             );
             assert_eq!(
                 entries[2],
                 (
-                    String::from("b-name"),
+                    Some(String::from("b-name")),
                     IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 16), 28).unwrap())
                 )
             );

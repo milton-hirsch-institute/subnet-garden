@@ -25,7 +25,7 @@ pub trait Space {
 
     fn cidrs(&self) -> Vec<&IpCidr>;
 
-    fn entries(&self) -> Vec<(String, IpCidr)>;
+    fn entries(&self) -> Vec<(Option<String>, IpCidr)>;
 }
 pub trait SubnetGarden {
     fn space_count(&self) -> usize;

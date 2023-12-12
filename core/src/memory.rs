@@ -210,10 +210,10 @@ impl Space for MemorySpace {
         cidrs
     }
 
-    fn entries(&self) -> Vec<(String, IpCidr)> {
+    fn entries(&self) -> Vec<(Option<String>, IpCidr)> {
         self.names
             .iter()
-            .map(|(name, cidr)| (name.clone(), cidr.clone()))
+            .map(|(name, cidr)| (Some(name.clone()), cidr.clone()))
             .collect()
     }
 }
