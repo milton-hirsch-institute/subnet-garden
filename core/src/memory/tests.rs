@@ -159,12 +159,12 @@ mod space {
         }
 
         #[test]
-        fn allocate_cidr_already_exists() {
+        fn name_is_not_cidr_record() {
             let mut instance = new_test_space();
             let space = instance.space_mut("test4").unwrap();
             space.allocate(4, Some("10.20.0.16/28")).unwrap();
             let result = space.allocate(4, None);
-            assert_eq!(result.err(), Some(AllocateError::DuplicateName));
+            assert_eq!(result.err(), None);
         }
 
         #[test]
@@ -292,10 +292,9 @@ mod space {
             space.allocate(4, None).unwrap();
             let mut names = space.names();
             names.sort();
-            assert_eq!(names.len(), 3);
-            assert_eq!(names[0], "10.20.0.32/28");
-            assert_eq!(names[1], "a-name");
-            assert_eq!(names[2], "b-name");
+            assert_eq!(names.len(), 2);
+            assert_eq!(names[0], "a-name");
+            assert_eq!(names[1], "b-name");
         }
     }
 
@@ -365,7 +364,7 @@ mod space {
             assert_eq!(
                 entries[0],
                 (
-                    Some(String::from("10.20.0.32/28")),
+                    None,
                     IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 32), 28).unwrap())
                 )
             );
@@ -391,7 +390,7 @@ mod space {
 
             #[test]
             fn success() {
-                let mut space = crate::memory::MemorySpace::new(TEST_CIDR4);
+                let mut space = MemorySpace::new(TEST_CIDR4);
                 space.allocate(4, Some("a-name")).unwrap();
                 space.allocate(4, Some("b-name")).unwrap();
                 space.allocate(4, None).unwrap();
@@ -399,11 +398,11 @@ mod space {
                 let json = to_string(&space).unwrap();
                 assert_eq!(
                     json,
-                    "{\
-                    \"10.20.0.32/28\":\"10.20.0.32/28\",\
-                    \"a-name\":\"10.20.0.0/28\",\
-                    \"b-name\":\"10.20.0.16/28\"\
-                    }"
+                    "[\
+                    [\"a-name\",\"10.20.0.0/28\"],\
+                    [\"b-name\",\"10.20.0.16/28\"],\
+                    [null,\"10.20.0.32/28\"]\
+                    ]"
                 );
             }
         }

@@ -9,7 +9,7 @@ use crate::model;
 use crate::model::{AllocateResult, Bits, Space};
 use cidr::IpCidr;
 use cidr_utils::separator as cidr_separator;
-use serde::ser::SerializeMap;
+use serde::ser::SerializeSeq;
 use std::collections::HashMap;
 
 #[derive(Debug, PartialEq)]
@@ -165,23 +165,13 @@ impl Space for MemorySpace {
     fn allocate(&mut self, bits: Bits, name: Option<&str>) -> AllocateResult<IpCidr> {
         match self.root.find_free_space(bits) {
             Some(subspace) => {
-                let new_name: String;
-                match name {
-                    Some(name) => {
-                        if self.names.contains_key(name) {
-                            return Err(AllocateError::DuplicateName);
-                        }
-                        new_name = name.to_string();
+                if let Some(name) = name {
+                    if self.names.contains_key(name) {
+                        return Err(AllocateError::DuplicateName);
                     }
-                    None => {
-                        new_name = format!("{}", subspace.cidr);
-                    }
+                    subspace.name = Some(name.to_string());
+                    self.names.insert(name.to_string(), subspace.cidr);
                 }
-                if self.names.contains_key(&new_name) {
-                    return Err(AllocateError::DuplicateName);
-                }
-                subspace.name = Some(new_name.clone());
-                self.names.insert(new_name, subspace.cidr);
                 subspace.state = State::Allocated;
                 Ok(subspace.cidr)
             }
@@ -214,7 +204,8 @@ impl Space for MemorySpace {
     }
 
     fn entries(&self) -> Vec<(Option<String>, IpCidr)> {
-        let allocated_subspaces = self.list_allocated_subspaces();
+        let mut allocated_subspaces = self.list_allocated_subspaces();
+        allocated_subspaces.sort_by(|subspace1, subspace2| subspace1.cidr.cmp(&subspace2.cidr));
         let mut entries = Vec::new();
         entries.reserve(allocated_subspaces.len());
         for subspace in allocated_subspaces {
@@ -226,13 +217,13 @@ impl Space for MemorySpace {
 impl serde::Serialize for MemorySpace {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut entries = self.entries();
-        entries.sort_by(|(name1, _), (name2, _)| name1.cmp(name2));
-        let mut map = serializer.serialize_map(None)?;
+        entries.sort_by(|(_, cidr1), (_, cidr2)| cidr1.cmp(cidr2));
+        let mut seq = serializer.serialize_seq(Some(entries.len()))?;
         for (name, cidr) in entries {
             let cidr_string = cidr.to_string();
-            map.serialize_entry(&name, &cidr_string)?;
+            seq.serialize_element(&(name, cidr_string))?;
         }
-        map.end()
+        seq.end()
     }
 }
 
