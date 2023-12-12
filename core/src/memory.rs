@@ -203,13 +203,16 @@ impl Space for MemorySpace {
         cidrs
     }
 
-    fn entries(&self) -> Vec<(Option<String>, IpCidr)> {
+    fn entries(&self) -> Vec<model::CidrRecord> {
         let mut allocated_subspaces = self.list_allocated_subspaces();
         allocated_subspaces.sort_by(|subspace1, subspace2| subspace1.cidr.cmp(&subspace2.cidr));
         let mut entries = Vec::new();
         entries.reserve(allocated_subspaces.len());
         for subspace in allocated_subspaces {
-            entries.push((subspace.name.clone(), subspace.cidr));
+            entries.push(model::CidrRecord::new(
+                subspace.cidr,
+                subspace.name.as_deref(),
+            ));
         }
         entries
     }
@@ -217,11 +220,10 @@ impl Space for MemorySpace {
 impl serde::Serialize for MemorySpace {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut entries = self.entries();
-        entries.sort_by(|(_, cidr1), (_, cidr2)| cidr1.cmp(cidr2));
+        entries.sort_by(|record1, record2| record1.cmp(record2));
         let mut seq = serializer.serialize_seq(Some(entries.len()))?;
-        for (name, cidr) in entries {
-            let cidr_string = cidr.to_string();
-            seq.serialize_element(&(name, cidr_string))?;
+        for entry in entries {
+            seq.serialize_element(&entry)?;
         }
         seq.end()
     }

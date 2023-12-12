@@ -350,6 +350,7 @@ mod space {
 
     mod entries {
         use super::*;
+        use model::CidrRecord;
 
         #[test]
         fn success() {
@@ -363,23 +364,23 @@ mod space {
             assert_eq!(entries.len(), 3);
             assert_eq!(
                 entries[0],
-                (
-                    None,
-                    IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 32), 28).unwrap())
+                CidrRecord::new(
+                    IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap()),
+                    Some("a-name")
                 )
             );
             assert_eq!(
                 entries[1],
-                (
-                    Some(String::from("a-name")),
-                    IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap())
+                CidrRecord::new(
+                    IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 16), 28).unwrap()),
+                    Some("b-name")
                 )
             );
             assert_eq!(
                 entries[2],
-                (
-                    Some(String::from("b-name")),
-                    IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 16), 28).unwrap())
+                CidrRecord::new(
+                    IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 32), 28).unwrap()),
+                    None
                 )
             );
         }
@@ -399,9 +400,9 @@ mod space {
                 assert_eq!(
                     json,
                     "[\
-                    [\"a-name\",\"10.20.0.0/28\"],\
-                    [\"b-name\",\"10.20.0.16/28\"],\
-                    [null,\"10.20.0.32/28\"]\
+                    {\"cidr\":\"10.20.0.0/28\",\"name\":\"a-name\"},\
+                    {\"cidr\":\"10.20.0.16/28\",\"name\":\"b-name\"},\
+                    {\"cidr\":\"10.20.0.32/28\",\"name\":null}\
                     ]"
                 );
             }
