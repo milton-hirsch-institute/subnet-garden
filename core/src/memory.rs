@@ -214,10 +214,13 @@ impl Space for MemorySpace {
     }
 
     fn entries(&self) -> Vec<(Option<String>, IpCidr)> {
-        self.names
-            .iter()
-            .map(|(name, cidr)| (Some(name.clone()), cidr.clone()))
-            .collect()
+        let allocated_subspaces = self.list_allocated_subspaces();
+        let mut entries = Vec::new();
+        entries.reserve(allocated_subspaces.len());
+        for subspace in allocated_subspaces {
+            entries.push((subspace.name.clone(), subspace.cidr));
+        }
+        entries
     }
 }
 impl serde::Serialize for MemorySpace {
