@@ -226,56 +226,6 @@ mod space {
         }
     }
 
-    mod list_cidrs {
-        use super::*;
-
-        #[test]
-        fn no_cidrs() {
-            let mut instance = new_test_space();
-            let space = instance.space_mut("test4").unwrap();
-            let cidrs = space.list_cidrs();
-            assert_eq!(cidrs.len(), 0);
-        }
-
-        #[test]
-        fn some() {
-            let mut instance = new_test_space();
-            let space = instance.space_mut("test4").unwrap();
-            space.allocate(4, None).unwrap();
-            space.allocate(5, None).unwrap();
-            space.allocate(5, None).unwrap();
-            space.allocate(4, None).unwrap();
-            space.allocate(4, None).unwrap();
-            space.allocate(4, None).unwrap();
-            let cidrs = space.list_cidrs();
-            assert_eq!(cidrs.len(), 6);
-            assert_eq!(
-                &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap()),
-                cidrs[0],
-            );
-            assert_eq!(
-                &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 16), 28).unwrap()),
-                cidrs[1],
-            );
-            assert_eq!(
-                &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 32), 27).unwrap()),
-                cidrs[2],
-            );
-            assert_eq!(
-                &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 64), 27).unwrap()),
-                cidrs[3],
-            );
-            assert_eq!(
-                &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 96), 28).unwrap()),
-                cidrs[4],
-            );
-            assert_eq!(
-                &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 112), 28).unwrap()),
-                cidrs[5],
-            );
-        }
-    }
-
     mod claim {
         use super::*;
 
@@ -353,26 +303,48 @@ mod space {
         use super::*;
 
         #[test]
-        fn success() {
+        fn no_cidrs() {
             let mut instance = new_test_space();
             let space = instance.space_mut("test4").unwrap();
-            space.allocate(4, Some("a-name")).unwrap();
-            space.allocate(4, Some("b-name")).unwrap();
+            let cidrs = space.cidrs();
+            assert_eq!(cidrs.len(), 0);
+        }
+
+        #[test]
+        fn some() {
+            let mut instance = new_test_space();
+            let space = instance.space_mut("test4").unwrap();
             space.allocate(4, None).unwrap();
-            let mut names = space.cidrs();
-            names.sort();
-            assert_eq!(names.len(), 3);
+            space.allocate(5, None).unwrap();
+            space.allocate(5, None).unwrap();
+            space.allocate(4, None).unwrap();
+            space.allocate(4, None).unwrap();
+            space.allocate(4, None).unwrap();
+            let cidrs = space.cidrs();
+            assert_eq!(cidrs.len(), 6);
             assert_eq!(
-                names[0],
-                IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap())
+                &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap()),
+                cidrs[0],
             );
             assert_eq!(
-                names[1],
-                IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 16), 28).unwrap())
+                &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 16), 28).unwrap()),
+                cidrs[1],
             );
             assert_eq!(
-                names[2],
-                IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 32), 28).unwrap())
+                &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 32), 27).unwrap()),
+                cidrs[2],
+            );
+            assert_eq!(
+                &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 64), 27).unwrap()),
+                cidrs[3],
+            );
+            assert_eq!(
+                &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 96), 28).unwrap()),
+                cidrs[4],
+            );
+            assert_eq!(
+                &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 112), 28).unwrap()),
+                cidrs[5],
             );
         }
     }

@@ -19,13 +19,11 @@ pub trait Space {
 
     fn allocate(&mut self, host_length: Bits, name: Option<&str>) -> AllocateResult<IpCidr>;
 
-    fn list_cidrs(&self) -> Vec<&IpCidr>;
-
     fn claim(&mut self, cidr: &IpCidr) -> AllocateResult<()>;
 
     fn names(&self) -> Vec<String>;
 
-    fn cidrs(&self) -> Vec<IpCidr>;
+    fn cidrs(&self) -> Vec<&IpCidr>;
 
     fn entries(&self) -> Vec<(String, IpCidr)>;
 }

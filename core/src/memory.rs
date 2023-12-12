@@ -186,16 +186,6 @@ impl Space for MemorySpace {
         }
     }
 
-    fn list_cidrs(&self) -> Vec<&IpCidr> {
-        let allocated_subspaces = self.list_allocated_subspaces();
-        let mut cidrs = Vec::new();
-        cidrs.reserve(allocated_subspaces.len());
-        for subspace in allocated_subspaces {
-            cidrs.push(&subspace.cidr);
-        }
-        cidrs
-    }
-
     fn claim(&mut self, cidr: &IpCidr) -> AllocateResult<()> {
         if self.names.contains_key(format!("{}", cidr).as_str()) {
             return Err(AllocateError::DuplicateName);
@@ -210,8 +200,14 @@ impl Space for MemorySpace {
         self.names.keys().cloned().collect()
     }
 
-    fn cidrs(&self) -> Vec<IpCidr> {
-        self.names.values().map(|&cidr| cidr.clone()).collect()
+    fn cidrs(&self) -> Vec<&IpCidr> {
+        let allocated_subspaces = self.list_allocated_subspaces();
+        let mut cidrs = Vec::new();
+        cidrs.reserve(allocated_subspaces.len());
+        for subspace in allocated_subspaces {
+            cidrs.push(&subspace.cidr);
+        }
+        cidrs
     }
 
     fn entries(&self) -> Vec<(String, IpCidr)> {
