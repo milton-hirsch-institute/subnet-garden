@@ -234,7 +234,7 @@ mod space {
             let mut instance = new_test_space();
             let space = instance.space_mut("test4").unwrap();
             let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 21, 0, 0), 28).unwrap());
-            let result = space.claim(&cidr);
+            let result = space.claim(&cidr, None);
             assert_eq!(result, Err(AllocateError::NoSpaceAvailable));
         }
 
@@ -243,21 +243,9 @@ mod space {
             let mut instance = new_test_space();
             let space = instance.space_mut("test4").unwrap();
             let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
-            space.claim(&cidr).unwrap();
-            let result = space.claim(&cidr);
+            space.claim(&cidr, None).unwrap();
+            let result = space.claim(&cidr, None);
             assert_eq!(result, Err(AllocateError::NoSpaceAvailable));
-        }
-
-        #[test]
-        fn alread_named() {
-            let mut instance = new_test_space();
-            let space = instance.space_mut("test4").unwrap();
-            let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
-            space
-                .allocate(4, Some(format!("{}", cidr).as_str()))
-                .unwrap();
-            let result = space.claim(&cidr);
-            assert_eq!(result, Err(AllocateError::DuplicateName));
         }
 
         #[test]
@@ -266,17 +254,38 @@ mod space {
             let space = instance.space_mut("test4").unwrap();
             let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
             space.allocate(16, None).unwrap();
-            let result = space.claim(&cidr);
+            let result = space.claim(&cidr, None);
             assert_eq!(result, Err(AllocateError::NoSpaceAvailable));
         }
 
         #[test]
-        fn success() {
+        fn already_named() {
+            let mut instance = new_test_space();
+            let space = instance.space_mut("test4").unwrap();
+            let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 16), 28).unwrap());
+            space.allocate(4, Some("a-name")).unwrap();
+            let result = space.claim(&cidr, Some("a-name"));
+            assert_eq!(result, Err(AllocateError::DuplicateName));
+        }
+
+        #[test]
+        fn unnamed() {
             let mut instance = new_test_space();
             let space = instance.space_mut("test4").unwrap();
             let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
-            let result = space.claim(&cidr);
+            let result = space.claim(&cidr, None);
             assert_eq!(result, Ok(()));
+        }
+
+        #[test]
+        fn named() {
+            let mut instance = new_test_space();
+            let space = instance.space_mut("test4").unwrap();
+            let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
+            let result = space.claim(&cidr, Some("a-name"));
+            assert_eq!(result, Ok(()));
+            let looked_up = space.find_by_name("a-name").unwrap();
+            assert_eq!(looked_up, cidr);
         }
     }
 

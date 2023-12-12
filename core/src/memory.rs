@@ -179,9 +179,12 @@ impl Space for MemorySpace {
         }
     }
 
-    fn claim(&mut self, cidr: &IpCidr) -> AllocateResult<()> {
-        if self.names.contains_key(format!("{}", cidr).as_str()) {
-            return Err(AllocateError::DuplicateName);
+    fn claim(&mut self, cidr: &IpCidr, name: Option<&str>) -> AllocateResult<()> {
+        if let Some(name) = name {
+            if self.names.contains_key(name) {
+                return Err(AllocateError::DuplicateName);
+            }
+            self.names.insert(name.to_string(), *cidr);
         }
         if self.root.claim(cidr) {
             return Ok(());

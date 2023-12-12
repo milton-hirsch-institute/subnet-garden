@@ -50,7 +50,7 @@ pub trait Space {
 
     fn allocate(&mut self, host_length: Bits, name: Option<&str>) -> AllocateResult<IpCidr>;
 
-    fn claim(&mut self, cidr: &IpCidr) -> AllocateResult<()>;
+    fn claim(&mut self, cidr: &IpCidr, name: Option<&str>) -> AllocateResult<()>;
 
     fn names(&self) -> Vec<String>;
 
