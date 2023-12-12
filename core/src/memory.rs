@@ -131,6 +131,24 @@ impl MemorySpace {
             names: HashMap::new(),
         }
     }
+
+    fn list_allocated_subspaces(&self) -> Vec<&Subspace> {
+        let mut subspaces = Vec::new();
+        let mut stack = Vec::new();
+        stack.push(&self.root);
+        while !stack.is_empty() {
+            let subspace = stack.pop().unwrap();
+            match subspace.state {
+                State::Allocated => subspaces.push(subspace),
+                State::Free => {}
+                State::Unavailable => {
+                    stack.push(subspace.high.as_deref().unwrap());
+                    stack.push(subspace.low.as_deref().unwrap());
+                }
+            }
+        }
+        return subspaces;
+    }
 }
 
 impl Space for MemorySpace {
@@ -138,8 +156,8 @@ impl Space for MemorySpace {
         &self.root.cidr
     }
 
-    fn get(&self, host: &str) -> Option<IpCidr> {
-        self.names.get(host).copied()
+    fn find_by_name(&self, name: &str) -> Option<IpCidr> {
+        self.names.get(name).copied()
     }
 
     fn allocate(&mut self, bits: Bits, name: Option<&str>) -> AllocateResult<IpCidr> {
@@ -169,21 +187,13 @@ impl Space for MemorySpace {
     }
 
     fn list_cidrs(&self) -> Vec<&IpCidr> {
+        let allocated_subspaces = self.list_allocated_subspaces();
         let mut cidrs = Vec::new();
-        let mut stack = Vec::new();
-        stack.push(&self.root);
-        while !stack.is_empty() {
-            let subspace = stack.pop().unwrap();
-            match subspace.state {
-                State::Allocated => cidrs.push(&subspace.cidr),
-                State::Free => {}
-                State::Unavailable => {
-                    stack.push(subspace.high.as_deref().unwrap());
-                    stack.push(subspace.low.as_deref().unwrap());
-                }
-            }
+        cidrs.reserve(allocated_subspaces.len());
+        for subspace in allocated_subspaces {
+            cidrs.push(&subspace.cidr);
         }
-        return cidrs;
+        cidrs
     }
 
     fn claim(&mut self, cidr: &IpCidr) -> AllocateResult<()> {

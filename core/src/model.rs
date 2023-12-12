@@ -15,7 +15,7 @@ pub type Bits = u8;
 pub trait Space {
     fn cidr(&self) -> &IpCidr;
 
-    fn get(&self, host: &str) -> Option<IpCidr>;
+    fn find_by_name(&self, host: &str) -> Option<IpCidr>;
 
     fn allocate(&mut self, host_length: Bits, name: Option<&str>) -> AllocateResult<IpCidr>;
 

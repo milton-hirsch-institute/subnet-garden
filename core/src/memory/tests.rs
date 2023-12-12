@@ -172,7 +172,7 @@ mod space {
             let mut instance = new_test_space();
             let space = instance.space_mut("test4").unwrap();
             let result = space.allocate(4, Some("a-name")).unwrap();
-            let looked_up = space.get("a-name").unwrap();
+            let looked_up = space.find_by_name("a-name").unwrap();
             assert_eq!(looked_up, result);
         }
 
