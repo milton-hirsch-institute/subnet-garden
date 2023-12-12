@@ -28,6 +28,7 @@ fn max_bits(cidr: &IpCidr) -> Bits {
 
 struct Subspace {
     cidr: IpCidr,
+    name: Option<String>,
     high: Option<Box<Self>>,
     low: Option<Box<Self>>,
     state: State,
@@ -37,6 +38,7 @@ impl Subspace {
     fn new(cidr: IpCidr) -> Self {
         Subspace {
             cidr,
+            name: None,
             high: None,
             low: None,
             state: State::Free,
@@ -178,6 +180,7 @@ impl Space for MemorySpace {
                 if self.names.contains_key(&new_name) {
                     return Err(AllocateError::DuplicateName);
                 }
+                subspace.name = Some(new_name.clone());
                 self.names.insert(new_name, subspace.cidr);
                 subspace.state = State::Allocated;
                 Ok(subspace.cidr)
