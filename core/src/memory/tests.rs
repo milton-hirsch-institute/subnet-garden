@@ -289,6 +289,62 @@ mod space {
         }
     }
 
+    mod rename {
+        use super::*;
+
+        #[test]
+        fn not_found() {
+            let mut instance = new_test_space();
+            let space = instance.space_mut("test4").unwrap();
+            let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 21, 0, 0), 28).unwrap());
+            let result = space.rename(&cidr, Some("a-name"));
+            assert_eq!(result, Err(RenameError::NameNotFound));
+            assert_eq!(space.find_by_name("a-name"), None);
+        }
+        #[test]
+        fn already_not_set() {
+            let mut instance = new_test_space();
+            let space = instance.space_mut("test4").unwrap();
+            let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
+            space.claim(&cidr, None).unwrap();
+            let result = space.rename(&cidr, None);
+            assert_eq!(result, Ok(()));
+        }
+        #[test]
+        fn same_name() {
+            let mut instance = new_test_space();
+            let space = instance.space_mut("test4").unwrap();
+            let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
+            space.claim(&cidr, Some("same-name")).unwrap();
+            let result = space.rename(&cidr, Some("same-name"));
+            assert_eq!(result, Ok(()));
+            assert_eq!(space.find_by_name("same-name").unwrap(), cidr);
+        }
+        #[test]
+        fn already_exists() {
+            let mut instance = new_test_space();
+            let space = instance.space_mut("test4").unwrap();
+            let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 16), 28).unwrap());
+            let existing_cidr = space.allocate(4, Some("already-exists")).unwrap();
+            space.claim(&cidr, Some("old-name")).unwrap();
+            let result = space.rename(&cidr, Some("already-exists"));
+            assert_eq!(result, Err(RenameError::DuplicateName));
+            assert_eq!(space.find_by_name("already-exists").unwrap(), existing_cidr);
+            assert_eq!(space.find_by_name("old-name").unwrap(), cidr);
+        }
+
+        #[test]
+        fn success() {
+            let mut instance = new_test_space();
+            let space = instance.space_mut("test4").unwrap();
+            let cidr = space.allocate(4, Some("old-name")).unwrap();
+            let result = space.rename(&cidr, Some("new-name"));
+            assert_eq!(result, Ok(()));
+            assert_eq!(space.find_by_name("new-name").unwrap(), cidr);
+            assert_eq!(space.find_by_name("old-name"), None);
+        }
+    }
+
     mod names {
         use super::*;
 

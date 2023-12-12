@@ -1,15 +1,17 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::errors::{AllocateError, CreateError, RemoveError};
+use crate::errors::{AllocateError, CreateError, RemoveError, RenameError};
 use cidr::IpCidr;
 use serde::ser::SerializeStruct;
 
-pub type CreateResult<T> = std::result::Result<T, CreateError>;
+pub type CreateResult<T> = Result<T, CreateError>;
 
-pub type RemoveResult<T> = std::result::Result<T, RemoveError>;
+pub type RemoveResult<T> = Result<T, RemoveError>;
 
-pub type AllocateResult<T> = std::result::Result<T, AllocateError>;
+pub type AllocateResult<T> = Result<T, AllocateError>;
+
+pub type RenameResult<T> = Result<T, RenameError>;
 
 pub type Bits = u8;
 
@@ -51,6 +53,8 @@ pub trait Space {
     fn allocate(&mut self, host_length: Bits, name: Option<&str>) -> AllocateResult<IpCidr>;
 
     fn claim(&mut self, cidr: &IpCidr, name: Option<&str>) -> AllocateResult<()>;
+
+    fn rename(&mut self, cidr: &IpCidr, name: Option<&str>) -> RenameResult<()>;
 
     fn names(&self) -> Vec<String>;
 

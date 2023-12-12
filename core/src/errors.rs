@@ -33,6 +33,12 @@ pub enum AllocateError {
     NoSpaceAvailable,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum RenameError {
+    DuplicateName,
+    NameNotFound,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

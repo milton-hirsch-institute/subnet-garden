@@ -4,9 +4,9 @@
 #[cfg(test)]
 mod tests;
 
-use crate::errors::{AllocateError, CreateError, RemoveError};
+use crate::errors::{AllocateError, CreateError, RemoveError, RenameError};
 use crate::model;
-use crate::model::{AllocateResult, Bits, Space};
+use crate::model::{AllocateResult, Bits, RenameResult, Space};
 use cidr::IpCidr;
 use cidr_utils::separator as cidr_separator;
 use serde::ser::SerializeSeq;
@@ -94,7 +94,7 @@ impl Subspace {
         return None;
     }
 
-    fn claim(&mut self, cidr: &IpCidr) -> bool {
+    fn claim(&mut self, cidr: &IpCidr, name: Option<&str>) -> bool {
         let first = cidr.first_address();
         let last = cidr.last_address();
         if !(self.cidr.contains(&first) && self.cidr.contains(&last)) {
@@ -106,6 +106,10 @@ impl Subspace {
             State::Free => {
                 if self.cidr == *cidr {
                     self.state = State::Allocated;
+                    self.name = match name {
+                        Some(name) => Some(name.to_string()),
+                        None => None,
+                    };
                     return true;
                 }
                 self.split();
@@ -113,11 +117,26 @@ impl Subspace {
             State::Unavailable => {}
         }
 
-        if self.low.as_deref_mut().unwrap().claim(cidr) {
+        if self.low.as_deref_mut().unwrap().claim(cidr, name) {
             return true;
         }
 
-        self.high.as_deref_mut().unwrap().claim(cidr)
+        self.high.as_deref_mut().unwrap().claim(cidr, name)
+    }
+
+    fn find_record(&mut self, cidr: &IpCidr) -> Option<&mut Self> {
+        if !(self.cidr.contains(&cidr.first_address()) && self.cidr.contains(&cidr.last_address()))
+        {
+            return None;
+        }
+        if self.cidr == *cidr {
+            return Some(self);
+        }
+        let found_low = self.low.as_deref_mut()?.find_record(cidr);
+        return match found_low {
+            Some(_) => found_low,
+            None => self.high.as_deref_mut()?.find_record(cidr),
+        };
     }
 }
 
@@ -186,10 +205,44 @@ impl Space for MemorySpace {
             }
             self.names.insert(name.to_string(), *cidr);
         }
-        if self.root.claim(cidr) {
+        if self.root.claim(cidr, name) {
             return Ok(());
         }
         return Err(AllocateError::NoSpaceAvailable);
+    }
+
+    fn rename(&mut self, cidr: &IpCidr, name: Option<&str>) -> RenameResult<()> {
+        // Find record that is being renamed
+        let subspace: &mut Subspace = match self.root.find_record(cidr) {
+            Some(record) => record,
+            None => return Err(RenameError::NameNotFound),
+        };
+
+        // Ignore if name is not changing
+        let name_as_string = match name {
+            Some(name) => Some(name.to_string()),
+            None => None,
+        };
+        if subspace.name == name_as_string {
+            return Ok(());
+        }
+
+        // Check that name does not already exist
+        if let Some(name) = name {
+            if self.names.contains_key(name) {
+                return Err(RenameError::DuplicateName);
+            }
+            self.names.insert(name.to_string(), *cidr);
+        }
+
+        // Remove old name
+        if let Some(record_name) = &subspace.name {
+            self.names.remove(record_name);
+        }
+
+        // Update record name
+        subspace.name = name_as_string;
+        Ok(())
     }
 
     fn names(&self) -> Vec<String> {
