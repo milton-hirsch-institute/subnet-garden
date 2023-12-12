@@ -72,3 +72,30 @@ pub trait SubnetGarden {
 
     fn entries(&self) -> Vec<(String, &dyn Space)>;
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    mod cidr_record {
+        use super::*;
+        use std::str::FromStr;
+
+        #[test]
+        fn new() {
+            let cidr = IpCidr::from_str("10.20.30.0/24").unwrap();
+            let name = Some("foo");
+            let record = super::super::CidrRecord::new(cidr, name);
+            assert_eq!(record.cidr, cidr);
+            assert_eq!(record.name, Some(name.unwrap().to_string()));
+        }
+
+        #[test]
+        fn serialize() {
+            let cidr = IpCidr::from_str("10.20.30.0/24").unwrap();
+            let name = Some("foo");
+            let record = super::super::CidrRecord::new(cidr, name);
+            let serialized = serde_json::to_string(&record).unwrap();
+            assert_eq!(serialized, r#"{"cidr":"10.20.30.0/24","name":"foo"}"#);
+        }
+    }
+}
