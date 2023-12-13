@@ -1,0 +1,25 @@
+# Copyright 2023 The Milton Hirsch Institute, B.V.
+# SPDX-License-Identifier: Apache-2.0
+
+[package]
+name = "subnet-garden-cli"
+authors = ["The Milton Hirsch Institute, B.V."]
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "subg"
+
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = { version="^4", features = ["cargo", "derive"] }
+exitcode = "^1"
+subnet-garden-core = { path = "../core", version="^0.1" }
+serde_json = "^1"
+
+[dev-dependencies]
+assert_cmd = "^2"
+assert_fs = "^1"
+predicates = "^3"

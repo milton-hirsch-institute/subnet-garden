@@ -3,6 +3,7 @@
 
 [package]
 name = "subnet-garden-core"
+authors = ["The Milton Hirsch Institute, B.V."]
 version = "0.1.0"
 edition = "2021"
 
