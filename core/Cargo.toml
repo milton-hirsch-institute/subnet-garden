@@ -9,7 +9,7 @@ edition = "2021"
 [dependencies]
 cidr = "^0.2"
 cidr-utils = "^0.6"
-serde = "^1"
+serde = { version="^1", features = ["derive"] }
 
 [dev-dependencies]
 grcov = "^0.8"

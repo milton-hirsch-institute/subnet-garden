@@ -10,6 +10,7 @@ use crate::model::{AllocateResult, Bits, RenameResult, Space};
 use cidr::IpCidr;
 use cidr_utils::separator as cidr_separator;
 use serde::ser::SerializeSeq;
+use serde::Serialize;
 use std::collections::HashMap;
 
 #[derive(Debug, PartialEq)]
@@ -285,6 +286,7 @@ impl serde::Serialize for MemorySpace {
     }
 }
 
+#[derive(Serialize)]
 pub struct MemorySubnetGarden {
     spaces: HashMap<String, MemorySpace>,
 }
