@@ -27,6 +27,12 @@ fn max_bits(cidr: &IpCidr) -> Bits {
     }
 }
 
+fn cidr_contains(outer: &IpCidr, inner: &IpCidr) -> bool {
+    let first = inner.first_address();
+    let last = inner.last_address();
+    outer.contains(&first) && outer.contains(&last)
+}
+
 struct Subspace {
     cidr: IpCidr,
     name: Option<String>,
@@ -96,9 +102,7 @@ impl Subspace {
     }
 
     fn claim(&mut self, cidr: &IpCidr, name: Option<&str>) -> bool {
-        let first = cidr.first_address();
-        let last = cidr.last_address();
-        if !(self.cidr.contains(&first) && self.cidr.contains(&last)) {
+        if !cidr_contains(&self.cidr, cidr) {
             return false;
         }
 
@@ -126,8 +130,7 @@ impl Subspace {
     }
 
     fn find_record(&mut self, cidr: &IpCidr) -> Option<&mut Self> {
-        if !(self.cidr.contains(&cidr.first_address()) && self.cidr.contains(&cidr.last_address()))
-        {
+        if !cidr_contains(&self.cidr, cidr) {
             return None;
         }
         if self.cidr == *cidr {
