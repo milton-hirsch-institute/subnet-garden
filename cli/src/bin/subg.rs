@@ -28,9 +28,14 @@ pub struct InitArgs {
     pub force: bool,
 }
 
+#[derive(Debug, clap::Args)]
+/// Manage spaces
+pub struct SpaceArgs {}
+
 #[derive(Debug, clap::Subcommand)]
 pub enum SubgCommands {
     Init(InitArgs),
+    Space(SpaceArgs),
 }
 
 #[derive(Debug, clap::Parser)]
@@ -45,6 +50,15 @@ pub struct Subg {
 
     #[command(subcommand)]
     pub command: Option<SubgCommands>,
+}
+
+fn print_help(command_path: &Vec<&str>) {
+    let mut command = &mut Subg::command();
+    for path in command_path.iter() {
+        command = command.find_subcommand_mut(path).unwrap();
+    }
+    command.print_help().unwrap();
+    exit(exitcode::USAGE);
 }
 
 fn init(subg: &SubgArgs, args: &InitArgs) {
@@ -64,6 +78,10 @@ fn init(subg: &SubgArgs, args: &InitArgs) {
     serde_json::to_writer_pretty(&mut garden_file, &new_garden).unwrap();
 }
 
+fn space(_subg: &SubgArgs, _args: &SpaceArgs) {
+    print_help(&vec!["space"]);
+}
+
 fn main() {
     let subg = Subg::parse();
 
@@ -72,10 +90,12 @@ fn main() {
             SubgCommands::Init(args) => {
                 init(&subg.args, &args);
             }
+            SubgCommands::Space(args) => {
+                space(&subg.args, &args);
+            }
         },
         None => {
-            Subg::command().print_help().unwrap();
-            exit(exitcode::USAGE);
+            print_help(&vec![]);
         }
     }
 }
@@ -113,7 +133,12 @@ mod tests {
     #[test]
     fn test_bin() {
         let mut test = new_test();
-        test.subg.assert().failure().code(exitcode::USAGE);
+        test.subg
+            .assert()
+            .failure()
+            .code(exitcode::USAGE)
+            .stdout(predicates::str::contains("Usage: subg"))
+            .stderr("");
     }
 
     mod init {
@@ -178,6 +203,27 @@ mod tests {
                 )));
 
             test.subgarden_path.assert(predicates::path::is_dir());
+        }
+    }
+
+    mod space {
+        use super::*;
+
+        fn new_space_test() -> Test {
+            let mut test = new_test();
+            test.subg.arg("space");
+            test
+        }
+
+        #[test]
+        fn no_args() {
+            let mut test = new_space_test();
+            test.subg
+                .assert()
+                .failure()
+                .code(exitcode::USAGE)
+                .stdout(predicates::str::contains("Usage: space"))
+                .stderr("");
         }
     }
 }
