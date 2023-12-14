@@ -337,8 +337,8 @@ impl<'s> serde::Deserialize<'s> for MemorySpace {
                             if cidr.is_some() {
                                 return Err(serde::de::Error::duplicate_field("cidr"));
                             }
-                            cidr = match map.next_value::<&str>() {
-                                Ok(cidr) => match IpCidr::from_str(cidr) {
+                            cidr = match map.next_value::<String>() {
+                                Ok(cidr) => match IpCidr::from_str(cidr.as_str()) {
                                     Ok(cidr) => Some(cidr),
                                     Err(err) => return Err(serde::de::Error::custom(err)),
                                 },

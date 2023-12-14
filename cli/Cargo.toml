@@ -14,6 +14,7 @@ name = "subg"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+cidr = "^0.2"
 clap = { version="^4", features = ["cargo", "derive"] }
 exitcode = "^1"
 subnet-garden-core = { path = "../core", version="^0.1" }

@@ -1510,6 +1510,7 @@ version = "0.1.0"
 dependencies = [
  "assert_cmd",
  "assert_fs",
+ "cidr",
  "clap 4.4.11",
  "exitcode",
  "predicates",
