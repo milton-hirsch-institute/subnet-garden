@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use clap;
-use clap::CommandFactory;
 use clap::Parser;
 use std::fs::File;
 use std::path::Path;
@@ -35,7 +34,6 @@ pub struct SpaceArgs {}
 #[derive(Debug, clap::Subcommand)]
 pub enum SubgCommands {
     Init(InitArgs),
-    Space(SpaceArgs),
 }
 
 #[derive(Debug, clap::Parser)]
@@ -49,16 +47,7 @@ pub struct Subg {
     pub args: SubgArgs,
 
     #[command(subcommand)]
-    pub command: Option<SubgCommands>,
-}
-
-fn print_help(command_path: &Vec<&str>) {
-    let mut command = &mut Subg::command();
-    for path in command_path.iter() {
-        command = command.find_subcommand_mut(path).unwrap();
-    }
-    command.print_help().unwrap();
-    exit(exitcode::USAGE);
+    pub command: SubgCommands,
 }
 
 fn init(subg: &SubgArgs, args: &InitArgs) {
@@ -78,24 +67,12 @@ fn init(subg: &SubgArgs, args: &InitArgs) {
     serde_json::to_writer_pretty(&mut garden_file, &new_garden).unwrap();
 }
 
-fn space(_subg: &SubgArgs, _args: &SpaceArgs) {
-    print_help(&vec!["space"]);
-}
-
 fn main() {
     let subg = Subg::parse();
 
     match subg.command {
-        Some(command) => match command {
-            SubgCommands::Init(args) => {
-                init(&subg.args, &args);
-            }
-            SubgCommands::Space(args) => {
-                space(&subg.args, &args);
-            }
-        },
-        None => {
-            print_help(&vec![]);
+        SubgCommands::Init(args) => {
+            init(&subg.args, &args);
         }
     }
 }
@@ -106,6 +83,8 @@ mod tests {
     use assert_fs::fixture::ChildPath;
     use assert_fs::fixture::PathChild;
     use assert_fs::prelude::*;
+
+    const HELP_EXIT_CODE: i32 = 2;
 
     struct Test {
         subg: assert_cmd::Command,
@@ -136,7 +115,7 @@ mod tests {
         test.subg
             .assert()
             .failure()
-            .code(exitcode::USAGE)
+            .code(HELP_EXIT_CODE)
             .stdout(predicates::str::contains("Usage: subg"))
             .stderr("");
     }
@@ -221,7 +200,7 @@ mod tests {
             test.subg
                 .assert()
                 .failure()
-                .code(exitcode::USAGE)
+                .code(HELP_EXIT_CODE)
                 .stdout(predicates::str::contains("Usage: space"))
                 .stderr("");
         }
