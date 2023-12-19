@@ -279,18 +279,11 @@ impl Space for MemorySpace {
 }
 impl serde::Serialize for MemorySpace {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut space = match serializer.serialize_struct("MemorySpace", 2) {
-            Ok(space) => space,
-            Err(err) => return Err(err),
-        };
-        if let Err(err) = space.serialize_field("cidr", &self.root.cidr.to_string()) {
-            return Err(err);
-        }
+        let mut space = serializer.serialize_struct("MemorySpace", 2)?;
+        space.serialize_field("cidr", &self.root.cidr.to_string())?;
         let mut entries = self.entries();
         entries.sort_by(|record1, record2| record1.cmp(record2));
-        if let Err(err) = space.serialize_field("subnets", &entries) {
-            return Err(err);
-        }
+        space.serialize_field("subnets", &entries)?;
 
         space.end()
     }
