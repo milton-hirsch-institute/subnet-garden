@@ -9,7 +9,7 @@ use crate::model;
 use crate::model::{AllocateResult, Bits, RenameResult, Space};
 use cidr::IpCidr;
 use cidr_utils::separator as cidr_separator;
-use serde::ser::SerializeSeq;
+use serde::ser::SerializeStruct;
 use serde::Serialize;
 use std::collections::HashMap;
 
@@ -279,13 +279,20 @@ impl Space for MemorySpace {
 }
 impl serde::Serialize for MemorySpace {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut space = match serializer.serialize_struct("MemorySpace", 2) {
+            Ok(space) => space,
+            Err(err) => return Err(err),
+        };
+        if let Err(err) = space.serialize_field("cidr", &self.root.cidr.to_string()) {
+            return Err(err);
+        }
         let mut entries = self.entries();
         entries.sort_by(|record1, record2| record1.cmp(record2));
-        let mut seq = serializer.serialize_seq(Some(entries.len()))?;
-        for entry in entries {
-            seq.serialize_element(&entry)?;
+        if let Err(err) = space.serialize_field("subnets", &entries) {
+            return Err(err);
         }
-        seq.end()
+
+        space.end()
     }
 }
 

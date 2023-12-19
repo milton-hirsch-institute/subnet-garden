@@ -464,11 +464,13 @@ mod space {
                 let json = to_string(&space).unwrap();
                 assert_eq!(
                     json,
-                    "[\
+                    "{\
+                    \"cidr\":\"10.20.0.0/16\",\
+                    \"subnets\":[\
                     {\"cidr\":\"10.20.0.0/28\",\"name\":\"a-name\"},\
                     {\"cidr\":\"10.20.0.16/28\",\"name\":\"b-name\"},\
                     {\"cidr\":\"10.20.0.32/28\",\"name\":null}\
-                    ]"
+                    ]}"
                 );
             }
         }
