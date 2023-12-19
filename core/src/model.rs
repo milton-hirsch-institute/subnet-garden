@@ -38,9 +38,16 @@ impl serde::Serialize for CidrRecord {
     where
         S: serde::Serializer,
     {
-        let mut structure = serializer.serialize_struct("CidrRecord", 2)?;
-        structure.serialize_field("cidr", &self.cidr.to_string())?;
-        structure.serialize_field("name", &self.name)?;
+        let mut structure = match serializer.serialize_struct("CidrRecord", 2) {
+            Ok(structure) => structure,
+            Err(err) => return Err(err),
+        };
+        if let Err(err) = structure.serialize_field("cidr", &self.cidr.to_string()) {
+            return Err(err);
+        }
+        if let Err(err) = structure.serialize_field("name", &self.name) {
+            return Err(err);
+        }
         structure.end()
     }
 }
