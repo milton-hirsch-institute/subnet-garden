@@ -3,7 +3,10 @@
 
 use crate::errors::{AllocateError, CreateError, RemoveError, RenameError};
 use cidr::IpCidr;
+use serde::de::{MapAccess, SeqAccess, Visitor};
 use serde::ser::SerializeStruct;
+use serde::{Deserialize, Deserializer};
+use std::str::FromStr;
 
 pub type CreateResult<T> = Result<T, CreateError>;
 
@@ -49,6 +52,96 @@ impl serde::Serialize for CidrRecord {
             return Err(err);
         }
         structure.end()
+    }
+}
+
+impl<'s> serde::Deserialize<'s> for CidrRecord {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'s>,
+    {
+        #[derive(Deserialize)]
+        #[serde(field_identifier, rename_all = "lowercase")]
+        enum Field {
+            Cidr,
+            Name,
+        }
+        struct CidrRecordVisitor;
+        impl<'d> Visitor<'d> for CidrRecordVisitor {
+            type Value = CidrRecord;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("struct CidrRecord")
+            }
+
+            fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+            where
+                A: SeqAccess<'d>,
+            {
+                let possible_cidr: Option<&str> = seq.next_element()?;
+                let cidr = match possible_cidr {
+                    Some(cidr_str) => match IpCidr::from_str(cidr_str) {
+                        Ok(cidr) => cidr,
+                        Err(err) => return Err(serde::de::Error::custom(err)),
+                    },
+                    None => return Err(serde::de::Error::missing_field("cidr")),
+                };
+
+                let possible_name: Option<Option<&str>> = seq.next_element()?;
+                let name = match possible_name {
+                    Some(possible_name) => match possible_name {
+                        Some(name) => Some(name),
+                        None => None,
+                    },
+                    None => return Err(serde::de::Error::missing_field("name")),
+                };
+
+                Ok(CidrRecord::new(cidr, name))
+            }
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: MapAccess<'d>,
+            {
+                let mut cidr: Option<IpCidr> = None;
+                let mut name: Option<String> = None;
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        Field::Cidr => {
+                            if cidr.is_some() {
+                                return Err(serde::de::Error::duplicate_field("cidr"));
+                            }
+                            cidr = match map.next_value::<String>() {
+                                Ok(cidr) => match IpCidr::from_str(cidr.as_str()) {
+                                    Ok(cidr) => Some(cidr),
+                                    Err(err) => return Err(serde::de::Error::custom(err)),
+                                },
+                                Err(err) => return Err(err),
+                            };
+                        }
+                        Field::Name => {
+                            if name.is_some() {
+                                return Err(serde::de::Error::duplicate_field("name"));
+                            }
+                            name = match map.next_value() {
+                                Ok(name) => Some(name),
+                                Err(err) => return Err(err),
+                            };
+                        }
+                    }
+                }
+                let cidr = match cidr {
+                    Some(cidr) => cidr,
+                    None => return Err(serde::de::Error::missing_field("cidr")),
+                };
+                let name = match name {
+                    Some(name) => Some(name),
+                    None => return Err(serde::de::Error::missing_field("name")),
+                };
+                Ok(CidrRecord::new(cidr, name.as_deref()))
+            }
+        }
+
+        deserializer.deserialize_struct("CidrRecord", &["cidr", "name"], CidrRecordVisitor)
     }
 }
 
@@ -104,9 +197,21 @@ mod tests {
         fn serialize() {
             let cidr = IpCidr::from_str("10.20.30.0/24").unwrap();
             let name = Some("foo");
-            let record = super::super::CidrRecord::new(cidr, name);
+            let record = CidrRecord::new(cidr, name);
             let serialized = serde_json::to_string(&record).unwrap();
             assert_eq!(serialized, r#"{"cidr":"10.20.30.0/24","name":"foo"}"#);
+            let unserialized: CidrRecord = serde_json::from_str(&serialized).unwrap();
+            assert_eq!(unserialized, record);
+        }
+
+        #[test]
+        fn deserialize_as_sequence() {
+            let cidr = IpCidr::from_str("10.20.30.0/24").unwrap();
+            let name = Some("foo");
+            let record = CidrRecord::new(cidr, name);
+            let serialized = postcard::to_vec::<CidrRecord, 1000>(&record).unwrap();
+            let unserialized: CidrRecord = postcard::from_bytes(&serialized).unwrap();
+            assert_eq!(unserialized, record);
         }
     }
 }
