@@ -10,8 +10,9 @@ use crate::model::{AllocateResult, Bits, RenameResult, Space};
 use cidr::IpCidr;
 use cidr_utils::separator as cidr_separator;
 use serde::ser::SerializeStruct;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::str::FromStr;
 
 #[derive(Debug, PartialEq)]
 enum State {
@@ -33,6 +34,7 @@ fn cidr_contains(outer: &IpCidr, inner: &IpCidr) -> bool {
     outer.contains(&first) && outer.contains(&last)
 }
 
+#[derive(PartialEq, Debug)]
 struct Subspace {
     cidr: IpCidr,
     name: Option<String>,
@@ -144,6 +146,7 @@ impl Subspace {
     }
 }
 
+#[derive(PartialEq, Debug)]
 pub struct MemorySpace {
     root: Subspace,
     names: HashMap<String, IpCidr>,
@@ -286,6 +289,83 @@ impl serde::Serialize for MemorySpace {
         space.serialize_field("subnets", &entries)?;
 
         space.end()
+    }
+}
+
+impl<'s> serde::Deserialize<'s> for MemorySpace {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'s>,
+    {
+        #[derive(Deserialize)]
+        #[serde(field_identifier, rename_all = "lowercase")]
+        enum Field {
+            Cidr,
+            Subnets,
+        }
+        struct MemorySpaceVisitor;
+        impl<'s> serde::de::Visitor<'s> for MemorySpaceVisitor {
+            type Value = MemorySpace;
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("struct MemorySpace")
+            }
+            fn visit_seq<V>(self, mut seq: V) -> Result<MemorySpace, V::Error>
+            where
+                V: serde::de::SeqAccess<'s>,
+            {
+                let cidr = seq
+                    .next_element::<&str>()?
+                    .ok_or_else(|| serde::de::Error::missing_field("cidr"))?;
+                let cidr = cidr.parse::<IpCidr>().unwrap();
+                let mut space = MemorySpace::new(cidr);
+                let entries = seq
+                    .next_element::<Vec<model::CidrRecord>>()?
+                    .ok_or_else(|| serde::de::Error::missing_field("subnets"))?;
+                for entry in entries {
+                    space.claim(&entry.cidr, entry.name.as_deref()).unwrap();
+                }
+                Ok(space)
+            }
+            fn visit_map<V>(self, mut map: V) -> Result<Self::Value, V::Error>
+            where
+                V: serde::de::MapAccess<'s>,
+            {
+                let mut cidr: Option<IpCidr> = None;
+                let mut entries: Option<Vec<model::CidrRecord>> = None;
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        Field::Cidr => {
+                            if cidr.is_some() {
+                                return Err(serde::de::Error::duplicate_field("cidr"));
+                            }
+                            cidr = match map.next_value::<&str>() {
+                                Ok(cidr) => match IpCidr::from_str(cidr) {
+                                    Ok(cidr) => Some(cidr),
+                                    Err(err) => return Err(serde::de::Error::custom(err)),
+                                },
+                                Err(err) => return Err(err),
+                            };
+                        }
+                        Field::Subnets => {
+                            if entries.is_some() {
+                                return Err(serde::de::Error::duplicate_field("subnets"));
+                            }
+                            entries = Some(map.next_value()?);
+                        }
+                    }
+                }
+                let cidr = cidr.ok_or_else(|| serde::de::Error::missing_field("cidr"))?;
+                let subnets = entries.ok_or_else(|| serde::de::Error::missing_field("subnets"))?;
+                let mut space = MemorySpace::new(cidr);
+                for entry in subnets {
+                    let entry_name = entry.name.as_deref();
+                    space.claim(&entry.cidr, entry_name).unwrap();
+                }
+                Ok(space)
+            }
+        }
+        const FIELDS: &[&str] = &["cidr", "subnets"];
+        deserializer.deserialize_struct("MemorySpace", FIELDS, MemorySpaceVisitor)
     }
 }
 

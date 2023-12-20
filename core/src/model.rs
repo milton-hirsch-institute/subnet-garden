@@ -78,23 +78,17 @@ impl<'s> serde::Deserialize<'s> for CidrRecord {
             where
                 A: SeqAccess<'d>,
             {
-                let possible_cidr: Option<&str> = seq.next_element()?;
-                let cidr = match possible_cidr {
-                    Some(cidr_str) => match IpCidr::from_str(cidr_str) {
-                        Ok(cidr) => cidr,
-                        Err(err) => return Err(serde::de::Error::custom(err)),
-                    },
-                    None => return Err(serde::de::Error::missing_field("cidr")),
+                let cidr_str = seq
+                    .next_element::<&str>()?
+                    .ok_or_else(|| serde::de::Error::missing_field("cidr"))?;
+                let cidr = match IpCidr::from_str(cidr_str) {
+                    Ok(cidr) => cidr,
+                    Err(err) => return Err(serde::de::Error::custom(err)),
                 };
 
-                let possible_name: Option<Option<&str>> = seq.next_element()?;
-                let name = match possible_name {
-                    Some(possible_name) => match possible_name {
-                        Some(name) => Some(name),
-                        None => None,
-                    },
-                    None => return Err(serde::de::Error::missing_field("name")),
-                };
+                let name = seq
+                    .next_element::<Option<&str>>()?
+                    .ok_or_else(|| serde::de::Error::missing_field("name"))?;
 
                 Ok(CidrRecord::new(cidr, name))
             }
@@ -110,8 +104,8 @@ impl<'s> serde::Deserialize<'s> for CidrRecord {
                             if cidr.is_some() {
                                 return Err(serde::de::Error::duplicate_field("cidr"));
                             }
-                            cidr = match map.next_value::<String>() {
-                                Ok(cidr) => match IpCidr::from_str(cidr.as_str()) {
+                            cidr = match map.next_value::<&str>() {
+                                Ok(cidr) => match IpCidr::from_str(cidr) {
                                     Ok(cidr) => Some(cidr),
                                     Err(err) => return Err(serde::de::Error::custom(err)),
                                 },

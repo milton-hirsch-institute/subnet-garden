@@ -472,6 +472,8 @@ mod space {
                     {\"cidr\":\"10.20.0.32/28\",\"name\":null}\
                     ]}"
                 );
+                let deserialize: MemorySpace = serde_json::from_str(&json).unwrap();
+                assert_eq!(deserialize, space);
             }
         }
     }
