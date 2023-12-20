@@ -96,7 +96,7 @@ impl<'s> serde::Deserialize<'s> for CidrRecord {
                 A: MapAccess<'d>,
             {
                 let mut cidr: Option<IpCidr> = None;
-                let mut name: Option<String> = None;
+                let mut name: Option<Option<&str>> = None;
                 while let Some(key) = map.next_key()? {
                     match key {
                         Field::Cidr => {
@@ -115,10 +115,7 @@ impl<'s> serde::Deserialize<'s> for CidrRecord {
                             if name.is_some() {
                                 return Err(serde::de::Error::duplicate_field("name"));
                             }
-                            name = match map.next_value() {
-                                Ok(name) => Some(name),
-                                Err(err) => return Err(err),
-                            };
+                            name = Some(map.next_value()?);
                         }
                     }
                 }
@@ -127,10 +124,10 @@ impl<'s> serde::Deserialize<'s> for CidrRecord {
                     None => return Err(serde::de::Error::missing_field("cidr")),
                 };
                 let name = match name {
-                    Some(name) => Some(name),
+                    Some(name) => name,
                     None => return Err(serde::de::Error::missing_field("name")),
                 };
-                Ok(CidrRecord::new(cidr, name.as_deref()))
+                Ok(CidrRecord::new(cidr, name))
             }
         }
 
@@ -204,6 +201,16 @@ mod tests {
             let record = CidrRecord::new(cidr, name);
             let serialized = postcard::to_vec::<CidrRecord, 1000>(&record).unwrap();
             let unserialized: CidrRecord = postcard::from_bytes(&serialized).unwrap();
+            assert_eq!(unserialized, record);
+        }
+
+        #[test]
+        fn deserialize_missing_name() {
+            let cidr = IpCidr::from_str("10.20.30.0/24").unwrap();
+            let record = CidrRecord::new(cidr, None);
+            let serialized = serde_json::to_string(&record).unwrap();
+            assert_eq!(serialized, r#"{"cidr":"10.20.30.0/24","name":null}"#);
+            let unserialized: CidrRecord = serde_json::from_str(&serialized).unwrap();
             assert_eq!(unserialized, record);
         }
     }
