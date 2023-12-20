@@ -368,7 +368,7 @@ impl<'s> serde::Deserialize<'s> for MemorySpace {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, Debug, PartialEq)]
 pub struct MemorySubnetGarden {
     spaces: HashMap<String, MemorySpace>,
 }
