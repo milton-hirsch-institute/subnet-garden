@@ -10,7 +10,6 @@ use crate::model::{AllocateResult, Bits, RenameResult, Space};
 use cidr::IpCidr;
 use cidr_utils::separator as cidr_separator;
 use serde::ser::SerializeStruct;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::str::FromStr;
 
@@ -297,7 +296,7 @@ impl<'s> serde::Deserialize<'s> for MemorySpace {
     where
         D: serde::Deserializer<'s>,
     {
-        #[derive(Deserialize)]
+        #[derive(serde::Deserialize)]
         #[serde(field_identifier, rename_all = "lowercase")]
         enum Field {
             Cidr,
@@ -369,7 +368,7 @@ impl<'s> serde::Deserialize<'s> for MemorySpace {
     }
 }
 
-#[derive(Serialize)]
+#[derive(serde::Serialize)]
 pub struct MemorySubnetGarden {
     spaces: HashMap<String, MemorySpace>,
 }

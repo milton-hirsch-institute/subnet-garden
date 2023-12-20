@@ -5,7 +5,6 @@ use crate::errors::{AllocateError, CreateError, RemoveError, RenameError};
 use cidr::IpCidr;
 use serde::de::{MapAccess, SeqAccess, Visitor};
 use serde::ser::SerializeStruct;
-use serde::{Deserialize, Deserializer};
 use std::str::FromStr;
 
 pub type CreateResult<T> = Result<T, CreateError>;
@@ -58,9 +57,9 @@ impl serde::Serialize for CidrRecord {
 impl<'s> serde::Deserialize<'s> for CidrRecord {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: Deserializer<'s>,
+        D: serde::Deserializer<'s>,
     {
-        #[derive(Deserialize)]
+        #[derive(serde::Deserialize)]
         #[serde(field_identifier, rename_all = "lowercase")]
         enum Field {
             Cidr,
