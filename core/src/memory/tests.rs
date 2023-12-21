@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::*;
-use crate::model::SubnetGarden;
+use crate::SubnetGarden;
 use cidr::{IpCidr, Ipv4Cidr, Ipv6Cidr};
 use std::net::{Ipv4Addr, Ipv6Addr};
 
@@ -436,7 +436,7 @@ mod space {
 
     mod entries {
         use super::*;
-        use model::CidrRecord;
+        use crate::CidrRecord;
 
         #[test]
         fn success() {

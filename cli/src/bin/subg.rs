@@ -9,7 +9,7 @@ use std::path::Path;
 use std::process::exit;
 use std::str::FromStr;
 use subnet_garden_core::memory;
-use subnet_garden_core::model::SubnetGarden;
+use subnet_garden_core::SubnetGarden;
 
 const SUBG_COMMAND: &str = "subg";
 

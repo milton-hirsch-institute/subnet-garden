@@ -5,8 +5,7 @@
 mod tests;
 
 use crate::errors::{AllocateError, CreateError, RemoveError, RenameError};
-use crate::model;
-use crate::model::{AllocateResult, Bits, RenameResult, Space};
+use crate::{AllocateResult, Bits, RenameResult, Space};
 use cidr::IpCidr;
 use cidr_utils::separator as cidr_separator;
 use serde::ser::SerializeStruct;
@@ -265,13 +264,13 @@ impl Space for MemorySpace {
         cidrs
     }
 
-    fn entries(&self) -> Vec<model::CidrRecord> {
+    fn entries(&self) -> Vec<crate::CidrRecord> {
         let mut allocated_subspaces = self.list_allocated_subspaces();
         allocated_subspaces.sort_by(|subspace1, subspace2| subspace1.cidr.cmp(&subspace2.cidr));
         let mut entries = Vec::new();
         entries.reserve(allocated_subspaces.len());
         for subspace in allocated_subspaces {
-            entries.push(model::CidrRecord::new(
+            entries.push(crate::CidrRecord::new(
                 subspace.cidr,
                 subspace.name.as_deref(),
             ));
@@ -318,7 +317,7 @@ impl<'s> serde::Deserialize<'s> for MemorySpace {
                 let cidr = cidr.parse::<IpCidr>().unwrap();
                 let mut space = MemorySpace::new(cidr);
                 let entries = seq
-                    .next_element::<Vec<model::CidrRecord>>()?
+                    .next_element::<Vec<crate::CidrRecord>>()?
                     .ok_or_else(|| serde::de::Error::missing_field("subnets"))?;
                 for entry in entries {
                     space.claim(&entry.cidr, entry.name.as_deref()).unwrap();
@@ -330,7 +329,7 @@ impl<'s> serde::Deserialize<'s> for MemorySpace {
                 V: serde::de::MapAccess<'s>,
             {
                 let mut cidr: Option<IpCidr> = None;
-                let mut entries: Option<Vec<model::CidrRecord>> = None;
+                let mut entries: Option<Vec<crate::CidrRecord>> = None;
                 while let Some(key) = map.next_key()? {
                     match key {
                         Field::Cidr => {
@@ -381,11 +380,11 @@ impl MemorySubnetGarden {
     }
 }
 
-impl model::SubnetGarden for MemorySubnetGarden {
+impl crate::SubnetGarden for MemorySubnetGarden {
     fn space_count(&self) -> usize {
         self.spaces.len()
     }
-    fn new_space(&mut self, name: &str, cidr: IpCidr) -> model::CreateResult<&mut dyn Space> {
+    fn new_space(&mut self, name: &str, cidr: IpCidr) -> crate::CreateResult<&mut dyn Space> {
         if self.spaces.contains_key(name) {
             return Err(CreateError::DuplicateObject);
         }
@@ -394,7 +393,7 @@ impl model::SubnetGarden for MemorySubnetGarden {
         return Ok(self.spaces.get_mut(name).unwrap());
     }
 
-    fn remove_space(&mut self, name: &str) -> model::RemoveResult<()> {
+    fn remove_space(&mut self, name: &str) -> crate::RemoveResult<()> {
         match self.spaces.remove(name) {
             Some(_) => Ok(()),
             None => Err(RemoveError::NoSuchObject),
