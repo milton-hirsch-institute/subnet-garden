@@ -35,4 +35,69 @@ mod tests {
             assert_eq!(max_bits(&TEST_CIDR4), 32);
         }
     }
+
+    mod cidr_contains {
+        use super::*;
+        use cidr_utils::separator;
+
+        fn get_nth_of(cidr: &IpCidr, bits: Bits, d: usize) -> IpCidr {
+            let network_bits = max_bits(cidr) - bits;
+            match cidr {
+                IpCidr::V4(cidr) => {
+                    let networks = separator::Ipv4CidrSeparator::sub_networks(cidr, network_bits);
+                    IpCidr::V4(*networks.unwrap().get(d).unwrap())
+                }
+                IpCidr::V6(cidr) => {
+                    let networks = separator::Ipv6CidrSeparator::sub_networks(cidr, network_bits);
+                    IpCidr::V6(*networks.unwrap().get(d).unwrap())
+                }
+            }
+        }
+
+        #[test]
+        fn contained_in() {
+            assert!(!cidr_contains(&get_nth_of(&TEST_CIDR4, 12, 2), &TEST_CIDR4));
+        }
+
+        #[test]
+        fn contained_in_low_edge() {
+            assert!(!cidr_contains(&get_nth_of(&TEST_CIDR4, 12, 0), &TEST_CIDR4));
+        }
+
+        #[test]
+        fn contained_in_high_edge() {
+            assert!(!cidr_contains(
+                &get_nth_of(&TEST_CIDR4, 12, 15),
+                &TEST_CIDR4
+            ));
+        }
+
+        #[test]
+        fn entirely_outside() {
+            assert!(!cidr_contains(
+                &get_nth_of(&TEST_CIDR4, 12, 15),
+                &get_nth_of(&TEST_CIDR4, 12, 0)
+            ));
+        }
+
+        #[test]
+        fn equal() {
+            assert!(cidr_contains(&TEST_CIDR6, &TEST_CIDR6));
+        }
+
+        #[test]
+        fn inner() {
+            assert!(cidr_contains(&TEST_CIDR4, &get_nth_of(&TEST_CIDR4, 12, 2)));
+        }
+
+        #[test]
+        fn low_edge() {
+            assert!(cidr_contains(&TEST_CIDR4, &get_nth_of(&TEST_CIDR4, 12, 0)));
+        }
+
+        #[test]
+        fn high_edge() {
+            assert!(cidr_contains(&TEST_CIDR4, &get_nth_of(&TEST_CIDR4, 12, 15)));
+        }
+    }
 }
