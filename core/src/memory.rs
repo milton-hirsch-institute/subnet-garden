@@ -10,7 +10,7 @@ use crate::model::{AllocateResult, Bits, RenameResult, Space};
 use cidr::IpCidr;
 use cidr_utils::separator as cidr_separator;
 use serde::ser::SerializeStruct;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::str::FromStr;
 
 #[derive(Debug, PartialEq)]
@@ -370,13 +370,13 @@ impl<'s> serde::Deserialize<'s> for MemorySpace {
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, PartialEq)]
 pub struct MemorySubnetGarden {
-    spaces: HashMap<String, MemorySpace>,
+    spaces: BTreeMap<String, MemorySpace>,
 }
 
 impl MemorySubnetGarden {
     pub fn new() -> Self {
         MemorySubnetGarden {
-            spaces: HashMap::new(),
+            spaces: BTreeMap::new(),
         }
     }
 }

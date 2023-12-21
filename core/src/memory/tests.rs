@@ -124,6 +124,27 @@ mod memory_garden {
             assert_eq!(*entries[1].1.cidr(), TEST_CIDR6);
         }
     }
+
+    mod serialize {
+        use super::*;
+        use serde_json::to_string;
+
+        #[test]
+        fn success() {
+            let instance = new_test_space();
+
+            let json = to_string(&instance).unwrap();
+            assert_eq!(
+                json,
+                "{\"spaces\":\
+                {\"test4\":{\"cidr\":\"10.20.0.0/16\",\"subnets\":[]},\
+                \"test6\":{\"cidr\":\"1:2:3:4:a:14::/112\",\"subnets\":[]}}}"
+            );
+
+            let deserialize: MemorySubnetGarden = serde_json::from_str(&json).unwrap();
+            assert_eq!(deserialize, instance);
+        }
+    }
 }
 
 mod space {
