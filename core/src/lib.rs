@@ -173,6 +173,21 @@ pub trait SubnetGarden {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use cidr::{Ipv4Cidr, Ipv6Cidr};
+    use std::net::{Ipv4Addr, Ipv6Addr};
+
+    pub static TEST_CIDR4: IpCidr =
+        IpCidr::V4(match Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 16) {
+            Ok(cidr) => cidr,
+            _ => panic!("Failed to create test v4 cidr"),
+        });
+
+    pub static TEST_CIDR6: IpCidr = IpCidr::V6(
+        match Ipv6Cidr::new(Ipv6Addr::new(1, 2, 3, 4, 10, 20, 0, 0), 112) {
+            Ok(cidr) => cidr,
+            _ => panic!("Failed to create test v6 cidr"),
+        },
+    );
     mod cidr_record {
         use super::*;
         use std::str::FromStr;

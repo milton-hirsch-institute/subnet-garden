@@ -2,21 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use super::*;
+use crate::tests::{TEST_CIDR4, TEST_CIDR6};
 use crate::SubnetGarden;
 use cidr::{IpCidr, Ipv4Cidr, Ipv6Cidr};
 use std::net::{Ipv4Addr, Ipv6Addr};
-
-static TEST_CIDR4: IpCidr = IpCidr::V4(match Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 16) {
-    Ok(cidr) => cidr,
-    _ => panic!("Failed to create test v4 cidr"),
-});
-
-static TEST_CIDR6: IpCidr = IpCidr::V6(
-    match Ipv6Cidr::new(Ipv6Addr::new(1, 2, 3, 4, 10, 20, 0, 0), 112) {
-        Ok(cidr) => cidr,
-        _ => panic!("Failed to create test v6 cidr"),
-    },
-);
 
 fn new_test_space() -> MemorySubnetGarden {
     let mut instance = MemorySubnetGarden::new();

@@ -3,6 +3,7 @@
 
 #[cfg(test)]
 mod tests;
+mod util;
 
 use crate::errors::{AllocateError, CreateError, RemoveError, RenameError};
 use crate::{AllocateResult, Bits, RenameResult, Space};
@@ -17,19 +18,6 @@ enum State {
     Allocated,
     Free,
     Unavailable,
-}
-
-fn max_bits(cidr: &IpCidr) -> Bits {
-    match cidr {
-        IpCidr::V4(_) => 32,
-        IpCidr::V6(_) => 128,
-    }
-}
-
-fn cidr_contains(outer: &IpCidr, inner: &IpCidr) -> bool {
-    let first = inner.first_address();
-    let last = inner.last_address();
-    outer.contains(&first) && outer.contains(&last)
 }
 
 #[derive(PartialEq, Debug)]
@@ -52,7 +40,7 @@ impl Subspace {
         }
     }
     fn host_length(self: &Self) -> Bits {
-        return max_bits(&self.cidr) - self.cidr.network_length();
+        return util::max_bits(&self.cidr) - self.cidr.network_length();
     }
 
     fn split(self: &mut Self) {
@@ -102,7 +90,7 @@ impl Subspace {
     }
 
     fn claim(&mut self, cidr: &IpCidr, name: Option<&str>) -> bool {
-        if !cidr_contains(&self.cidr, cidr) {
+        if !util::cidr_contains(&self.cidr, cidr) {
             return false;
         }
 
@@ -130,7 +118,7 @@ impl Subspace {
     }
 
     fn find_record(&mut self, cidr: &IpCidr) -> Option<&mut Self> {
-        if !cidr_contains(&self.cidr, cidr) {
+        if !util::cidr_contains(&self.cidr, cidr) {
             return None;
         }
         if self.cidr == *cidr {
