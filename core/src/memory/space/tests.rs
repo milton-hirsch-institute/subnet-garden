@@ -338,13 +338,23 @@ mod space {
 
             #[test]
             fn parse_bad_network() {
-                let json = r#"{"cidr":"bad-network", subnets: []}"#;
+                let json = r#"{"cidr":"bad-network", "subnets": []}"#;
                 let err = serde_json::from_str::<MemorySpace>(json).unwrap_err();
                 assert_eq!(
                     err.to_string(),
                     "couldn't parse address in network: \
                     invalid IP address syntax at line 1 column 21"
                         .to_string()
+                );
+            }
+
+            #[test]
+            fn allocation_error() {
+                let json = r#"{"cidr":"10.10.0.0/24", "subnets": [{"cidr": "10.20.0.0/24", "name": null}]}"#;
+                let err = serde_json::from_str::<MemorySpace>(json).unwrap_err();
+                assert_eq!(
+                    err.to_string(),
+                    "No space available at line 1 column 76".to_string()
                 );
             }
 

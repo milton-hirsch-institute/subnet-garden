@@ -169,13 +169,16 @@ impl<'s> serde::Deserialize<'s> for MemorySpace {
             Subnets,
         }
 
-        fn load_cidrs(entries: &Vec<CidrRecord>, cidr: &IpCidr) -> MemorySpace {
+        fn load_cidrs(
+            entries: &Vec<CidrRecord>,
+            cidr: &IpCidr,
+        ) -> Result<MemorySpace, AllocateError> {
             let mut space = MemorySpace::new(*cidr);
             for entry in entries {
                 let entry_name = entry.name.as_deref();
-                space.claim(&entry.cidr, entry_name).unwrap();
+                space.claim(&entry.cidr, entry_name)?;
             }
-            space
+            Ok(space)
         }
         struct MemorySpaceVisitor;
         impl<'s> serde::de::Visitor<'s> for MemorySpaceVisitor {
@@ -196,7 +199,7 @@ impl<'s> serde::Deserialize<'s> for MemorySpace {
                     .next_element::<Vec<crate::CidrRecord>>()?
                     .ok_or_else(|| serde::de::Error::missing_field("subnets"))?;
 
-                Ok(load_cidrs(&entries, &cidr))
+                Ok(load_cidrs(&entries, &cidr).map_err(serde::de::Error::custom)?)
             }
             fn visit_map<V>(self, mut map: V) -> Result<Self::Value, V::Error>
             where
@@ -227,7 +230,7 @@ impl<'s> serde::Deserialize<'s> for MemorySpace {
                 }
                 let cidr = cidr.ok_or_else(|| serde::de::Error::missing_field("cidr"))?;
                 let subnets = entries.ok_or_else(|| serde::de::Error::missing_field("subnets"))?;
-                Ok(load_cidrs(&subnets, &cidr))
+                Ok(load_cidrs(&subnets, &cidr).map_err(serde::de::Error::custom)?)
             }
         }
         const FIELDS: &[&str] = &["cidr", "subnets"];
