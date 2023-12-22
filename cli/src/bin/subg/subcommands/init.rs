@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::args::{InitArgs, SubgArgs};
-use std::fs::File;
+use crate::store_space;
 use std::path::Path;
 use std::process::exit;
 use subnet_garden_core::memory;
@@ -19,9 +19,7 @@ pub(crate) fn init(subg: &SubgArgs, args: &InitArgs) {
             exit(exitcode::CANTCREAT);
         }
     }
-    let new_garden = memory::MemorySubnetGarden::new();
-    let mut garden_file = File::create(path).unwrap();
-    serde_json::to_writer_pretty(&mut garden_file, &new_garden).unwrap();
+    store_space(&subg.garden_path, &memory::MemorySubnetGarden::new());
 }
 
 #[cfg(test)]
@@ -89,5 +87,21 @@ mod tests {
             )));
 
         test.subgarden_path.assert(predicates::path::is_dir());
+    }
+
+    #[test]
+    fn bad_garden_file() {
+        let mut test = tests::new_test_with_path("/bad/path");
+        test.subg.arg("init");
+        test.subg
+            .assert()
+            .failure()
+            .code(exitcode::CANTCREAT)
+            .stdout("")
+            .stderr(format!(
+                "Could not create garden file at {}\n\
+                No such file or directory (os error 2)\n",
+                test.subgarden_path.display()
+            ));
     }
 }

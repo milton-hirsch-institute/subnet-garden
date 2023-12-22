@@ -4,6 +4,8 @@
 use crate::args::{Subg, SubgCommands};
 use clap;
 use clap::Parser;
+use exitcode::ExitCode;
+use std::error::Error;
 use std::fs::File;
 use std::path::Path;
 use std::process::exit;
@@ -12,6 +14,11 @@ use subnet_garden_core::memory;
 
 mod args;
 mod subcommands;
+fn show_error(err: impl Error, message: &str, exit_code: ExitCode) -> ! {
+    eprintln!("{}", message);
+    eprintln!("{}", err);
+    exit(exit_code);
+}
 
 fn load_garden(garden_path: &String) -> memory::MemorySubnetGarden {
     let path = Path::new(garden_path);
@@ -29,8 +36,28 @@ fn load_garden(garden_path: &String) -> memory::MemorySubnetGarden {
 
 fn store_space(garden_path: &str, garden: &memory::MemorySubnetGarden) {
     let path = Path::new(garden_path);
-    let mut garden_file = File::create(path).unwrap();
-    serde_json::to_writer_pretty(&mut garden_file, &garden).unwrap();
+
+    let mut garden_file = match File::create(path) {
+        Ok(file) => file,
+        Err(err) => {
+            crate::show_error(
+                err,
+                &format!("Could not create garden file at {}", path.display()),
+                exitcode::CANTCREAT,
+            );
+        }
+    };
+
+    match serde_json::to_writer_pretty(&mut garden_file, &garden) {
+        Ok(_) => {}
+        Err(err) => {
+            crate::show_error(
+                err,
+                &format!("Could not serialize garden file at {}", path.display()),
+                exitcode::CANTCREAT,
+            );
+        }
+    }
 }
 
 fn main() {
@@ -71,16 +98,20 @@ mod tests {
         }
     }
 
-    pub(crate) fn new_test() -> Test {
-        let mut subg = assert_cmd::Command::cargo_bin(SUBG_COMMAND).unwrap();
+    pub(crate) fn new_test_with_path(path: &str) -> Test {
+        let mut test = assert_cmd::Command::cargo_bin(SUBG_COMMAND).unwrap();
         let dir = assert_fs::TempDir::new().unwrap();
-        let subgarden_path = dir.child(DEFAULT_STORAGE_PATH);
-        subg.args(&["--garden-path", subgarden_path.to_str().unwrap()]);
+        let subgarden_path = dir.child(path);
+        test.args(&["--garden-path", subgarden_path.to_str().unwrap()]);
         Test {
-            subg,
+            subg: test,
             _dir: dir,
             subgarden_path,
         }
+    }
+
+    pub(crate) fn new_test() -> Test {
+        return new_test_with_path(DEFAULT_STORAGE_PATH);
     }
 
     #[test]
