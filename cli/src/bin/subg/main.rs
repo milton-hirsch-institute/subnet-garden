@@ -1,6 +1,8 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::args::{InitArgs, SpaceArgs, SpaceCommands, SpaceNewArgs, Subg, SubgCommands};
+use args::SubgArgs;
 use cidr::IpCidr;
 use clap;
 use clap::Parser;
@@ -11,68 +13,7 @@ use std::str::FromStr;
 use subnet_garden_core::memory;
 use subnet_garden_core::SubnetGarden;
 
-const SUBG_COMMAND: &str = "subg";
-
-const DEFAULT_STORAGE_PATH: &str = "subnet-garden.json";
-
-#[derive(Debug, clap::Args)]
-/// Subnet gardener command line interface
-pub struct SubgArgs {
-    #[arg(short, long, default_value = DEFAULT_STORAGE_PATH)]
-    pub garden_path: String,
-}
-
-#[derive(Debug, clap::Args)]
-/// Initialize the subnet garden file
-pub struct InitArgs {
-    #[arg(short, long, default_value_t)]
-    /// Force initialization even if the garden file already exists
-    pub force: bool,
-}
-
-#[derive(Debug, clap::Args)]
-/// Manage spaces
-pub struct SpaceArgs {
-    #[command(subcommand)]
-    pub command: SpaceCommands,
-}
-
-#[derive(Debug, clap::Args)]
-/// Create a new space.
-pub struct SpaceNewArgs {
-    #[arg()]
-    /// The name of the space
-    pub name: String,
-
-    #[arg()]
-    /// The managed CIDR space
-    pub cidr: String,
-}
-
-#[derive(Debug, clap::Subcommand)]
-pub enum SpaceCommands {
-    New(SpaceNewArgs),
-}
-
-#[derive(Debug, clap::Subcommand)]
-pub enum SubgCommands {
-    Init(InitArgs),
-    Space(SpaceArgs),
-}
-
-#[derive(Debug, clap::Parser)]
-#[command(
-    name = SUBG_COMMAND,
-    version = clap::crate_version!(),
-    author = clap::crate_authors!(),
-)]
-pub struct Subg {
-    #[command(flatten)]
-    pub args: SubgArgs,
-
-    #[command(subcommand)]
-    pub command: SubgCommands,
-}
+mod args;
 
 fn load_garden(garden_path: &String) -> memory::MemorySubnetGarden {
     let path = Path::new(garden_path);
@@ -142,6 +83,7 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::args::{DEFAULT_STORAGE_PATH, SUBG_COMMAND};
     use assert_fs::fixture::ChildPath;
     use assert_fs::fixture::PathChild;
     use assert_fs::prelude::*;
