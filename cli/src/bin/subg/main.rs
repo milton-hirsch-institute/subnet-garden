@@ -1,7 +1,7 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::args::{InitArgs, SpaceArgs, SpaceCommands, SpaceNewArgs, Subg, SubgCommands};
+use crate::args::{SpaceArgs, SpaceCommands, SpaceNewArgs, Subg, SubgCommands};
 use args::SubgArgs;
 use cidr::IpCidr;
 use clap;
@@ -10,10 +10,12 @@ use std::fs::File;
 use std::path::Path;
 use std::process::exit;
 use std::str::FromStr;
+use subcommands::init;
 use subnet_garden_core::memory;
 use subnet_garden_core::SubnetGarden;
 
 mod args;
+mod subcommands;
 
 fn load_garden(garden_path: &String) -> memory::MemorySubnetGarden {
     let path = Path::new(garden_path);
@@ -33,23 +35,6 @@ fn store_space(garden_path: &str, garden: &memory::MemorySubnetGarden) {
     let path = Path::new(garden_path);
     let mut garden_file = File::create(path).unwrap();
     serde_json::to_writer_pretty(&mut garden_file, &garden).unwrap();
-}
-
-fn init(subg: &SubgArgs, args: &InitArgs) {
-    let path = Path::new(&subg.garden_path);
-    if path.exists() {
-        if !args.force {
-            eprintln!("Garden file already exists at {}", path.display());
-            exit(exitcode::CANTCREAT);
-        }
-        if !path.is_file() {
-            eprintln!("Path is not a file at {}", path.display());
-            exit(exitcode::CANTCREAT);
-        }
-    }
-    let new_garden = memory::MemorySubnetGarden::new();
-    let mut garden_file = File::create(path).unwrap();
-    serde_json::to_writer_pretty(&mut garden_file, &new_garden).unwrap();
 }
 
 fn new_space(subg: &SubgArgs, args: &SpaceNewArgs) {
@@ -72,7 +57,7 @@ fn main() {
 
     match subg.command {
         SubgCommands::Init(args) => {
-            init(&subg.args, &args);
+            init::init(&subg.args, &args);
         }
         SubgCommands::Space(args) => {
             space(&subg.args, &args);
@@ -86,14 +71,13 @@ mod tests {
     use crate::args::{DEFAULT_STORAGE_PATH, SUBG_COMMAND};
     use assert_fs::fixture::ChildPath;
     use assert_fs::fixture::PathChild;
-    use assert_fs::prelude::*;
 
     const HELP_EXIT_CODE: i32 = 2;
 
-    struct Test {
-        subg: assert_cmd::Command,
-        _dir: assert_fs::TempDir,
-        subgarden_path: ChildPath,
+    pub(crate) struct Test {
+        pub subg: assert_cmd::Command,
+        pub _dir: assert_fs::TempDir,
+        pub subgarden_path: ChildPath,
     }
 
     impl Test {
@@ -106,7 +90,7 @@ mod tests {
         }
     }
 
-    fn new_test() -> Test {
+    pub(crate) fn new_test() -> Test {
         let mut subg = assert_cmd::Command::cargo_bin(SUBG_COMMAND).unwrap();
         let dir = assert_fs::TempDir::new().unwrap();
         let subgarden_path = dir.child(DEFAULT_STORAGE_PATH);
@@ -133,71 +117,6 @@ mod tests {
             .stderr(predicates::str::contains(
                 "\'subg\' requires a subcommand but one was not provided",
             ));
-    }
-
-    mod init {
-        use super::*;
-
-        fn new_init_test() -> Test {
-            let mut test = new_test();
-            test.subg.arg("init");
-            test
-        }
-        #[test]
-        fn unforced() {
-            let mut test = new_init_test();
-            test.subg.assert().success().stdout("").stderr("");
-
-            let garden = memory::MemorySubnetGarden::new();
-            let expected_content = serde_json::to_string_pretty(&garden).unwrap();
-            test.subgarden_path.assert(expected_content);
-        }
-
-        #[test]
-        fn already_exists() {
-            let mut test = new_init_test();
-            test.subgarden_path.touch().unwrap();
-            test.subg
-                .assert()
-                .failure()
-                .code(exitcode::CANTCREAT)
-                .stdout("")
-                .stderr(predicates::str::starts_with(format!(
-                    "Garden file already exists at {}",
-                    test.subgarden_path.display()
-                )));
-
-            test.subgarden_path.assert("");
-        }
-
-        #[test]
-        fn forced() {
-            let mut test = new_init_test();
-            test.subg.arg("--force");
-            test.subg.assert().success().stdout("").stderr("");
-
-            let garden = memory::MemorySubnetGarden::new();
-            let expected_content = serde_json::to_string_pretty(&garden).unwrap();
-            test.subgarden_path.assert(expected_content);
-        }
-
-        #[test]
-        fn not_a_file() {
-            let mut test = new_init_test();
-            test.subg.arg("--force");
-            test.subgarden_path.create_dir_all().unwrap();
-            test.subg
-                .assert()
-                .failure()
-                .code(exitcode::CANTCREAT)
-                .stdout("")
-                .stderr(predicates::str::starts_with(format!(
-                    "Path is not a file at {}",
-                    test.subgarden_path.display()
-                )));
-
-            test.subgarden_path.assert(predicates::path::is_dir());
-        }
     }
 
     mod space {
