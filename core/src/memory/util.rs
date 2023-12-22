@@ -57,6 +57,7 @@ mod tests {
         #[test]
         fn contained_in() {
             assert!(!cidr_contains(&get_nth_of(&TEST_CIDR4, 12, 2), &TEST_CIDR4));
+            assert!(!cidr_contains(&get_nth_of(&TEST_CIDR6, 12, 2), &TEST_CIDR6));
         }
 
         #[test]
@@ -77,6 +78,10 @@ mod tests {
             assert!(!cidr_contains(
                 &get_nth_of(&TEST_CIDR4, 12, 15),
                 &get_nth_of(&TEST_CIDR4, 12, 0)
+            ));
+            assert!(!cidr_contains(
+                &get_nth_of(&TEST_CIDR6, 12, 15),
+                &get_nth_of(&TEST_CIDR6, 12, 0)
             ));
         }
 
