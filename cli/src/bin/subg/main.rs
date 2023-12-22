@@ -1,18 +1,14 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::args::{SpaceArgs, SpaceCommands, SpaceNewArgs, Subg, SubgCommands};
-use args::SubgArgs;
-use cidr::IpCidr;
+use crate::args::{Subg, SubgCommands};
 use clap;
 use clap::Parser;
 use std::fs::File;
 use std::path::Path;
 use std::process::exit;
-use std::str::FromStr;
-use subcommands::init;
+use subcommands::{init, space};
 use subnet_garden_core::memory;
-use subnet_garden_core::SubnetGarden;
 
 mod args;
 mod subcommands;
@@ -37,21 +33,6 @@ fn store_space(garden_path: &str, garden: &memory::MemorySubnetGarden) {
     serde_json::to_writer_pretty(&mut garden_file, &garden).unwrap();
 }
 
-fn new_space(subg: &SubgArgs, args: &SpaceNewArgs) {
-    let mut garden = load_garden(&subg.garden_path);
-    let cidr = IpCidr::from_str(args.cidr.as_str()).unwrap();
-    garden.new_space(args.name.as_str(), cidr).unwrap();
-    store_space(&subg.garden_path, &garden);
-}
-
-fn space(subg: &SubgArgs, args: &SpaceArgs) {
-    match &args.command {
-        SpaceCommands::New(args) => {
-            new_space(subg, args);
-        }
-    }
-}
-
 fn main() {
     let subg = Subg::parse();
 
@@ -60,7 +41,7 @@ fn main() {
             init::init(&subg.args, &args);
         }
         SubgCommands::Space(args) => {
-            space(&subg.args, &args);
+            space::space(&subg.args, &args);
         }
     }
 }
@@ -72,20 +53,20 @@ mod tests {
     use assert_fs::fixture::ChildPath;
     use assert_fs::fixture::PathChild;
 
-    const HELP_EXIT_CODE: i32 = 2;
+    pub(crate) const HELP_EXIT_CODE: i32 = 2;
 
     pub(crate) struct Test {
-        pub subg: assert_cmd::Command,
-        pub _dir: assert_fs::TempDir,
-        pub subgarden_path: ChildPath,
+        pub(crate) subg: assert_cmd::Command,
+        pub(crate) _dir: assert_fs::TempDir,
+        pub(crate) subgarden_path: ChildPath,
     }
 
     impl Test {
-        fn store(&self, garden: &memory::MemorySubnetGarden) {
+        pub(crate) fn store(&self, garden: &memory::MemorySubnetGarden) {
             store_space(self.subgarden_path.to_str().unwrap(), garden);
         }
 
-        fn load(&self) -> memory::MemorySubnetGarden {
+        pub(crate) fn load(&self) -> memory::MemorySubnetGarden {
             load_garden(&String::from(self.subgarden_path.to_str().unwrap()))
         }
     }
@@ -117,66 +98,5 @@ mod tests {
             .stderr(predicates::str::contains(
                 "\'subg\' requires a subcommand but one was not provided",
             ));
-    }
-
-    mod space {
-        use super::*;
-
-        fn new_space_test() -> Test {
-            let mut test = new_test();
-            let mut garden = memory::MemorySubnetGarden::new();
-            garden
-                .new_space("exists", IpCidr::from_str("10.20.0.0/24").unwrap())
-                .unwrap();
-            test.store(&garden);
-            test.subg.arg("space");
-            test
-        }
-
-        #[test]
-        fn no_args() {
-            let mut test = new_space_test();
-            test.subg
-                .assert()
-                .failure()
-                .code(HELP_EXIT_CODE)
-                .stderr(predicates::str::contains("Usage: subg space <COMMAND>"));
-        }
-        mod new {
-            use super::*;
-
-            fn new_new_space_test() -> Test {
-                let mut test = new_space_test();
-                test.subg.arg("new");
-                test
-            }
-
-            #[test]
-            fn no_args() {
-                let mut test = new_new_space_test();
-                test.subg
-                    .assert()
-                    .failure()
-                    .code(HELP_EXIT_CODE)
-                    .stdout(predicates::str::contains(""))
-                    .stderr(predicates::str::contains(
-                        "the following required arguments were not provided:\n  <NAME>",
-                    ));
-            }
-
-            #[test]
-            fn new_space() {
-                let mut test = new_new_space_test();
-                test.subg
-                    .arg("new")
-                    .arg("10.10.0.0/24")
-                    .assert()
-                    .success()
-                    .stdout(predicates::str::contains(""))
-                    .stderr("");
-                let stored = test.load();
-                assert_eq!(stored.space_names(), vec!["exists", "new"]);
-            }
-        }
     }
 }

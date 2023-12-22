@@ -30,67 +30,64 @@ mod tests {
     use crate::tests;
     use crate::tests::Test;
     use assert_fs::prelude::*;
-    mod init {
-        use super::*;
-        fn new_init_test() -> Test {
-            let mut test = tests::new_test();
-            test.subg.arg("init");
-            test
-        }
-        #[test]
-        fn unforced() {
-            let mut test = new_init_test();
-            test.subg.assert().success().stdout("").stderr("");
+    fn new_init_test() -> Test {
+        let mut test = tests::new_test();
+        test.subg.arg("init");
+        test
+    }
+    #[test]
+    fn unforced() {
+        let mut test = new_init_test();
+        test.subg.assert().success().stdout("").stderr("");
 
-            let garden = memory::MemorySubnetGarden::new();
-            let expected_content = serde_json::to_string_pretty(&garden).unwrap();
-            test.subgarden_path.assert(expected_content);
-        }
+        let garden = memory::MemorySubnetGarden::new();
+        let expected_content = serde_json::to_string_pretty(&garden).unwrap();
+        test.subgarden_path.assert(expected_content);
+    }
 
-        #[test]
-        fn already_exists() {
-            let mut test = new_init_test();
-            test.subgarden_path.touch().unwrap();
-            test.subg
-                .assert()
-                .failure()
-                .code(exitcode::CANTCREAT)
-                .stdout("")
-                .stderr(predicates::str::starts_with(format!(
-                    "Garden file already exists at {}",
-                    test.subgarden_path.display()
-                )));
+    #[test]
+    fn already_exists() {
+        let mut test = new_init_test();
+        test.subgarden_path.touch().unwrap();
+        test.subg
+            .assert()
+            .failure()
+            .code(exitcode::CANTCREAT)
+            .stdout("")
+            .stderr(predicates::str::starts_with(format!(
+                "Garden file already exists at {}",
+                test.subgarden_path.display()
+            )));
 
-            test.subgarden_path.assert("");
-        }
+        test.subgarden_path.assert("");
+    }
 
-        #[test]
-        fn forced() {
-            let mut test = new_init_test();
-            test.subg.arg("--force");
-            test.subg.assert().success().stdout("").stderr("");
+    #[test]
+    fn forced() {
+        let mut test = new_init_test();
+        test.subg.arg("--force");
+        test.subg.assert().success().stdout("").stderr("");
 
-            let garden = memory::MemorySubnetGarden::new();
-            let expected_content = serde_json::to_string_pretty(&garden).unwrap();
-            test.subgarden_path.assert(expected_content);
-        }
+        let garden = memory::MemorySubnetGarden::new();
+        let expected_content = serde_json::to_string_pretty(&garden).unwrap();
+        test.subgarden_path.assert(expected_content);
+    }
 
-        #[test]
-        fn not_a_file() {
-            let mut test = new_init_test();
-            test.subg.arg("--force");
-            test.subgarden_path.create_dir_all().unwrap();
-            test.subg
-                .assert()
-                .failure()
-                .code(exitcode::CANTCREAT)
-                .stdout("")
-                .stderr(predicates::str::starts_with(format!(
-                    "Path is not a file at {}",
-                    test.subgarden_path.display()
-                )));
+    #[test]
+    fn not_a_file() {
+        let mut test = new_init_test();
+        test.subg.arg("--force");
+        test.subgarden_path.create_dir_all().unwrap();
+        test.subg
+            .assert()
+            .failure()
+            .code(exitcode::CANTCREAT)
+            .stdout("")
+            .stderr(predicates::str::starts_with(format!(
+                "Path is not a file at {}",
+                test.subgarden_path.display()
+            )));
 
-            test.subgarden_path.assert(predicates::path::is_dir());
-        }
+        test.subgarden_path.assert(predicates::path::is_dir());
     }
 }
