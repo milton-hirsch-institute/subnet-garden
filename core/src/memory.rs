@@ -36,6 +36,7 @@ impl crate::SubnetGarden for MemorySubnetGarden {
         }
         let space = MemorySpace::new(cidr);
         self.spaces.insert(name.to_string(), space);
+        // Need to figure out how to return this without multiple lookup.
         return Ok(self.spaces.get_mut(name).unwrap());
     }
 
@@ -47,10 +48,10 @@ impl crate::SubnetGarden for MemorySubnetGarden {
     }
 
     fn space_mut(&mut self, name: &str) -> Option<&mut dyn Space> {
-        match self.spaces.get_mut(name) {
-            Some(space) => Some(space),
-            None => None,
-        }
+        return self
+            .spaces
+            .get_mut(name)
+            .map(|space| space as &mut dyn Space);
     }
 
     fn space_names(&self) -> Vec<String> {
