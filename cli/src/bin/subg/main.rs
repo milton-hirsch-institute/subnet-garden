@@ -20,6 +20,18 @@ fn show_error(err: impl Error, message: &str, exit_code: ExitCode) -> ! {
     exit(exit_code);
 }
 
+fn result<T, E>(result: Result<T, E>, exit_code: ExitCode, message: &str) -> T
+where
+    E: Error,
+{
+    match result {
+        Ok(value) => value,
+        Err(err) => {
+            show_error(err, message, exit_code);
+        }
+    }
+}
+
 fn load_garden(garden_path: &String) -> memory::MemorySubnetGarden {
     let path = Path::new(garden_path);
     if !path.exists() {
@@ -37,27 +49,17 @@ fn load_garden(garden_path: &String) -> memory::MemorySubnetGarden {
 fn store_space(garden_path: &str, garden: &memory::MemorySubnetGarden) {
     let path = Path::new(garden_path);
 
-    let mut garden_file = match File::create(path) {
-        Ok(file) => file,
-        Err(err) => {
-            crate::show_error(
-                err,
-                &format!("Could not create garden file at {}", path.display()),
-                exitcode::CANTCREAT,
-            );
-        }
-    };
+    let mut garden_file = result(
+        File::create(path),
+        exitcode::CANTCREAT,
+        &format!("Could not create garden file at {}", path.display()),
+    );
 
-    match serde_json::to_writer_pretty(&mut garden_file, &garden) {
-        Ok(_) => {}
-        Err(err) => {
-            crate::show_error(
-                err,
-                &format!("Could not serialize garden file at {}", path.display()),
-                exitcode::CANTCREAT,
-            );
-        }
-    }
+    result(
+        serde_json::to_writer_pretty(&mut garden_file, &garden),
+        exitcode::CANTCREAT,
+        &format!("Could not serialize garden file at {}", path.display()),
+    );
 }
 
 fn main() {

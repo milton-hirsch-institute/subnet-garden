@@ -8,18 +8,16 @@ use subnet_garden_core::SubnetGarden;
 
 fn new_space(subg: &SubgArgs, args: &SpaceNewArgs) {
     let mut garden = crate::load_garden(&subg.garden_path);
-    let cidr = match IpCidr::from_str(args.cidr.as_str()) {
-        Ok(cidr) => cidr,
-        Err(err) => {
-            crate::show_error(err, "Invalid CIDR parameter", exitcode::USAGE);
-        }
-    };
-    match garden.new_space(args.name.as_str(), cidr) {
-        Ok(_) => {}
-        Err(err) => {
-            crate::show_error(err, "Could not create space", exitcode::CANTCREAT);
-        }
-    }
+    let cidr = crate::result(
+        IpCidr::from_str(args.cidr.as_str()),
+        exitcode::USAGE,
+        "Invalid CIDR parameter",
+    );
+    crate::result(
+        garden.new_space(args.name.as_str(), cidr),
+        exitcode::CANTCREAT,
+        "Could not create space",
+    );
     crate::store_space(&subg.garden_path, &garden);
 }
 
