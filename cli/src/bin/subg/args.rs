@@ -6,13 +6,6 @@ pub(super) const DEFAULT_STORAGE_PATH: &str = "subnet-garden.json";
 pub(super) const SUBG_COMMAND: &str = "subg";
 
 #[derive(Debug, clap::Args)]
-/// Subnet gardener command line interface
-pub(super) struct SubgArgs {
-    #[arg(short, long, default_value = DEFAULT_STORAGE_PATH)]
-    pub(super) garden_path: String,
-}
-
-#[derive(Debug, clap::Args)]
 /// Initialize the subnet garden file
 pub(super) struct InitArgs {
     #[arg(short, long, default_value_t)]
@@ -48,6 +41,13 @@ pub(super) enum SpaceCommands {
 pub(super) enum SubgCommands {
     Init(InitArgs),
     Space(SpaceArgs),
+}
+
+#[derive(Debug, clap::Args)]
+/// Subnet gardener command line interface
+pub(super) struct SubgArgs {
+    #[arg(short, long, default_value = DEFAULT_STORAGE_PATH)]
+    pub(super) garden_path: String,
 }
 
 #[derive(Debug, clap::Parser)]
