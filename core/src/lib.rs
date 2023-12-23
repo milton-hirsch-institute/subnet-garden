@@ -1,7 +1,7 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::errors::{AllocateError, CreateError, RemoveError, RenameError};
+use crate::errors::{AllocateError, CreateError, DeleteError, RenameError};
 use cidr::IpCidr;
 use serde::de;
 use serde::ser::SerializeStruct;
@@ -11,7 +11,7 @@ pub mod errors;
 pub mod memory;
 pub type CreateResult<T> = Result<T, CreateError>;
 
-pub type RemoveResult<T> = Result<T, RemoveError>;
+pub type DeleteResult<T> = Result<T, DeleteError>;
 
 pub type AllocateResult<T> = Result<T, AllocateError>;
 
@@ -152,7 +152,7 @@ pub trait SubnetGarden {
     fn space_count(&self) -> usize;
     fn new_space(&mut self, name: &str, cidr: IpCidr) -> CreateResult<&mut dyn Space>;
 
-    fn delete_space(&mut self, name: &str) -> RemoveResult<()>;
+    fn delete_space(&mut self, name: &str) -> DeleteResult<()>;
 
     fn space_mut(&mut self, name: &str) -> Option<&mut dyn Space>;
 

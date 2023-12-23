@@ -7,7 +7,7 @@ mod subspace;
 mod tests;
 mod util;
 
-use crate::errors::{CreateError, RemoveError};
+use crate::errors::{CreateError, DeleteError};
 use crate::Space;
 use cidr::IpCidr;
 use space::MemorySpace;
@@ -40,10 +40,10 @@ impl crate::SubnetGarden for MemorySubnetGarden {
         return Ok(self.spaces.get_mut(name).unwrap());
     }
 
-    fn delete_space(&mut self, name: &str) -> crate::RemoveResult<()> {
+    fn delete_space(&mut self, name: &str) -> crate::DeleteResult<()> {
         match self.spaces.remove(name) {
             Some(_) => Ok(()),
-            None => Err(RemoveError::NoSuchObject),
+            None => Err(DeleteError::NoSuchObject),
         }
     }
 

@@ -41,18 +41,18 @@ mod memory_garden {
         }
     }
 
-    mod remove_space {
+    mod delete_space {
         use super::*;
 
         #[test]
-        fn remove_space_no_such_object() {
+        fn delete_space_no_such_object() {
             let mut instance = new_test_space();
             let result = instance.delete_space("does-not-exist");
-            assert_eq!(result.err(), Some(RemoveError::NoSuchObject));
+            assert_eq!(result.err(), Some(DeleteError::NoSuchObject));
         }
 
         #[test]
-        fn remove_space_success() {
+        fn delete_space_success() {
             let mut instance = new_test_space();
             instance.delete_space("test4").unwrap();
             assert_eq!(instance.space_count(), 1);

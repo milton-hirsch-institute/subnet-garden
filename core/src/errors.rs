@@ -23,19 +23,19 @@ impl Error for CreateError {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum RemoveError {
+pub enum DeleteError {
     NoSuchObject,
 }
 
-impl std::fmt::Display for RemoveError {
+impl std::fmt::Display for DeleteError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            RemoveError::NoSuchObject => write!(f, "No such object"),
+            DeleteError::NoSuchObject => write!(f, "No such object"),
         }
     }
 }
 
-impl Error for RemoveError {
+impl Error for DeleteError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         None
     }
@@ -75,7 +75,7 @@ mod tests {
     }
 
     #[test]
-    fn display_remove_error_no_such_object() {
-        assert_eq!(format!("{}", RemoveError::NoSuchObject), "No such object");
+    fn display_delete_error_no_such_object() {
+        assert_eq!(format!("{}", DeleteError::NoSuchObject), "No such object");
     }
 }
