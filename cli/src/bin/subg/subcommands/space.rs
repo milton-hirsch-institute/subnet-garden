@@ -127,4 +127,37 @@ mod tests {
             assert_eq!(stored.space_names(), vec!["exists", "new"]);
         }
     }
+
+    mod delete {
+        use super::*;
+
+        fn new_delete_space_test() -> Test {
+            let mut test = new_space_test();
+            test.subg.arg("delete");
+            test
+        }
+        #[test]
+        fn cannot_delete_space() {
+            let mut test = new_delete_space_test();
+            test.subg.arg("does-not-exist");
+            test.subg
+                .assert()
+                .failure()
+                .code(exitcode::NOINPUT)
+                .stderr("Could not delete space\nNo such object\n");
+        }
+
+        #[test]
+        fn delete_space() {
+            let mut test = new_delete_space_test();
+            test.subg.arg("exists");
+            test.subg
+                .assert()
+                .success()
+                .stdout(predicates::str::contains(""))
+                .stderr("");
+            let stored = test.load();
+            assert_eq!(stored.space_names(), Vec::<String>::new());
+        }
+    }
 }
