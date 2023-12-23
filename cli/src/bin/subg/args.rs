@@ -18,13 +18,6 @@ pub(crate) mod init {
 pub(crate) mod space {
 
     #[derive(Debug, clap::Args)]
-    /// Manage spaces
-    pub(crate) struct SpaceArgs {
-        #[command(subcommand)]
-        pub(crate) command: SpaceCommands,
-    }
-
-    #[derive(Debug, clap::Args)]
     /// Create a new space.
     pub(crate) struct SpaceNewArgs {
         #[arg()]
@@ -39,6 +32,13 @@ pub(crate) mod space {
     #[derive(Debug, clap::Subcommand)]
     pub(crate) enum SpaceCommands {
         New(SpaceNewArgs),
+    }
+
+    #[derive(Debug, clap::Args)]
+    /// Manage spaces
+    pub(crate) struct SpaceArgs {
+        #[command(subcommand)]
+        pub(crate) command: SpaceCommands,
     }
 }
 
