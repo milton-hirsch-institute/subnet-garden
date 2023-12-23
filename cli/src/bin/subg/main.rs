@@ -69,8 +69,11 @@ fn main() {
         SubgCommands::Init(args) => {
             init::init(&subg.args, &args);
         }
-        SubgCommands::Space(args) => {
-            space::space(&subg.args, &args);
+        SubgCommands::NewSpace(args) => {
+            space::new_space(&subg.args, &args);
+        }
+        SubgCommands::DeleteSpace(args) => {
+            space::delete_space(&subg.args, &args);
         }
     }
 }

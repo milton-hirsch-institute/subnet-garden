@@ -1,11 +1,13 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
+use crate::args::subcommands::{DeleteSpaceArgs, NewSpaceArgs};
+
 pub(crate) const DEFAULT_STORAGE_PATH: &str = "subnet-garden.json";
 
 pub(crate) const SUBG_COMMAND: &str = "subg";
 
-pub(crate) mod init {
+pub(crate) mod subcommands {
     #[derive(Debug, clap::Args)]
     /// Initialize the subnet garden file
     pub(crate) struct InitArgs {
@@ -13,13 +15,10 @@ pub(crate) mod init {
         /// Force initialization even if the garden file already exists
         pub(crate) force: bool,
     }
-}
-
-pub(crate) mod space {
 
     #[derive(Debug, clap::Args)]
     /// Create a new space.
-    pub(crate) struct SpaceNewArgs {
+    pub(crate) struct NewSpaceArgs {
         #[arg()]
         /// The name of the space
         pub(crate) name: String,
@@ -31,30 +30,18 @@ pub(crate) mod space {
 
     #[derive(Debug, clap::Args)]
     /// Delete a space.
-    pub(crate) struct SpaceDeleteArgs {
+    pub(crate) struct DeleteSpaceArgs {
         #[arg()]
         /// The name of the space
         pub(crate) name: String,
-    }
-
-    #[derive(Debug, clap::Subcommand)]
-    pub(crate) enum SpaceCommands {
-        New(SpaceNewArgs),
-        Delete(SpaceDeleteArgs),
-    }
-
-    #[derive(Debug, clap::Args)]
-    /// Manage spaces
-    pub(crate) struct SpaceArgs {
-        #[command(subcommand)]
-        pub(crate) command: SpaceCommands,
     }
 }
 
 #[derive(Debug, clap::Subcommand)]
 pub(crate) enum SubgCommands {
-    Init(init::InitArgs),
-    Space(space::SpaceArgs),
+    Init(subcommands::InitArgs),
+    NewSpace(NewSpaceArgs),
+    DeleteSpace(DeleteSpaceArgs),
 }
 
 #[derive(Debug, clap::Args)]

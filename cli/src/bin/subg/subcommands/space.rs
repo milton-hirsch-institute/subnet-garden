@@ -1,13 +1,13 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::args::space::{SpaceArgs, SpaceCommands, SpaceDeleteArgs, SpaceNewArgs};
+use crate::args::subcommands::{DeleteSpaceArgs, NewSpaceArgs};
 use crate::args::SubgArgs;
 use cidr::IpCidr;
 use std::str::FromStr;
 use subnet_garden_core::SubnetGarden;
 
-fn new_space(subg: &SubgArgs, args: &SpaceNewArgs) {
+pub(crate) fn new_space(subg: &SubgArgs, args: &NewSpaceArgs) {
     let mut garden = crate::load_garden(&subg.garden_path);
     let cidr = crate::result(
         IpCidr::from_str(args.cidr.as_str()),
@@ -22,7 +22,7 @@ fn new_space(subg: &SubgArgs, args: &SpaceNewArgs) {
     crate::store_space(&subg.garden_path, &garden);
 }
 
-fn delete_space(subg: &SubgArgs, args: &SpaceDeleteArgs) {
+pub(crate) fn delete_space(subg: &SubgArgs, args: &DeleteSpaceArgs) {
     let mut garden = crate::load_garden(&subg.garden_path);
     crate::result(
         garden.delete_space(args.name.as_str()),
@@ -30,17 +30,6 @@ fn delete_space(subg: &SubgArgs, args: &SpaceDeleteArgs) {
         "Could not delete space",
     );
     crate::store_space(&subg.garden_path, &garden);
-}
-
-pub fn space(subg: &SubgArgs, args: &SpaceArgs) {
-    match &args.command {
-        SpaceCommands::New(args) => {
-            new_space(subg, args);
-        }
-        SpaceCommands::Delete(args) => {
-            delete_space(subg, args);
-        }
-    }
 }
 
 #[cfg(test)]
