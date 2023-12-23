@@ -35,6 +35,12 @@ impl std::fmt::Display for RemoveError {
     }
 }
 
+impl Error for RemoveError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        None
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum AllocateError {
     DuplicateName,

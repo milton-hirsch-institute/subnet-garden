@@ -29,9 +29,18 @@ pub(crate) mod space {
         pub(crate) cidr: String,
     }
 
+    #[derive(Debug, clap::Args)]
+    /// Delete a space.
+    pub(crate) struct SpaceDeleteArgs {
+        #[arg()]
+        /// The name of the space
+        pub(crate) name: String,
+    }
+
     #[derive(Debug, clap::Subcommand)]
     pub(crate) enum SpaceCommands {
         New(SpaceNewArgs),
+        Delete(SpaceDeleteArgs),
     }
 
     #[derive(Debug, clap::Args)]

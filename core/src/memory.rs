@@ -40,7 +40,7 @@ impl crate::SubnetGarden for MemorySubnetGarden {
         return Ok(self.spaces.get_mut(name).unwrap());
     }
 
-    fn remove_space(&mut self, name: &str) -> crate::RemoveResult<()> {
+    fn delete_space(&mut self, name: &str) -> crate::RemoveResult<()> {
         match self.spaces.remove(name) {
             Some(_) => Ok(()),
             None => Err(RemoveError::NoSuchObject),

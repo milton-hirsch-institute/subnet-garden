@@ -47,14 +47,14 @@ mod memory_garden {
         #[test]
         fn remove_space_no_such_object() {
             let mut instance = new_test_space();
-            let result = instance.remove_space("does-not-exist");
+            let result = instance.delete_space("does-not-exist");
             assert_eq!(result.err(), Some(RemoveError::NoSuchObject));
         }
 
         #[test]
         fn remove_space_success() {
             let mut instance = new_test_space();
-            instance.remove_space("test4").unwrap();
+            instance.delete_space("test4").unwrap();
             assert_eq!(instance.space_count(), 1);
         }
     }

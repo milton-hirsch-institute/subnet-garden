@@ -1,7 +1,7 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::args::space::{SpaceArgs, SpaceCommands, SpaceNewArgs};
+use crate::args::space::{SpaceArgs, SpaceCommands, SpaceDeleteArgs, SpaceNewArgs};
 use crate::args::SubgArgs;
 use cidr::IpCidr;
 use std::str::FromStr;
@@ -22,10 +22,23 @@ fn new_space(subg: &SubgArgs, args: &SpaceNewArgs) {
     crate::store_space(&subg.garden_path, &garden);
 }
 
+fn delete_space(subg: &SubgArgs, args: &SpaceDeleteArgs) {
+    let mut garden = crate::load_garden(&subg.garden_path);
+    crate::result(
+        garden.delete_space(args.name.as_str()),
+        exitcode::NOINPUT,
+        "Could not delete space",
+    );
+    crate::store_space(&subg.garden_path, &garden);
+}
+
 pub fn space(subg: &SubgArgs, args: &SpaceArgs) {
     match &args.command {
         SpaceCommands::New(args) => {
             new_space(subg, args);
+        }
+        SpaceCommands::Delete(args) => {
+            delete_space(subg, args);
         }
     }
 }

@@ -152,7 +152,7 @@ pub trait SubnetGarden {
     fn space_count(&self) -> usize;
     fn new_space(&mut self, name: &str, cidr: IpCidr) -> CreateResult<&mut dyn Space>;
 
-    fn remove_space(&mut self, name: &str) -> RemoveResult<()>;
+    fn delete_space(&mut self, name: &str) -> RemoveResult<()>;
 
     fn space_mut(&mut self, name: &str) -> Option<&mut dyn Space>;
 
