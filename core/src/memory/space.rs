@@ -18,7 +18,7 @@ pub struct MemorySpace {
 }
 
 impl MemorySpace {
-    pub(super) fn new(cidr: IpCidr) -> Self {
+    pub fn new(cidr: IpCidr) -> Self {
         MemorySpace {
             root: Subspace::new(cidr),
             names: HashMap::new(),

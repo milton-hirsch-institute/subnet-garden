@@ -9,8 +9,8 @@ use std::error::Error;
 use std::fs::File;
 use std::path::Path;
 use std::process::exit;
-use subcommands::{init, space};
-use subnet_garden_core::memory;
+use subcommands::init;
+use subnet_garden_core::memory::space as memory_space;
 
 mod args;
 mod subcommands;
@@ -32,7 +32,7 @@ where
     }
 }
 
-fn load_garden(garden_path: &String) -> memory::MemorySubnetGarden {
+fn _load_garden(garden_path: &String) -> memory_space::MemorySpace {
     let path = Path::new(garden_path);
     if !path.exists() {
         eprintln!("Garden file does not exist at {}", path.display());
@@ -46,7 +46,7 @@ fn load_garden(garden_path: &String) -> memory::MemorySubnetGarden {
     serde_json::from_reader(garden_file).unwrap()
 }
 
-fn store_space(garden_path: &str, garden: &memory::MemorySubnetGarden) {
+fn store_space(garden_path: &str, garden: &memory_space::MemorySpace) {
     let path = Path::new(garden_path);
 
     let mut garden_file = result(
@@ -69,9 +69,6 @@ fn main() {
         SubgCommands::Init(args) => {
             init::init(&subg.args, &args);
         }
-        SubgCommands::Space(args) => {
-            space::space(&subg.args, &args);
-        }
     }
 }
 
@@ -84,6 +81,8 @@ mod tests {
 
     pub(crate) const HELP_EXIT_CODE: i32 = 2;
 
+    pub(crate) const TEST_CIDR: &str = "10.10.0.0/16";
+
     pub(crate) struct Test {
         pub(crate) subg: assert_cmd::Command,
         pub(crate) _dir: assert_fs::TempDir,
@@ -91,12 +90,12 @@ mod tests {
     }
 
     impl Test {
-        pub(crate) fn store(&self, garden: &memory::MemorySubnetGarden) {
+        pub(crate) fn _store(&self, garden: &memory_space::MemorySpace) {
             store_space(self.subgarden_path.to_str().unwrap(), garden);
         }
 
-        pub(crate) fn load(&self) -> memory::MemorySubnetGarden {
-            load_garden(&String::from(self.subgarden_path.to_str().unwrap()))
+        pub(crate) fn _load(&self) -> memory_space::MemorySpace {
+            _load_garden(&String::from(self.subgarden_path.to_str().unwrap()))
         }
     }
 

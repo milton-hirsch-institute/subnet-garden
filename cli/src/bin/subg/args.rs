@@ -12,54 +12,16 @@ pub(crate) mod init {
         #[arg(short, long, default_value_t)]
         /// Force initialization even if the garden file already exists
         pub(crate) force: bool,
-    }
-}
-
-pub(crate) mod space {
-
-    #[derive(Debug, clap::Args)]
-    /// Create a new space.
-    pub(crate) struct SpaceNewArgs {
-        #[arg()]
-        /// The name of the space
-        pub(crate) name: String,
 
         #[arg()]
-        /// The managed CIDR space
+        /// Garden subnet CIDR
         pub(crate) cidr: String,
-    }
-
-    #[derive(Debug, clap::Args)]
-    /// Delete a space.
-    pub(crate) struct SpaceDeleteArgs {
-        #[arg()]
-        /// The name of the space
-        pub(crate) name: String,
-    }
-
-    #[derive(Debug, clap::Args)]
-    /// List spaces
-    pub(crate) struct SpaceListArgs {}
-
-    #[derive(Debug, clap::Subcommand)]
-    pub(crate) enum SpaceCommands {
-        New(SpaceNewArgs),
-        Delete(SpaceDeleteArgs),
-        List(SpaceListArgs),
-    }
-
-    #[derive(Debug, clap::Args)]
-    /// Manage spaces
-    pub(crate) struct SpaceArgs {
-        #[command(subcommand)]
-        pub(crate) command: SpaceCommands,
     }
 }
 
 #[derive(Debug, clap::Subcommand)]
 pub(crate) enum SubgCommands {
     Init(init::InitArgs),
-    Space(space::SpaceArgs),
 }
 
 #[derive(Debug, clap::Args)]
