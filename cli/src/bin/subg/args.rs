@@ -1,51 +1,51 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-pub const DEFAULT_STORAGE_PATH: &str = "subnet-garden.json";
+pub(super) const DEFAULT_STORAGE_PATH: &str = "subnet-garden.json";
 
-pub const SUBG_COMMAND: &str = "subg";
+pub(super) const SUBG_COMMAND: &str = "subg";
 
 #[derive(Debug, clap::Args)]
 /// Subnet gardener command line interface
-pub struct SubgArgs {
+pub(super) struct SubgArgs {
     #[arg(short, long, default_value = DEFAULT_STORAGE_PATH)]
-    pub garden_path: String,
+    pub(super) garden_path: String,
 }
 
 #[derive(Debug, clap::Args)]
 /// Initialize the subnet garden file
-pub struct InitArgs {
+pub(super) struct InitArgs {
     #[arg(short, long, default_value_t)]
     /// Force initialization even if the garden file already exists
-    pub force: bool,
+    pub(super) force: bool,
 }
 
 #[derive(Debug, clap::Args)]
 /// Manage spaces
-pub struct SpaceArgs {
+pub(super) struct SpaceArgs {
     #[command(subcommand)]
-    pub command: SpaceCommands,
+    pub(super) command: SpaceCommands,
 }
 
 #[derive(Debug, clap::Args)]
 /// Create a new space.
-pub struct SpaceNewArgs {
+pub(super) struct SpaceNewArgs {
     #[arg()]
     /// The name of the space
-    pub name: String,
+    pub(super) name: String,
 
     #[arg()]
     /// The managed CIDR space
-    pub cidr: String,
+    pub(super) cidr: String,
 }
 
 #[derive(Debug, clap::Subcommand)]
-pub enum SpaceCommands {
+pub(super) enum SpaceCommands {
     New(SpaceNewArgs),
 }
 
 #[derive(Debug, clap::Subcommand)]
-pub enum SubgCommands {
+pub(super) enum SubgCommands {
     Init(InitArgs),
     Space(SpaceArgs),
 }
@@ -56,10 +56,10 @@ pub enum SubgCommands {
     version = clap::crate_version!(),
     author = clap::crate_authors!(),
 )]
-pub struct Subg {
+pub(super) struct Subg {
     #[command(flatten)]
-    pub args: SubgArgs,
+    pub(super) args: SubgArgs,
 
     #[command(subcommand)]
-    pub command: SubgCommands,
+    pub(super) command: SubgCommands,
 }
