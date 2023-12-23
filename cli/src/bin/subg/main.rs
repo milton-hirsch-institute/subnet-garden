@@ -10,6 +10,7 @@ use std::fs::File;
 use std::path::Path;
 use std::process::exit;
 use subcommands::init;
+use subcommands::subnet;
 use subnet_garden_core::memory::space as memory_space;
 
 mod args;
@@ -32,7 +33,7 @@ where
     }
 }
 
-fn _load_garden(garden_path: &String) -> memory_space::MemorySpace {
+fn load_garden(garden_path: &str) -> memory_space::MemorySpace {
     let path = Path::new(garden_path);
     if !path.exists() {
         eprintln!("Garden file does not exist at {}", path.display());
@@ -69,6 +70,9 @@ fn main() {
         SubgCommands::Init(args) => {
             init::init(&subg.args, &args);
         }
+        SubgCommands::Allocate(args) => {
+            subnet::allocate(&subg.args, &args);
+        }
     }
 }
 
@@ -87,15 +91,17 @@ mod tests {
         pub(crate) subg: assert_cmd::Command,
         pub(crate) _dir: assert_fs::TempDir,
         pub(crate) subgarden_path: ChildPath,
+        pub(crate) garden: memory_space::MemorySpace,
     }
 
     impl Test {
-        pub(crate) fn _store(&self, garden: &memory_space::MemorySpace) {
-            store_space(self.subgarden_path.to_str().unwrap(), garden);
+        pub(crate) fn store(&self) {
+            store_space(self.subgarden_path.to_str().unwrap(), &self.garden);
         }
 
-        pub(crate) fn _load(&self) -> memory_space::MemorySpace {
-            _load_garden(&String::from(self.subgarden_path.to_str().unwrap()))
+        pub(crate) fn load(&mut self) {
+            let garden_path = self.subgarden_path.to_str().unwrap();
+            self.garden = load_garden(garden_path);
         }
     }
 
@@ -108,6 +114,7 @@ mod tests {
             subg: test,
             _dir: dir,
             subgarden_path,
+            garden: memory_space::MemorySpace::new(TEST_CIDR.parse().unwrap()),
         }
     }
 

@@ -1,6 +1,8 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
+use subnet_garden_core::Bits;
+
 pub(crate) const DEFAULT_STORAGE_PATH: &str = "subnet-garden.json";
 
 pub(crate) const SUBG_COMMAND: &str = "subg";
@@ -19,9 +21,22 @@ pub(crate) mod init {
     }
 }
 
+#[derive(Debug, clap::Args)]
+/// Allocate subnet
+pub(crate) struct AllocateArgs {
+    #[arg()]
+    /// Number of subnet bits
+    pub(crate) bits: Bits,
+
+    #[arg()]
+    /// Name of the subnet to allocate
+    pub(crate) name: Option<String>,
+}
+
 #[derive(Debug, clap::Subcommand)]
 pub(crate) enum SubgCommands {
     Init(init::InitArgs),
+    Allocate(AllocateArgs),
 }
 
 #[derive(Debug, clap::Args)]

@@ -19,7 +19,7 @@ pub type RenameResult<T> = Result<T, RenameError>;
 
 pub type Bits = u8;
 
-#[derive(Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Debug, Eq, Ord, PartialEq, PartialOrd, Clone)]
 pub struct CidrRecord {
     pub cidr: IpCidr,
     pub name: Option<String>,
@@ -91,15 +91,15 @@ impl<'s> serde::Deserialize<'s> for CidrRecord {
                 A: de::MapAccess<'d>,
             {
                 let mut cidr: Option<IpCidr> = None;
-                let mut name: Option<Option<&str>> = None;
+                let mut name: Option<Option<String>> = None;
                 while let Some(key) = map.next_key()? {
                     match key {
                         Field::Cidr => {
                             if cidr.is_some() {
                                 return Err(serde::de::Error::duplicate_field("cidr"));
                             }
-                            cidr = match map.next_value::<&str>() {
-                                Ok(cidr) => match IpCidr::from_str(cidr) {
+                            cidr = match map.next_value::<String>() {
+                                Ok(cidr) => match IpCidr::from_str(cidr.as_str()) {
                                     Ok(cidr) => Some(cidr),
                                     Err(err) => return Err(serde::de::Error::custom(err)),
                                 },
@@ -122,7 +122,7 @@ impl<'s> serde::Deserialize<'s> for CidrRecord {
                     Some(name) => name,
                     None => return Err(serde::de::Error::missing_field("name")),
                 };
-                Ok(CidrRecord::new(cidr, name))
+                Ok(CidrRecord::new(cidr, name.as_deref()))
             }
         }
 

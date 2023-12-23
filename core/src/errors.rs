@@ -56,6 +56,12 @@ impl std::fmt::Display for AllocateError {
     }
 }
 
+impl Error for AllocateError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        None
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum RenameError {
     DuplicateName,
