@@ -32,6 +32,13 @@ fn delete_space(subg: &SubgArgs, args: &SpaceDeleteArgs) {
     crate::store_space(&subg.garden_path, &garden);
 }
 
+fn list_spaces(subg: &SubgArgs) {
+    let garden = crate::load_garden(&subg.garden_path);
+    for space in garden.space_names() {
+        println!("{}", space);
+    }
+}
+
 pub fn space(subg: &SubgArgs, args: &SpaceArgs) {
     match &args.command {
         SpaceCommands::New(args) => {
@@ -39,6 +46,9 @@ pub fn space(subg: &SubgArgs, args: &SpaceArgs) {
         }
         SpaceCommands::Delete(args) => {
             delete_space(subg, args);
+        }
+        SpaceCommands::List(_) => {
+            list_spaces(subg);
         }
     }
 }
@@ -158,6 +168,26 @@ mod tests {
                 .stderr("");
             let stored = test.load();
             assert_eq!(stored.space_names(), Vec::<String>::new());
+        }
+    }
+
+    mod list {
+        use super::*;
+
+        fn new_list_spaces_test() -> Test {
+            let mut test = new_space_test();
+            test.subg.arg("list");
+            test
+        }
+
+        #[test]
+        fn list_spaces() {
+            let mut test = new_list_spaces_test();
+            test.subg
+                .assert()
+                .success()
+                .stdout(predicates::str::contains("exists\n"))
+                .stderr("");
         }
     }
 }

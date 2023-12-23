@@ -37,10 +37,15 @@ pub(crate) mod space {
         pub(crate) name: String,
     }
 
+    #[derive(Debug, clap::Args)]
+    /// List spaces
+    pub(crate) struct SpaceListArgs {}
+
     #[derive(Debug, clap::Subcommand)]
     pub(crate) enum SpaceCommands {
         New(SpaceNewArgs),
         Delete(SpaceDeleteArgs),
+        List(SpaceListArgs),
     }
 
     #[derive(Debug, clap::Args)]
