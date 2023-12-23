@@ -8,8 +8,18 @@ use subnet_garden_core::SubnetGarden;
 
 fn new_space(subg: &SubgArgs, args: &SpaceNewArgs) {
     let mut garden = crate::load_garden(&subg.garden_path);
-    let cidr = IpCidr::from_str(args.cidr.as_str()).unwrap();
-    garden.new_space(args.name.as_str(), cidr).unwrap();
+    let cidr = match IpCidr::from_str(args.cidr.as_str()) {
+        Ok(cidr) => cidr,
+        Err(err) => {
+            crate::show_error(err, "Invalid CIDR parameter", exitcode::USAGE);
+        }
+    };
+    match garden.new_space(args.name.as_str(), cidr) {
+        Ok(_) => {}
+        Err(err) => {
+            crate::show_error(err, "Could not create space", exitcode::CANTCREAT);
+        }
+    }
     crate::store_space(&subg.garden_path, &garden);
 }
 
@@ -68,6 +78,27 @@ mod tests {
                 .stderr(predicates::str::contains(
                     "the following required arguments were not provided:\n  <NAME>",
                 ));
+        }
+
+        #[test]
+        fn cannot_create_space() {
+            let mut test = new_new_space_test();
+            test.subg.arg("exists").arg("10.10.0.0/24");
+            test.subg
+                .assert()
+                .failure()
+                .code(exitcode::CANTCREAT)
+                .stderr("Could not create space\nDuplicate object\n");
+        }
+
+        #[test]
+        fn invalid_cidr() {
+            let mut test = new_new_space_test();
+            test.subg.arg("exists").arg("bad-cidr");
+            test.subg.assert().failure().code(exitcode::USAGE).stderr(
+                "Invalid CIDR parameter\n\
+                couldn\'t parse address in network: invalid IP address syntax\n",
+            );
         }
 
         #[test]

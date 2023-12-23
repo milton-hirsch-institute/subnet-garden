@@ -1,6 +1,8 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
+use std::error::Error;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum CreateError {
     DuplicateObject,
@@ -11,6 +13,12 @@ impl std::fmt::Display for CreateError {
         match self {
             CreateError::DuplicateObject => write!(f, "Duplicate object"),
         }
+    }
+}
+
+impl Error for CreateError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        None
     }
 }
 
