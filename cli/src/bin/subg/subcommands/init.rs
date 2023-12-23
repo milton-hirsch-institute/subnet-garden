@@ -1,7 +1,8 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::args::{InitArgs, SubgArgs};
+use crate::args::init::InitArgs;
+use crate::args::SubgArgs;
 use crate::store_space;
 use std::path::Path;
 use std::process::exit;

@@ -5,12 +5,14 @@ pub(super) const DEFAULT_STORAGE_PATH: &str = "subnet-garden.json";
 
 pub(super) const SUBG_COMMAND: &str = "subg";
 
-#[derive(Debug, clap::Args)]
-/// Initialize the subnet garden file
-pub(super) struct InitArgs {
-    #[arg(short, long, default_value_t)]
-    /// Force initialization even if the garden file already exists
-    pub(super) force: bool,
+pub(super) mod init {
+    #[derive(Debug, clap::Args)]
+    /// Initialize the subnet garden file
+    pub(crate) struct InitArgs {
+        #[arg(short, long, default_value_t)]
+        /// Force initialization even if the garden file already exists
+        pub(crate) force: bool,
+    }
 }
 
 #[derive(Debug, clap::Args)]
@@ -39,7 +41,7 @@ pub(super) enum SpaceCommands {
 
 #[derive(Debug, clap::Subcommand)]
 pub(super) enum SubgCommands {
-    Init(InitArgs),
+    Init(init::InitArgs),
     Space(SpaceArgs),
 }
 
