@@ -1,11 +1,11 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-pub(super) const DEFAULT_STORAGE_PATH: &str = "subnet-garden.json";
+pub(crate) const DEFAULT_STORAGE_PATH: &str = "subnet-garden.json";
 
-pub(super) const SUBG_COMMAND: &str = "subg";
+pub(crate) const SUBG_COMMAND: &str = "subg";
 
-pub(super) mod init {
+pub(crate) mod init {
     #[derive(Debug, clap::Args)]
     /// Initialize the subnet garden file
     pub(crate) struct InitArgs {
@@ -15,41 +15,44 @@ pub(super) mod init {
     }
 }
 
-#[derive(Debug, clap::Args)]
-/// Manage spaces
-pub(super) struct SpaceArgs {
-    #[command(subcommand)]
-    pub(super) command: SpaceCommands,
-}
+pub(crate) mod space {
 
-#[derive(Debug, clap::Args)]
-/// Create a new space.
-pub(super) struct SpaceNewArgs {
-    #[arg()]
-    /// The name of the space
-    pub(super) name: String,
+    #[derive(Debug, clap::Args)]
+    /// Manage spaces
+    pub(crate) struct SpaceArgs {
+        #[command(subcommand)]
+        pub(crate) command: SpaceCommands,
+    }
 
-    #[arg()]
-    /// The managed CIDR space
-    pub(super) cidr: String,
+    #[derive(Debug, clap::Args)]
+    /// Create a new space.
+    pub(crate) struct SpaceNewArgs {
+        #[arg()]
+        /// The name of the space
+        pub(crate) name: String,
+
+        #[arg()]
+        /// The managed CIDR space
+        pub(crate) cidr: String,
+    }
+
+    #[derive(Debug, clap::Subcommand)]
+    pub(crate) enum SpaceCommands {
+        New(SpaceNewArgs),
+    }
 }
 
 #[derive(Debug, clap::Subcommand)]
-pub(super) enum SpaceCommands {
-    New(SpaceNewArgs),
-}
-
-#[derive(Debug, clap::Subcommand)]
-pub(super) enum SubgCommands {
+pub(crate) enum SubgCommands {
     Init(init::InitArgs),
-    Space(SpaceArgs),
+    Space(space::SpaceArgs),
 }
 
 #[derive(Debug, clap::Args)]
 /// Subnet gardener command line interface
-pub(super) struct SubgArgs {
+pub(crate) struct SubgArgs {
     #[arg(short, long, default_value = DEFAULT_STORAGE_PATH)]
-    pub(super) garden_path: String,
+    pub(crate) garden_path: String,
 }
 
 #[derive(Debug, clap::Parser)]
@@ -58,10 +61,10 @@ pub(super) struct SubgArgs {
     version = clap::crate_version!(),
     author = clap::crate_authors!(),
 )]
-pub(super) struct Subg {
+pub(crate) struct Subg {
     #[command(flatten)]
-    pub(super) args: SubgArgs,
+    pub(crate) args: SubgArgs,
 
     #[command(subcommand)]
-    pub(super) command: SubgCommands,
+    pub(crate) command: SubgCommands,
 }

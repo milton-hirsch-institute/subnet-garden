@@ -1,7 +1,8 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::args::{SpaceArgs, SpaceCommands, SpaceNewArgs, SubgArgs};
+use crate::args::space::{SpaceArgs, SpaceCommands, SpaceNewArgs};
+use crate::args::SubgArgs;
 use cidr::IpCidr;
 use std::str::FromStr;
 use subnet_garden_core::SubnetGarden;
