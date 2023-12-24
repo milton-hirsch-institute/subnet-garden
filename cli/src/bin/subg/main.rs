@@ -79,6 +79,9 @@ fn main() {
         SubgCommands::Cidrs(_) => {
             subnet::cidrs(&subg.args);
         }
+        SubgCommands::Names(_) => {
+            subnet::names(&subg.args);
+        }
     }
 }
 

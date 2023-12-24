@@ -39,6 +39,15 @@ pub(crate) fn cidrs(subg: &SubgArgs) {
     }
 }
 
+pub(crate) fn names(subg: &SubgArgs) {
+    let garden = crate::load_garden(&subg.garden_path);
+    let mut names = garden.names();
+    names.sort();
+    for name in names {
+        println!("{}", name);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -175,6 +184,38 @@ mod tests {
                 .assert()
                 .success()
                 .stdout("10.10.0.0/28\n10.10.0.64/26\n")
+                .stderr("");
+        }
+    }
+
+    mod names {
+        use super::*;
+
+        fn new_names_test() -> Test {
+            let mut test = tests::new_test();
+            test.store();
+            test.subg.arg("names");
+            test
+        }
+
+        #[test]
+        fn no_names() {
+            let mut test = new_names_test();
+            test.subg.assert().success().stdout("").stderr("");
+        }
+
+        #[test]
+        fn has_names() {
+            let mut test = new_names_test();
+            test.garden.allocate(4, Some("test1")).unwrap();
+            test.garden.allocate(5, None).unwrap();
+            test.garden.allocate(6, Some("test2")).unwrap();
+            test.garden.allocate(4, Some("test0")).unwrap();
+            test.store();
+            test.subg
+                .assert()
+                .success()
+                .stdout("test0\ntest1\ntest2\n")
                 .stderr("");
         }
     }
