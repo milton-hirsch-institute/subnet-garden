@@ -1,15 +1,12 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-pub mod space;
-mod subspace;
 #[cfg(test)]
-mod tests;
-mod util;
+pub(crate) mod tests;
 
 use crate::errors::{CreateError, DeleteError};
+use crate::space::SubnetGarden;
 use cidr::IpCidr;
-use space::SubnetGarden;
 use std::collections::BTreeMap;
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, PartialEq)]

@@ -4,7 +4,7 @@
 use super::*;
 use crate::tests::{TEST_CIDR4, TEST_CIDR6};
 
-pub(super) fn new_test_space() -> SubnetGardenLibrary {
+pub(crate) fn new_test_garden() -> SubnetGardenLibrary {
     let mut instance = SubnetGardenLibrary::new();
     instance.new_space("test4", TEST_CIDR4).unwrap();
     instance.new_space("test6", TEST_CIDR6).unwrap();
@@ -25,14 +25,14 @@ mod new_space {
 
     #[test]
     fn duplicate_object() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let result = instance.new_space("test4", TEST_CIDR4);
         assert_eq!(result.err(), Some(CreateError::DuplicateObject));
     }
 
     #[test]
     fn success() {
-        let instance = new_test_space();
+        let instance = new_test_garden();
         assert_eq!(instance.space_count(), 2);
     }
 }
@@ -42,14 +42,14 @@ mod delete_space {
 
     #[test]
     fn delete_space_no_such_object() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let result = instance.delete_space("does-not-exist");
         assert_eq!(result.err(), Some(DeleteError::NoSuchObject));
     }
 
     #[test]
     fn delete_space_success() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         instance.delete_space("test4").unwrap();
         assert_eq!(instance.space_count(), 1);
     }
@@ -60,14 +60,14 @@ mod space_mut {
 
     #[test]
     fn space_success() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test4").unwrap();
         assert_eq!(*space.cidr(), TEST_CIDR4);
     }
 
     #[test]
     fn space_not_found() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         assert!(instance.space_mut("does-not-exist").is_none());
     }
 }
@@ -77,7 +77,7 @@ mod space_names {
 
     #[test]
     fn space_names_success() {
-        let instance = new_test_space();
+        let instance = new_test_garden();
         let mut names = instance.space_names();
         names.sort();
         assert_eq!(names.len(), 2);
@@ -87,7 +87,7 @@ mod space_names {
 
     #[test]
     fn spaces_success() {
-        let instance = new_test_space();
+        let instance = new_test_garden();
         let mut spaces = instance.spaces();
         spaces.sort_by(|a, b| a.cidr().cmp(b.cidr()));
         assert_eq!(spaces.len(), 2);
@@ -97,7 +97,7 @@ mod space_names {
 
     #[test]
     fn entries_success() {
-        let instance = new_test_space();
+        let instance = new_test_garden();
         let mut entries = instance.entries();
         entries.sort_by(|a, b| a.0.cmp(&b.0));
         assert_eq!(entries.len(), 2);
@@ -114,7 +114,7 @@ mod serialize {
 
     #[test]
     fn success() {
-        let instance = new_test_space();
+        let instance = new_test_garden();
 
         let json = to_string(&instance).unwrap();
         assert_eq!(

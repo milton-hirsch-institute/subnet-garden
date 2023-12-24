@@ -1,19 +1,20 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-use super::super::tests::*;
 use super::*;
 use crate::tests::*;
+
+use crate::errors::AllocateError;
+use crate::library::tests::*;
 use cidr::{IpCidr, Ipv4Cidr, Ipv6Cidr};
 use std::net::{Ipv4Addr, Ipv6Addr};
 
 mod allocate {
     use super::*;
-    use crate::errors::AllocateError;
 
     #[test]
     fn too_many_bits() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test4").unwrap();
         let result = space.allocate(17, None);
         assert_eq!(result.err(), Some(AllocateError::NoSpaceAvailable));
@@ -21,7 +22,7 @@ mod allocate {
 
     #[test]
     fn no_space_available() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test4").unwrap();
         space.allocate(16, None).unwrap();
         let result = space.allocate(16, None);
@@ -30,7 +31,7 @@ mod allocate {
 
     #[test]
     fn allocate_name_already_exists() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test4").unwrap();
         space.allocate(4, Some("a-name")).unwrap();
         let result = space.allocate(4, Some("a-name"));
@@ -39,7 +40,7 @@ mod allocate {
 
     #[test]
     fn name_is_not_cidr_record() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test4").unwrap();
         space.allocate(4, Some("10.20.0.16/28")).unwrap();
         let result = space.allocate(4, None);
@@ -48,7 +49,7 @@ mod allocate {
 
     #[test]
     fn allocate_named() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test4").unwrap();
         let result = space.allocate(4, Some("a-name")).unwrap();
         let looked_up = space.find_by_name("a-name").unwrap();
@@ -57,7 +58,7 @@ mod allocate {
 
     #[test]
     fn allocate_success_v4() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test4").unwrap();
         let result = space.allocate(4, None).unwrap();
         assert_eq!(
@@ -68,7 +69,7 @@ mod allocate {
 
     #[test]
     fn allocate_success_v6() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test6").unwrap();
         let result = space.allocate(4, None).unwrap();
         assert_eq!(
@@ -79,7 +80,7 @@ mod allocate {
 
     #[test]
     fn allocate_multi_sizes() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test4").unwrap();
         let result1 = space.allocate(4, None).unwrap();
         assert_eq!(
@@ -95,7 +96,7 @@ mod allocate {
 
     #[test]
     fn max_bits() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test4").unwrap();
         let result = space.allocate(16, None).unwrap();
         assert_eq!(
@@ -111,7 +112,7 @@ mod claim {
 
     #[test]
     fn out_of_range() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test4").unwrap();
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 21, 0, 0), 28).unwrap());
         let result = space.claim(&cidr, None);
@@ -120,7 +121,7 @@ mod claim {
 
     #[test]
     fn already_claimed() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test4").unwrap();
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
         space.claim(&cidr, None).unwrap();
@@ -130,7 +131,7 @@ mod claim {
 
     #[test]
     fn already_allocated() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test4").unwrap();
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
         space.allocate(16, None).unwrap();
@@ -140,7 +141,7 @@ mod claim {
 
     #[test]
     fn already_named() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test4").unwrap();
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 16), 28).unwrap());
         space.allocate(4, Some("a-name")).unwrap();
@@ -150,7 +151,7 @@ mod claim {
 
     #[test]
     fn unnamed() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test4").unwrap();
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
         let result = space.claim(&cidr, None);
@@ -159,7 +160,7 @@ mod claim {
 
     #[test]
     fn named() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test4").unwrap();
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
         let result = space.claim(&cidr, Some("a-name"));
@@ -175,7 +176,7 @@ mod rename {
 
     #[test]
     fn not_found() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test4").unwrap();
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 21, 0, 0), 28).unwrap());
         let result = space.rename(&cidr, Some("a-name"));
@@ -184,7 +185,7 @@ mod rename {
     }
     #[test]
     fn already_not_set() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test4").unwrap();
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
         space.claim(&cidr, None).unwrap();
@@ -193,7 +194,7 @@ mod rename {
     }
     #[test]
     fn same_name() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test4").unwrap();
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
         space.claim(&cidr, Some("same-name")).unwrap();
@@ -203,7 +204,7 @@ mod rename {
     }
     #[test]
     fn already_exists() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test4").unwrap();
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 16), 28).unwrap());
         let existing_cidr = space.allocate(4, Some("already-exists")).unwrap();
@@ -216,7 +217,7 @@ mod rename {
 
     #[test]
     fn success() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test4").unwrap();
         let cidr = space.allocate(4, Some("old-name")).unwrap();
         let result = space.rename(&cidr, Some("new-name"));
@@ -230,7 +231,7 @@ mod names {
     use super::*;
     #[test]
     fn success() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test4").unwrap();
         space.allocate(4, Some("a-name")).unwrap();
         space.allocate(4, Some("b-name")).unwrap();
@@ -247,7 +248,7 @@ mod cidrs {
     use super::*;
     #[test]
     fn no_cidrs() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test4").unwrap();
         let cidrs = space.cidrs();
         assert_eq!(cidrs.len(), 0);
@@ -255,7 +256,7 @@ mod cidrs {
 
     #[test]
     fn some() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test4").unwrap();
         space.allocate(4, None).unwrap();
         space.allocate(5, None).unwrap();
@@ -298,7 +299,7 @@ mod entries {
 
     #[test]
     fn success() {
-        let mut instance = new_test_space();
+        let mut instance = new_test_garden();
         let space = instance.space_mut("test4").unwrap();
         space.allocate(4, Some("a-name")).unwrap();
         space.allocate(4, Some("b-name")).unwrap();

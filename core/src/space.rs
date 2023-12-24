@@ -5,7 +5,7 @@
 mod tests;
 
 use crate::errors::{AllocateError, RenameError};
-use crate::library::subspace::{State, Subspace};
+use crate::subspace::{State, Subspace};
 use crate::{AllocateResult, Bits, CidrRecord, RenameResult};
 use cidr::IpCidr;
 use serde::ser::SerializeStruct;

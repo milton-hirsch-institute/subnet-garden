@@ -1,7 +1,7 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::library::util;
+use crate::util;
 use crate::Bits;
 use cidr::IpCidr;
 use cidr_utils::separator;
@@ -14,16 +14,16 @@ pub(crate) enum State {
 }
 
 #[derive(PartialEq, Debug)]
-pub(super) struct Subspace {
-    pub(super) cidr: IpCidr,
-    pub(super) name: Option<String>,
-    pub(super) high: Option<Box<Self>>,
-    pub(super) low: Option<Box<Self>>,
-    pub(super) state: State,
+pub(crate) struct Subspace {
+    pub(crate) cidr: IpCidr,
+    pub(crate) name: Option<String>,
+    pub(crate) high: Option<Box<Self>>,
+    pub(crate) low: Option<Box<Self>>,
+    pub(crate) state: State,
 }
 
 impl Subspace {
-    pub(super) fn new(cidr: IpCidr) -> Self {
+    pub(crate) fn new(cidr: IpCidr) -> Self {
         Subspace {
             cidr,
             name: None,
@@ -32,11 +32,11 @@ impl Subspace {
             state: State::Free,
         }
     }
-    pub(super) fn host_length(self: &Self) -> Bits {
+    pub(crate) fn host_length(self: &Self) -> Bits {
         return util::max_bits(&self.cidr) - self.cidr.network_length();
     }
 
-    pub(super) fn split(self: &mut Self) {
+    pub(crate) fn split(self: &mut Self) {
         self.state = State::Unavailable;
         let new_network_length = self.cidr.network_length() + 1;
         let low_cidr: IpCidr;
@@ -59,7 +59,7 @@ impl Subspace {
         self.high = Some(Box::new(Subspace::new(high_cidr)));
     }
 
-    pub(super) fn find_free_space(&mut self, host_length: Bits) -> Option<&mut Self> {
+    pub(crate) fn find_free_space(&mut self, host_length: Bits) -> Option<&mut Self> {
         if host_length > self.host_length() {
             return None;
         }
@@ -80,7 +80,7 @@ impl Subspace {
         return None;
     }
 
-    pub(super) fn claim(&mut self, cidr: &IpCidr, name: Option<&str>) -> bool {
+    pub(crate) fn claim(&mut self, cidr: &IpCidr, name: Option<&str>) -> bool {
         if !util::cidr_contains(&self.cidr, cidr) {
             return false;
         }
@@ -108,7 +108,7 @@ impl Subspace {
         self.high.as_deref_mut().unwrap().claim(cidr, name)
     }
 
-    pub(super) fn find_record(&mut self, cidr: &IpCidr) -> Option<&mut Self> {
+    pub(crate) fn find_record(&mut self, cidr: &IpCidr) -> Option<&mut Self> {
         if !util::cidr_contains(&self.cidr, cidr) {
             return None;
         }

@@ -9,6 +9,10 @@ use std::str::FromStr;
 
 pub mod errors;
 pub mod library;
+pub mod space;
+mod subspace;
+mod util;
+
 pub type CreateResult<T> = Result<T, CreateError>;
 
 pub type DeleteResult<T> = Result<T, DeleteError>;
