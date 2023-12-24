@@ -87,7 +87,7 @@ pub(crate) enum SubgCommands {
 #[derive(Debug, clap::Args)]
 /// Subnet gardener command line interface
 pub(crate) struct SubgArgs {
-    #[arg(short, long, default_value = DEFAULT_STORAGE_PATH)]
+    #[arg(short, long, default_value = DEFAULT_STORAGE_PATH, env = "SUBG_GARDEN_PATH")]
     pub(crate) garden_path: String,
 }
 

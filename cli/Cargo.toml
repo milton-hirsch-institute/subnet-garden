@@ -15,7 +15,7 @@ name = "subg"
 
 [dependencies]
 cidr = "^0.2"
-clap = { version="^4", features = ["cargo", "derive"] }
+clap = { version="^4", features = ["cargo", "derive", "env"] }
 exitcode = "^1"
 subnet-garden-core = { path = "../core", version="^0.1" }
 serde_json = "^1"
