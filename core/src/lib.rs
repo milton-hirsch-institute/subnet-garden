@@ -8,7 +8,7 @@ use serde::ser::SerializeStruct;
 use std::str::FromStr;
 
 pub mod errors;
-pub mod memory;
+pub mod library;
 pub type CreateResult<T> = Result<T, CreateError>;
 
 pub type DeleteResult<T> = Result<T, DeleteError>;

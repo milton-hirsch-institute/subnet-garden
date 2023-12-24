@@ -11,7 +11,7 @@ use std::path::Path;
 use std::process::exit;
 use subcommands::init;
 use subcommands::subnet;
-use subnet_garden_core::memory::space as memory_space;
+use subnet_garden_core::library::space as memory_space;
 
 mod args;
 mod subcommands;

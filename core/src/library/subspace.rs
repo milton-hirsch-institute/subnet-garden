@@ -1,7 +1,7 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::memory::util;
+use crate::library::util;
 use crate::Bits;
 use cidr::IpCidr;
 use cidr_utils::separator;
