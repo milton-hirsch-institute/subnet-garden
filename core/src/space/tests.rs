@@ -7,7 +7,9 @@ use crate::tests::*;
 use crate::errors::AllocateError;
 use crate::library::tests::*;
 use cidr::{IpCidr, Ipv4Cidr, Ipv6Cidr};
+use itertools::Itertools;
 use std::net::{Ipv4Addr, Ipv6Addr};
+use std::str::FromStr;
 
 mod allocate {
     use super::*;
@@ -103,6 +105,39 @@ mod allocate {
             result,
             IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 16).unwrap())
         );
+    }
+}
+
+mod free {
+    use super::*;
+
+    #[test]
+    fn out_of_range() {
+        let mut instance = new_test_garden();
+        let garden = instance.space_mut("test4").unwrap();
+        assert!(!garden.free(&IpCidr::from_str("20.20.0.0/16").unwrap()));
+    }
+
+    #[test]
+    fn free() {
+        let index_list = vec![0, 1, 2, 3];
+        for indices in index_list.iter().permutations(index_list.len()) {
+            let mut instance = new_test_garden();
+            let garden = instance.space_mut("test4").unwrap();
+            let mut cidrs = vec![];
+            for _ in 0..index_list.len() {
+                cidrs.push(garden.allocate(14, None).unwrap());
+            }
+            fn free_test(garden: &mut SubnetGarden, cidr: &IpCidr) {
+                assert!(garden.free(&cidr));
+                assert!(!garden.free(&cidr));
+                garden.claim(cidr, None).unwrap();
+            }
+            for index in indices {
+                let cidr = cidrs[*index];
+                free_test(garden, &cidr);
+            }
+        }
     }
 }
 

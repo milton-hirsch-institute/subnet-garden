@@ -79,6 +79,39 @@ impl Subspace {
         }
         return None;
     }
+    pub(crate) fn free(&mut self, cidr: &IpCidr) -> bool {
+        if !util::cidr_contains(&self.cidr, cidr) {
+            return false;
+        }
+
+        match self.state {
+            State::Allocated => match self.cidr == *cidr {
+                true => {
+                    self.state = State::Free;
+                    self.name = None;
+                    return true;
+                }
+                false => {
+                    return false;
+                }
+            },
+            State::Free => false,
+            State::Unavailable => {
+                let low = self.low.as_deref_mut().unwrap();
+                let high = self.high.as_deref_mut().unwrap();
+                let freed = low.free(cidr) || high.free(cidr);
+                if freed {
+                    if low.state == State::Free && high.state == State::Free {
+                        self.low = None;
+                        self.high = None;
+                        self.state = State::Free;
+                    }
+                }
+
+                freed
+            }
+        }
+    }
 
     pub(crate) fn claim(&mut self, cidr: &IpCidr, name: Option<&str>) -> bool {
         if !util::cidr_contains(&self.cidr, cidr) {

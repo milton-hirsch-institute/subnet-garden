@@ -66,6 +66,10 @@ impl SubnetGarden {
         }
     }
 
+    pub fn free(&mut self, cidr: &IpCidr) -> bool {
+        return self.root.free(cidr);
+    }
+
     pub fn claim(&mut self, cidr: &IpCidr, name: Option<&str>) -> AllocateResult<()> {
         if let Some(name) = name {
             if self.names.contains_key(name) {
