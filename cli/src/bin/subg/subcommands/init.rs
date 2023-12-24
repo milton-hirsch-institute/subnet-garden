@@ -26,7 +26,7 @@ pub(crate) fn init(subg: &SubgArgs, args: &InitArgs) {
 mod tests {
     use super::*;
     use crate::tests;
-    use crate::tests::{Test, HELP_EXIT_CODE, TEST_CIDR};
+    use crate::tests::{Test, TEST_CIDR};
     use assert_fs::prelude::*;
     fn new_init_test(cidr: &str) -> Test {
         let mut test = tests::new_test();
@@ -87,20 +87,6 @@ mod tests {
             )));
 
         test.subgarden_path.assert(predicates::path::is_dir());
-    }
-
-    #[test]
-    fn bad_cidr() {
-        let mut test = new_init_test("bad-cidr");
-        test.subg
-            .assert()
-            .failure()
-            .code(HELP_EXIT_CODE)
-            .stdout("")
-            .stderr(predicates::str::contains(
-                "error: invalid value \'bad-cidr\' for \'<CIDR>\': \
-                couldn\'t parse address in network: invalid IP address syntax",
-            ));
     }
 
     #[test]

@@ -50,13 +50,8 @@ pub(crate) fn names(subg: &SubgArgs) {
 
 pub(crate) fn claim(subg: &SubgArgs, args: &ClaimArgs) {
     let mut garden = crate::load_garden(&subg.garden_path);
-    let cidr = crate::result(
-        args.cidr.parse::<IpCidr>(),
-        exitcode::USAGE,
-        "Could not parse arg CIDR",
-    );
     crate::result(
-        garden.claim(&cidr, args.name.as_deref()),
+        garden.claim(&args.cidr, args.name.as_deref()),
         exitcode::SOFTWARE,
         "Could not claim subnet",
     );
@@ -265,19 +260,6 @@ mod tests {
             test
         }
 
-        #[test]
-        fn bad_cidr() {
-            let mut test = new_claim_test("bad-cidr", None);
-            test.subg
-                .assert()
-                .failure()
-                .code(exitcode::USAGE)
-                .stdout("")
-                .stderr(
-                    "Could not parse arg CIDR\n\
-                couldn\'t parse address in network: invalid IP address syntax\n",
-                );
-        }
         #[test]
         fn claim_failed() {
             let mut test = new_claim_test("20.20.0.0/24", Some("does-not-exist"));

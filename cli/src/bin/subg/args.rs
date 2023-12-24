@@ -1,6 +1,7 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
+use cidr::IpCidr;
 use subnet_garden_core::Bits;
 
 pub(crate) const DEFAULT_STORAGE_PATH: &str = "subnet-garden.json";
@@ -56,7 +57,7 @@ pub(crate) struct NamesArgs {}
 pub(crate) struct ClaimArgs {
     #[arg()]
     /// CIDR subnet to claim
-    pub(crate) cidr: String,
+    pub(crate) cidr: IpCidr,
 
     #[arg()]
     /// Name of the subnet to claim
