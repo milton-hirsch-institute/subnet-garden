@@ -8,6 +8,8 @@ pub(crate) const DEFAULT_STORAGE_PATH: &str = "subnet-garden.json";
 pub(crate) const SUBG_COMMAND: &str = "subg";
 
 pub(crate) mod init {
+    use cidr::IpCidr;
+
     #[derive(Debug, clap::Args)]
     /// Initialize the subnet garden file
     pub(crate) struct InitArgs {
@@ -17,7 +19,7 @@ pub(crate) mod init {
 
         #[arg()]
         /// Garden subnet CIDR
-        pub(crate) cidr: String,
+        pub(crate) cidr: IpCidr,
     }
 }
 

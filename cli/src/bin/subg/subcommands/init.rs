@@ -9,11 +9,6 @@ use subnet_garden_core::garden;
 
 pub(crate) fn init(subg: &SubgArgs, args: &InitArgs) {
     let path = Path::new(&subg.garden_path);
-    let cidr = crate::result(
-        args.cidr.parse(),
-        exitcode::USAGE,
-        "Could not parse arg CIDR",
-    );
     if path.exists() {
         if !args.force {
             eprintln!("Garden file already exists at {}", path.display());
@@ -24,14 +19,14 @@ pub(crate) fn init(subg: &SubgArgs, args: &InitArgs) {
             exit(exitcode::CANTCREAT);
         }
     }
-    crate::store_space(&subg.garden_path, &garden::SubnetGarden::new(cidr));
+    crate::store_space(&subg.garden_path, &garden::SubnetGarden::new(args.cidr));
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::tests;
-    use crate::tests::{Test, TEST_CIDR};
+    use crate::tests::{Test, HELP_EXIT_CODE, TEST_CIDR};
     use assert_fs::prelude::*;
     fn new_init_test(cidr: &str) -> Test {
         let mut test = tests::new_test();
@@ -100,12 +95,12 @@ mod tests {
         test.subg
             .assert()
             .failure()
-            .code(exitcode::USAGE)
+            .code(HELP_EXIT_CODE)
             .stdout("")
-            .stderr(
-                "Could not parse arg CIDR\n\
-            couldn\'t parse address in network: invalid IP address syntax\n",
-            );
+            .stderr(predicates::str::contains(
+                "error: invalid value \'bad-cidr\' for \'<CIDR>\': \
+                couldn\'t parse address in network: invalid IP address syntax",
+            ));
     }
 
     #[test]
