@@ -59,7 +59,7 @@ mod tests {
                 .failure()
                 .code(exitcode::SOFTWARE)
                 .stdout("")
-                .stderr("Could not allocate subnet\nNo garden available\n");
+                .stderr("Could not allocate subnet\nNo space available\n");
         }
 
         #[test]
