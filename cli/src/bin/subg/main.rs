@@ -33,7 +33,7 @@ where
     }
 }
 
-fn load_garden(garden_path: &str) -> memory_space::MemorySpace {
+fn load_garden(garden_path: &str) -> memory_space::SubnetGarden {
     let path = Path::new(garden_path);
     if !path.exists() {
         eprintln!("Garden file does not exist at {}", path.display());
@@ -47,7 +47,7 @@ fn load_garden(garden_path: &str) -> memory_space::MemorySpace {
     serde_json::from_reader(garden_file).unwrap()
 }
 
-fn store_space(garden_path: &str, garden: &memory_space::MemorySpace) {
+fn store_space(garden_path: &str, garden: &memory_space::SubnetGarden) {
     let path = Path::new(garden_path);
 
     let mut garden_file = result(
@@ -91,7 +91,7 @@ mod tests {
         pub(crate) subg: assert_cmd::Command,
         pub(crate) _dir: assert_fs::TempDir,
         pub(crate) subgarden_path: ChildPath,
-        pub(crate) garden: memory_space::MemorySpace,
+        pub(crate) garden: memory_space::SubnetGarden,
     }
 
     impl Test {
@@ -114,7 +114,7 @@ mod tests {
             subg: test,
             _dir: dir,
             subgarden_path,
-            garden: memory_space::MemorySpace::new(TEST_CIDR.parse().unwrap()),
+            garden: memory_space::SubnetGarden::new(TEST_CIDR.parse().unwrap()),
         }
     }
 

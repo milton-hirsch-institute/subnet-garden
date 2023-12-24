@@ -9,12 +9,12 @@ mod util;
 
 use crate::errors::{CreateError, DeleteError};
 use cidr::IpCidr;
-use space::MemorySpace;
+use space::SubnetGarden;
 use std::collections::BTreeMap;
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, PartialEq)]
 pub struct MemorySubnetGarden {
-    spaces: BTreeMap<String, MemorySpace>,
+    spaces: BTreeMap<String, SubnetGarden>,
 }
 
 impl MemorySubnetGarden {
@@ -26,11 +26,11 @@ impl MemorySubnetGarden {
     fn space_count(&self) -> usize {
         self.spaces.len()
     }
-    fn new_space(&mut self, name: &str, cidr: IpCidr) -> crate::CreateResult<&mut MemorySpace> {
+    fn new_space(&mut self, name: &str, cidr: IpCidr) -> crate::CreateResult<&mut SubnetGarden> {
         if self.spaces.contains_key(name) {
             return Err(CreateError::DuplicateObject);
         }
-        let space = MemorySpace::new(cidr);
+        let space = SubnetGarden::new(cidr);
         self.spaces.insert(name.to_string(), space);
         // Need to figure out how to return this without multiple lookup.
         return Ok(self.spaces.get_mut(name).unwrap());
@@ -43,7 +43,7 @@ impl MemorySubnetGarden {
         }
     }
 
-    fn space_mut(&mut self, name: &str) -> Option<&mut MemorySpace> {
+    fn space_mut(&mut self, name: &str) -> Option<&mut SubnetGarden> {
         return self.spaces.get_mut(name);
     }
 
@@ -51,11 +51,11 @@ impl MemorySubnetGarden {
         self.spaces.keys().cloned().collect()
     }
 
-    fn spaces(&self) -> Vec<&MemorySpace> {
+    fn spaces(&self) -> Vec<&SubnetGarden> {
         self.spaces.values().collect()
     }
 
-    fn entries(&self) -> Vec<(String, &MemorySpace)> {
+    fn entries(&self) -> Vec<(String, &SubnetGarden)> {
         self.spaces
             .iter()
             .map(|(name, space)| (name.clone(), space))

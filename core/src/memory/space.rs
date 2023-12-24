@@ -12,14 +12,14 @@ use serde::ser::SerializeStruct;
 use std::collections::HashMap;
 
 #[derive(PartialEq, Debug)]
-pub struct MemorySpace {
+pub struct SubnetGarden {
     root: Subspace,
     names: HashMap<String, IpCidr>,
 }
 
-impl MemorySpace {
+impl SubnetGarden {
     pub fn new(cidr: IpCidr) -> Self {
-        MemorySpace {
+        SubnetGarden {
             root: Subspace::new(cidr),
             names: HashMap::new(),
         }
@@ -142,7 +142,7 @@ impl MemorySpace {
     }
 }
 
-impl serde::Serialize for MemorySpace {
+impl serde::Serialize for SubnetGarden {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut space = serializer.serialize_struct("MemorySpace", 2)?;
         space.serialize_field("cidr", &self.root.cidr.to_string())?;
@@ -154,7 +154,7 @@ impl serde::Serialize for MemorySpace {
     }
 }
 
-impl<'s> serde::Deserialize<'s> for MemorySpace {
+impl<'s> serde::Deserialize<'s> for SubnetGarden {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'s>,
@@ -169,8 +169,8 @@ impl<'s> serde::Deserialize<'s> for MemorySpace {
         fn load_cidrs(
             entries: &Vec<CidrRecord>,
             cidr: &IpCidr,
-        ) -> Result<MemorySpace, AllocateError> {
-            let mut space = MemorySpace::new(*cidr);
+        ) -> Result<SubnetGarden, AllocateError> {
+            let mut space = SubnetGarden::new(*cidr);
             for entry in entries {
                 let entry_name = entry.name.as_deref();
                 space.claim(&entry.cidr, entry_name)?;
@@ -179,12 +179,12 @@ impl<'s> serde::Deserialize<'s> for MemorySpace {
         }
         struct MemorySpaceVisitor;
         impl<'s> serde::de::Visitor<'s> for MemorySpaceVisitor {
-            type Value = MemorySpace;
+            type Value = SubnetGarden;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                 formatter.write_str("struct MemorySpace")
             }
-            fn visit_seq<V>(self, mut seq: V) -> Result<MemorySpace, V::Error>
+            fn visit_seq<V>(self, mut seq: V) -> Result<SubnetGarden, V::Error>
             where
                 V: serde::de::SeqAccess<'s>,
             {

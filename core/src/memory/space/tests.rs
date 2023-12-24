@@ -338,7 +338,7 @@ mod space {
             #[test]
             fn parse_bad_network() {
                 let json = r#"{"cidr":"bad-network", "subnets": []}"#;
-                let err = serde_json::from_str::<MemorySpace>(json).unwrap_err();
+                let err = serde_json::from_str::<SubnetGarden>(json).unwrap_err();
                 assert_eq!(
                     err.to_string(),
                     "couldn't parse address in network: \
@@ -350,7 +350,7 @@ mod space {
             #[test]
             fn allocation_error() {
                 let json = r#"{"cidr":"10.10.0.0/24", "subnets": [{"cidr": "10.20.0.0/24", "name": null}]}"#;
-                let err = serde_json::from_str::<MemorySpace>(json).unwrap_err();
+                let err = serde_json::from_str::<SubnetGarden>(json).unwrap_err();
                 assert_eq!(
                     err.to_string(),
                     "No space available at line 1 column 76".to_string()
@@ -359,7 +359,7 @@ mod space {
 
             #[test]
             fn success() {
-                let mut space = MemorySpace::new(TEST_CIDR4);
+                let mut space = SubnetGarden::new(TEST_CIDR4);
                 space.allocate(4, Some("a-name")).unwrap();
                 space.allocate(4, Some("b-name")).unwrap();
                 space.allocate(4, None).unwrap();
@@ -375,7 +375,7 @@ mod space {
                     {\"cidr\":\"10.20.0.32/28\",\"name\":null}\
                     ]}"
                 );
-                let deserialize: MemorySpace = serde_json::from_str(&json).unwrap();
+                let deserialize: SubnetGarden = serde_json::from_str(&json).unwrap();
                 assert_eq!(deserialize, space);
             }
         }

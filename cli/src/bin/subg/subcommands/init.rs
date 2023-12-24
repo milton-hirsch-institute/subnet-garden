@@ -24,7 +24,7 @@ pub(crate) fn init(subg: &SubgArgs, args: &InitArgs) {
             exit(exitcode::CANTCREAT);
         }
     }
-    crate::store_space(&subg.garden_path, &memory::space::MemorySpace::new(cidr));
+    crate::store_space(&subg.garden_path, &memory::space::SubnetGarden::new(cidr));
 }
 
 #[cfg(test)]
@@ -43,7 +43,7 @@ mod tests {
         let mut test = new_init_test(TEST_CIDR);
         test.subg.assert().success().stdout("").stderr("");
 
-        let garden = memory::space::MemorySpace::new(TEST_CIDR.parse().unwrap());
+        let garden = memory::space::SubnetGarden::new(TEST_CIDR.parse().unwrap());
         let expected_content = serde_json::to_string_pretty(&garden).unwrap();
         test.subgarden_path.assert(expected_content);
     }
@@ -71,7 +71,7 @@ mod tests {
         test.subg.arg("--force");
         test.subg.assert().success().stdout("").stderr("");
 
-        let garden = memory::space::MemorySpace::new(TEST_CIDR.parse().unwrap());
+        let garden = memory::space::SubnetGarden::new(TEST_CIDR.parse().unwrap());
         let expected_content = serde_json::to_string_pretty(&garden).unwrap();
         test.subgarden_path.assert(expected_content);
     }
