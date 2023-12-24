@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::args::{AllocateArgs, SubgArgs};
-use subnet_garden_core::Space;
 
 pub(crate) fn allocate(subg: &SubgArgs, args: &AllocateArgs) {
     let mut garden = crate::load_garden(&subg.garden_path);

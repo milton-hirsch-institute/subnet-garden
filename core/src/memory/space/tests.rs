@@ -7,7 +7,6 @@ use crate::tests::*;
 
 mod space {
     use super::*;
-    use crate::SubnetGarden;
     use cidr::{IpCidr, Ipv4Cidr, Ipv6Cidr};
     use std::net::{Ipv4Addr, Ipv6Addr};
     mod allocate {

@@ -3,7 +3,6 @@
 
 use super::*;
 use crate::tests::{TEST_CIDR4, TEST_CIDR6};
-use crate::SubnetGarden;
 
 pub(super) fn new_test_space() -> MemorySubnetGarden {
     let mut instance = MemorySubnetGarden::new();

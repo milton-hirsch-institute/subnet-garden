@@ -6,7 +6,7 @@ mod tests;
 
 use crate::errors::{AllocateError, RenameError};
 use crate::memory::subspace::{State, Subspace};
-use crate::{AllocateResult, Bits, CidrRecord, RenameResult, Space};
+use crate::{AllocateResult, Bits, CidrRecord, RenameResult};
 use cidr::IpCidr;
 use serde::ser::SerializeStruct;
 use std::collections::HashMap;
@@ -41,18 +41,15 @@ impl MemorySpace {
         }
         return subspaces;
     }
-}
-
-impl Space for MemorySpace {
-    fn cidr(&self) -> &IpCidr {
+    pub fn cidr(&self) -> &IpCidr {
         &self.root.cidr
     }
 
-    fn find_by_name(&self, name: &str) -> Option<IpCidr> {
+    pub fn find_by_name(&self, name: &str) -> Option<IpCidr> {
         self.names.get(name).copied()
     }
 
-    fn allocate(&mut self, bits: Bits, name: Option<&str>) -> AllocateResult<IpCidr> {
+    pub fn allocate(&mut self, bits: Bits, name: Option<&str>) -> AllocateResult<IpCidr> {
         match self.root.find_free_space(bits) {
             Some(subspace) => {
                 if let Some(name) = name {
@@ -69,7 +66,7 @@ impl Space for MemorySpace {
         }
     }
 
-    fn claim(&mut self, cidr: &IpCidr, name: Option<&str>) -> AllocateResult<()> {
+    pub fn claim(&mut self, cidr: &IpCidr, name: Option<&str>) -> AllocateResult<()> {
         if let Some(name) = name {
             if self.names.contains_key(name) {
                 return Err(AllocateError::DuplicateName);
@@ -82,7 +79,7 @@ impl Space for MemorySpace {
         return Err(AllocateError::NoSpaceAvailable);
     }
 
-    fn rename(&mut self, cidr: &IpCidr, name: Option<&str>) -> RenameResult<()> {
+    pub fn rename(&mut self, cidr: &IpCidr, name: Option<&str>) -> RenameResult<()> {
         // Find record that is being renamed
         let subspace: &mut Subspace = match self.root.find_record(cidr) {
             Some(record) => record,
@@ -116,11 +113,11 @@ impl Space for MemorySpace {
         Ok(())
     }
 
-    fn names(&self) -> Vec<String> {
+    pub fn names(&self) -> Vec<String> {
         self.names.keys().cloned().collect()
     }
 
-    fn cidrs(&self) -> Vec<&IpCidr> {
+    pub fn cidrs(&self) -> Vec<&IpCidr> {
         let allocated_subspaces = self.list_allocated_subspaces();
         let mut cidrs = Vec::new();
         cidrs.reserve(allocated_subspaces.len());
@@ -130,7 +127,7 @@ impl Space for MemorySpace {
         cidrs
     }
 
-    fn entries(&self) -> Vec<crate::CidrRecord> {
+    pub fn entries(&self) -> Vec<crate::CidrRecord> {
         let mut allocated_subspaces = self.list_allocated_subspaces();
         allocated_subspaces.sort_by(|subspace1, subspace2| subspace1.cidr.cmp(&subspace2.cidr));
         let mut entries = Vec::new();

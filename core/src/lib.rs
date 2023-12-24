@@ -130,39 +130,6 @@ impl<'s> serde::Deserialize<'s> for CidrRecord {
     }
 }
 
-pub trait Space {
-    fn cidr(&self) -> &IpCidr;
-
-    fn find_by_name(&self, name: &str) -> Option<IpCidr>;
-
-    fn allocate(&mut self, host_length: Bits, name: Option<&str>) -> AllocateResult<IpCidr>;
-
-    fn claim(&mut self, cidr: &IpCidr, name: Option<&str>) -> AllocateResult<()>;
-
-    fn rename(&mut self, cidr: &IpCidr, name: Option<&str>) -> RenameResult<()>;
-
-    fn names(&self) -> Vec<String>;
-
-    fn cidrs(&self) -> Vec<&IpCidr>;
-
-    fn entries(&self) -> Vec<CidrRecord>;
-}
-
-pub trait SubnetGarden {
-    fn space_count(&self) -> usize;
-    fn new_space(&mut self, name: &str, cidr: IpCidr) -> CreateResult<&mut dyn Space>;
-
-    fn delete_space(&mut self, name: &str) -> DeleteResult<()>;
-
-    fn space_mut(&mut self, name: &str) -> Option<&mut dyn Space>;
-
-    fn space_names(&self) -> Vec<String>;
-
-    fn spaces(&self) -> Vec<&dyn Space>;
-
-    fn entries(&self) -> Vec<(String, &dyn Space)>;
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -8,7 +8,6 @@ mod tests;
 mod util;
 
 use crate::errors::{CreateError, DeleteError};
-use crate::Space;
 use cidr::IpCidr;
 use space::MemorySpace;
 use std::collections::BTreeMap;
@@ -24,13 +23,10 @@ impl MemorySubnetGarden {
             spaces: BTreeMap::new(),
         }
     }
-}
-
-impl crate::SubnetGarden for MemorySubnetGarden {
     fn space_count(&self) -> usize {
         self.spaces.len()
     }
-    fn new_space(&mut self, name: &str, cidr: IpCidr) -> crate::CreateResult<&mut dyn Space> {
+    fn new_space(&mut self, name: &str, cidr: IpCidr) -> crate::CreateResult<&mut MemorySpace> {
         if self.spaces.contains_key(name) {
             return Err(CreateError::DuplicateObject);
         }
@@ -47,28 +43,22 @@ impl crate::SubnetGarden for MemorySubnetGarden {
         }
     }
 
-    fn space_mut(&mut self, name: &str) -> Option<&mut dyn Space> {
-        return self
-            .spaces
-            .get_mut(name)
-            .map(|space| space as &mut dyn Space);
+    fn space_mut(&mut self, name: &str) -> Option<&mut MemorySpace> {
+        return self.spaces.get_mut(name);
     }
 
     fn space_names(&self) -> Vec<String> {
         self.spaces.keys().cloned().collect()
     }
 
-    fn spaces(&self) -> Vec<&dyn Space> {
-        self.spaces
-            .values()
-            .map(|space| space as &dyn Space)
-            .collect()
+    fn spaces(&self) -> Vec<&MemorySpace> {
+        self.spaces.values().collect()
     }
 
-    fn entries(&self) -> Vec<(String, &dyn Space)> {
+    fn entries(&self) -> Vec<(String, &MemorySpace)> {
         self.spaces
             .iter()
-            .map(|(name, space)| (name.clone(), space as &dyn Space))
+            .map(|(name, space)| (name.clone(), space))
             .collect()
     }
 }
