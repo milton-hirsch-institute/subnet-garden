@@ -82,6 +82,9 @@ fn main() {
         SubgCommands::Names(_) => {
             subnet::names(&subg.args);
         }
+        SubgCommands::Claim(args) => {
+            subnet::claim(&subg.args, &args);
+        }
     }
 }
 

@@ -49,10 +49,23 @@ pub(crate) struct CidrsArgs {}
 /// List named subnets
 pub(crate) struct NamesArgs {}
 
+#[derive(Debug, clap::Args)]
+/// Claim subnet
+pub(crate) struct ClaimArgs {
+    #[arg()]
+    /// CIDR subnet to claim
+    pub(crate) cidr: String,
+
+    #[arg()]
+    /// Name of the subnet to claim
+    pub(crate) name: Option<String>,
+}
+
 #[derive(Debug, clap::Subcommand)]
 pub(crate) enum SubgCommands {
     Allocate(AllocateArgs),
     Cidrs(CidrsArgs),
+    Claim(ClaimArgs),
     Free(FreeArgs),
     Init(init::InitArgs),
     Names(NamesArgs),

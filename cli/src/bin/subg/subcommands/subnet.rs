@@ -1,7 +1,7 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::args::{AllocateArgs, FreeArgs, SubgArgs};
+use crate::args::{AllocateArgs, ClaimArgs, FreeArgs, SubgArgs};
 use cidr::IpCidr;
 use std::process::exit;
 
@@ -46,6 +46,21 @@ pub(crate) fn names(subg: &SubgArgs) {
     for name in names {
         println!("{}", name);
     }
+}
+
+pub(crate) fn claim(subg: &SubgArgs, args: &ClaimArgs) {
+    let mut garden = crate::load_garden(&subg.garden_path);
+    let cidr = crate::result(
+        args.cidr.parse::<IpCidr>(),
+        exitcode::USAGE,
+        "Could not parse arg CIDR",
+    );
+    crate::result(
+        garden.claim(&cidr, args.name.as_deref()),
+        exitcode::SOFTWARE,
+        "Could not claim subnet",
+    );
+    crate::store_space(&subg.garden_path, &garden);
 }
 
 #[cfg(test)]
@@ -217,6 +232,68 @@ mod tests {
                 .success()
                 .stdout("test0\ntest1\ntest2\n")
                 .stderr("");
+        }
+    }
+
+    mod claim {
+        use super::*;
+        fn new_claim_test(cidr: &str, name: Option<&str>) -> Test {
+            let mut test = tests::new_test();
+            test.store();
+            test.subg.arg("claim").arg(cidr);
+            if let Some(name) = name {
+                test.subg.arg(name);
+            }
+            test
+        }
+
+        #[test]
+        fn bad_cidr() {
+            let mut test = new_claim_test("bad-cidr", None);
+            test.subg
+                .assert()
+                .failure()
+                .code(exitcode::USAGE)
+                .stdout("")
+                .stderr(
+                    "Could not parse arg CIDR\n\
+                couldn\'t parse address in network: invalid IP address syntax\n",
+                );
+        }
+        #[test]
+        fn claim_failed() {
+            let mut test = new_claim_test("20.20.0.0/24", Some("does-not-exist"));
+            test.subg
+                .assert()
+                .failure()
+                .code(exitcode::SOFTWARE)
+                .stdout("")
+                .stderr(
+                    "Could not claim subnet\n\
+                No space available\n",
+                );
+        }
+
+        #[test]
+        fn unnamed() {
+            let mut test = new_claim_test("10.10.0.0/24", None);
+            test.subg.assert().success().stdout("").stderr("");
+            test.load();
+            let subnets = test.garden.entries().to_vec();
+            assert_eq!(subnets.len(), 1);
+            assert_eq!(subnets[0].name, None);
+            assert_eq!(subnets[0].cidr.to_string(), "10.10.0.0/24");
+        }
+
+        #[test]
+        fn named() {
+            let mut test = new_claim_test("10.10.0.0/24", Some("test"));
+            test.subg.assert().success().stdout("").stderr("");
+            test.load();
+            let subnets = test.garden.entries().to_vec();
+            assert_eq!(subnets.len(), 1);
+            assert_eq!(subnets[0].name.clone().unwrap(), "test");
+            assert_eq!(subnets[0].cidr.to_string(), "10.10.0.0/24");
         }
     }
 }
