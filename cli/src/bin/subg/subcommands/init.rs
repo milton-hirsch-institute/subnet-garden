@@ -5,7 +5,7 @@ use crate::args::init::InitArgs;
 use crate::args::SubgArgs;
 use std::path::Path;
 use std::process::exit;
-use subnet_garden_core::space;
+use subnet_garden_core::garden;
 
 pub(crate) fn init(subg: &SubgArgs, args: &InitArgs) {
     let path = Path::new(&subg.garden_path);
@@ -24,7 +24,7 @@ pub(crate) fn init(subg: &SubgArgs, args: &InitArgs) {
             exit(exitcode::CANTCREAT);
         }
     }
-    crate::store_space(&subg.garden_path, &space::SubnetGarden::new(cidr));
+    crate::store_space(&subg.garden_path, &garden::SubnetGarden::new(cidr));
 }
 
 #[cfg(test)]
@@ -43,7 +43,7 @@ mod tests {
         let mut test = new_init_test(TEST_CIDR);
         test.subg.assert().success().stdout("").stderr("");
 
-        let garden = space::SubnetGarden::new(TEST_CIDR.parse().unwrap());
+        let garden = garden::SubnetGarden::new(TEST_CIDR.parse().unwrap());
         let expected_content = serde_json::to_string_pretty(&garden).unwrap();
         test.subgarden_path.assert(expected_content);
     }
@@ -71,7 +71,7 @@ mod tests {
         test.subg.arg("--force");
         test.subg.assert().success().stdout("").stderr("");
 
-        let garden = space::SubnetGarden::new(TEST_CIDR.parse().unwrap());
+        let garden = garden::SubnetGarden::new(TEST_CIDR.parse().unwrap());
         let expected_content = serde_json::to_string_pretty(&garden).unwrap();
         test.subgarden_path.assert(expected_content);
     }

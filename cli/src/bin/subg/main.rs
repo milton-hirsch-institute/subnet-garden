@@ -11,7 +11,7 @@ use std::path::Path;
 use std::process::exit;
 use subcommands::init;
 use subcommands::subnet;
-use subnet_garden_core::space;
+use subnet_garden_core::garden;
 
 mod args;
 mod subcommands;
@@ -33,7 +33,7 @@ where
     }
 }
 
-fn load_garden(garden_path: &str) -> space::SubnetGarden {
+fn load_garden(garden_path: &str) -> garden::SubnetGarden {
     let path = Path::new(garden_path);
     if !path.exists() {
         eprintln!("Garden file does not exist at {}", path.display());
@@ -47,7 +47,7 @@ fn load_garden(garden_path: &str) -> space::SubnetGarden {
     serde_json::from_reader(garden_file).unwrap()
 }
 
-fn store_space(garden_path: &str, garden: &space::SubnetGarden) {
+fn store_space(garden_path: &str, garden: &garden::SubnetGarden) {
     let path = Path::new(garden_path);
 
     let mut garden_file = result(
@@ -94,7 +94,7 @@ mod tests {
         pub(crate) subg: assert_cmd::Command,
         pub(crate) _dir: assert_fs::TempDir,
         pub(crate) subgarden_path: ChildPath,
-        pub(crate) garden: space::SubnetGarden,
+        pub(crate) garden: garden::SubnetGarden,
     }
 
     impl Test {
@@ -117,7 +117,7 @@ mod tests {
             subg: test,
             _dir: dir,
             subgarden_path,
-            garden: space::SubnetGarden::new(TEST_CIDR.parse().unwrap()),
+            garden: garden::SubnetGarden::new(TEST_CIDR.parse().unwrap()),
         }
     }
 

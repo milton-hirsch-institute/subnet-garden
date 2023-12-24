@@ -51,7 +51,7 @@ impl std::fmt::Display for AllocateError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             AllocateError::DuplicateName => write!(f, "Duplicate name"),
-            AllocateError::NoSpaceAvailable => write!(f, "No space available"),
+            AllocateError::NoSpaceAvailable => write!(f, "No garden available"),
         }
     }
 }

@@ -5,7 +5,7 @@
 pub(crate) mod tests;
 
 use crate::errors::{CreateError, DeleteError};
-use crate::space::SubnetGarden;
+use crate::garden::SubnetGarden;
 use cidr::IpCidr;
 use std::collections::BTreeMap;
 

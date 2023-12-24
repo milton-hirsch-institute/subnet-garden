@@ -388,7 +388,7 @@ mod entries {
             let err = serde_json::from_str::<SubnetGarden>(json).unwrap_err();
             assert_eq!(
                 err.to_string(),
-                "No space available at line 1 column 76".to_string()
+                "No garden available at line 1 column 76".to_string()
             );
         }
 
