@@ -1,7 +1,7 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::args::{AllocateArgs, ClaimArgs, FreeArgs, SubgArgs};
+use crate::args::{AllocateArgs, ClaimArgs, FreeArgs, RenameArgs, SubgArgs};
 use cidr::IpCidr;
 use std::process::exit;
 
@@ -59,6 +59,24 @@ pub(crate) fn claim(subg: &SubgArgs, args: &ClaimArgs) {
         garden.claim(&cidr, args.name.as_deref()),
         exitcode::SOFTWARE,
         "Could not claim subnet",
+    );
+    crate::store_space(&subg.garden_path, &garden);
+}
+
+pub(crate) fn rename(subg: &SubgArgs, args: &RenameArgs) {
+    let mut garden = crate::load_garden(&subg.garden_path);
+    let cidr = match garden.find_by_name(&args.identifier.as_str()) {
+        Some(cidr) => cidr,
+        None => crate::result(
+            args.identifier.parse::<IpCidr>(),
+            exitcode::USAGE,
+            "Could not parse arg IDENTIFIER",
+        ),
+    };
+    crate::result(
+        garden.rename(&cidr, args.name.as_deref()),
+        exitcode::SOFTWARE,
+        "Could not rename subnet",
     );
     crate::store_space(&subg.garden_path, &garden);
 }
@@ -294,6 +312,73 @@ mod tests {
             assert_eq!(subnets.len(), 1);
             assert_eq!(subnets[0].name.clone().unwrap(), "test");
             assert_eq!(subnets[0].cidr.to_string(), "10.10.0.0/24");
+        }
+    }
+
+    mod rename {
+        use super::*;
+        fn new_rename_test(identifier: &str, name: Option<&str>) -> Test {
+            let mut test = tests::new_test();
+            test.store();
+            test.subg.arg("rename").arg(identifier);
+            if let Some(name) = name {
+                test.subg.arg(name);
+            }
+            test
+        }
+
+        #[test]
+        fn unknown() {
+            let mut test = new_rename_test("bad-cidr", None);
+            test.subg
+                .assert()
+                .failure()
+                .code(exitcode::USAGE)
+                .stdout("")
+                .stderr(
+                    "Could not parse arg IDENTIFIER\n\
+                couldn\'t parse address in network: invalid IP address syntax\n",
+                );
+        }
+
+        #[test]
+        fn rename_failure() {
+            let mut test = new_rename_test("10.10.0.0/24", Some("test"));
+            test.garden.allocate(4, Some("test")).unwrap();
+            test.garden.allocate(4, None).unwrap();
+            test.store();
+            test.subg
+                .assert()
+                .failure()
+                .code(exitcode::SOFTWARE)
+                .stdout("")
+                .stderr("Could not rename subnet\nDuplicate name\n");
+        }
+
+        #[test]
+        fn success_with_name() {
+            let mut test = new_rename_test("test", Some("test2"));
+            test.garden.allocate(4, Some("test")).unwrap();
+            test.store();
+            test.subg.assert().success().stdout("").stderr("");
+            test.load();
+            let subnets = test.garden.entries().to_vec();
+            assert_eq!(subnets.len(), 1);
+            assert_eq!(subnets[0].name.clone().unwrap(), "test2");
+            assert_eq!(subnets[0].cidr.to_string(), "10.10.0.0/28");
+        }
+
+        #[test]
+        fn success_with_cidr() {
+            let mut test = new_rename_test("10.10.0.0/28", Some("test2"));
+            test.garden.allocate(4, Some("test")).unwrap();
+            test.store();
+            test.subg.assert().success().stdout("").stderr("");
+            test.load();
+            let subnets = test.garden.entries().to_vec();
+            assert_eq!(subnets.len(), 1);
+            assert_eq!(subnets[0].name.clone().unwrap(), "test2");
+            assert_eq!(subnets[0].cidr.to_string(), "10.10.0.0/28");
         }
     }
 }

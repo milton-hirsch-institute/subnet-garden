@@ -87,7 +87,7 @@ impl SubnetGarden {
         // Find record that is being renamed
         let subspace: &mut Subspace = match self.root.find_record(cidr) {
             Some(record) => record,
-            None => return Err(RenameError::NameNotFound),
+            None => return Err(RenameError::NoSuchObject),
         };
 
         // Ignore if name is not changing

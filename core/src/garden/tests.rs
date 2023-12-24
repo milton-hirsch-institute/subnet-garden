@@ -215,7 +215,7 @@ mod rename {
         let space = instance.space_mut("test4").unwrap();
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 21, 0, 0), 28).unwrap());
         let result = space.rename(&cidr, Some("a-name"));
-        assert_eq!(result, Err(RenameError::NameNotFound));
+        assert_eq!(result, Err(RenameError::NoSuchObject));
         assert_eq!(space.find_by_name("a-name"), None);
     }
     #[test]

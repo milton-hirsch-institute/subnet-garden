@@ -65,7 +65,21 @@ impl Error for AllocateError {
 #[derive(Debug, Clone, PartialEq)]
 pub enum RenameError {
     DuplicateName,
-    NameNotFound,
+    NoSuchObject,
+}
+
+impl std::fmt::Display for RenameError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            RenameError::DuplicateName => write!(f, "Duplicate name"),
+            RenameError::NoSuchObject => write!(f, "No such object"),
+        }
+    }
+}
+impl Error for RenameError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        None
+    }
 }
 
 #[cfg(test)]

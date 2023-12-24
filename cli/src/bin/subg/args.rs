@@ -61,6 +61,18 @@ pub(crate) struct ClaimArgs {
     pub(crate) name: Option<String>,
 }
 
+#[derive(Debug, clap::Args)]
+/// Rename subnet
+pub(crate) struct RenameArgs {
+    #[arg()]
+    /// Name or CIDR of the subnet to rename
+    pub(crate) identifier: String,
+
+    #[arg()]
+    /// New name of the subnet or omit to remove the name
+    pub(crate) name: Option<String>,
+}
+
 #[derive(Debug, clap::Subcommand)]
 pub(crate) enum SubgCommands {
     Allocate(AllocateArgs),
@@ -69,6 +81,7 @@ pub(crate) enum SubgCommands {
     Free(FreeArgs),
     Init(init::InitArgs),
     Names(NamesArgs),
+    Rename(RenameArgs),
 }
 
 #[derive(Debug, clap::Args)]
