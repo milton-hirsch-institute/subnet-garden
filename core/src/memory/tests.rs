@@ -4,8 +4,8 @@
 use super::*;
 use crate::tests::{TEST_CIDR4, TEST_CIDR6};
 
-pub(super) fn new_test_space() -> MemorySubnetGarden {
-    let mut instance = MemorySubnetGarden::new();
+pub(super) fn new_test_space() -> SubnetGardenLibrary {
+    let mut instance = SubnetGardenLibrary::new();
     instance.new_space("test4", TEST_CIDR4).unwrap();
     instance.new_space("test6", TEST_CIDR6).unwrap();
     return instance;
@@ -18,7 +18,7 @@ mod memory_garden {
         use super::*;
         #[test]
         fn new_memory_garden() {
-            let instance = MemorySubnetGarden::new();
+            let instance = SubnetGardenLibrary::new();
             assert_eq!(instance.space_count(), 0);
         }
     }
@@ -127,7 +127,7 @@ mod memory_garden {
                 \"test6\":{\"cidr\":\"1:2:3:4:a:14::/112\",\"subnets\":[]}}}"
             );
 
-            let deserialize: MemorySubnetGarden = serde_json::from_str(&json).unwrap();
+            let deserialize: SubnetGardenLibrary = serde_json::from_str(&json).unwrap();
             assert_eq!(deserialize, instance);
         }
     }
