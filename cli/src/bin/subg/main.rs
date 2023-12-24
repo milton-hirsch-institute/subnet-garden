@@ -73,6 +73,9 @@ fn main() {
         SubgCommands::Allocate(args) => {
             subnet::allocate(&subg.args, &args);
         }
+        SubgCommands::Free(args) => {
+            subnet::free(&subg.args, &args);
+        }
     }
 }
 

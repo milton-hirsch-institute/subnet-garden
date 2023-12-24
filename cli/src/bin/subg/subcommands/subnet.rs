@@ -1,7 +1,9 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::args::{AllocateArgs, SubgArgs};
+use crate::args::{AllocateArgs, FreeArgs, SubgArgs};
+use cidr::IpCidr;
+use subnet_garden_core::Space;
 
 pub(crate) fn allocate(subg: &SubgArgs, args: &AllocateArgs) {
     let mut garden = crate::load_garden(&subg.garden_path);
@@ -11,6 +13,19 @@ pub(crate) fn allocate(subg: &SubgArgs, args: &AllocateArgs) {
         "Could not allocate subnet",
     );
     crate::store_space(&subg.garden_path, &garden);
+}
+
+pub(crate) fn free(subg: &SubgArgs, args: &FreeArgs) {
+    let mut garden = crate::load_garden(&subg.garden_path);
+    let cidr = match garden.find_by_name(&args.identifier.as_deref().unwrap()) {
+        Some(cidr) => cidr,
+        None => crate::result(
+            args.identifier.parse::<IpCidr>(),
+            exitcode::USAGE,
+            "Could not parse arg IDENTIFIER",
+        ),
+    };
+    garden
 }
 
 #[cfg(test)]

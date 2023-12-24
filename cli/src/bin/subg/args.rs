@@ -33,10 +33,19 @@ pub(crate) struct AllocateArgs {
     pub(crate) name: Option<String>,
 }
 
+#[derive(Debug, clap::Args)]
+/// Free subnet
+pub(crate) struct FreeArgs {
+    #[arg()]
+    /// Name or CIDR of a subnet
+    pub(crate) identifier: String,
+}
+
 #[derive(Debug, clap::Subcommand)]
 pub(crate) enum SubgCommands {
     Init(init::InitArgs),
     Allocate(AllocateArgs),
+    Free(FreeArgs),
 }
 
 #[derive(Debug, clap::Args)]
