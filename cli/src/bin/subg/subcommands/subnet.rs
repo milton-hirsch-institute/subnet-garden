@@ -32,6 +32,13 @@ pub(crate) fn free(subg: &SubgArgs, args: &FreeArgs) {
     crate::store_space(&subg.garden_path, &garden);
 }
 
+pub(crate) fn cidrs(subg: &SubgArgs) {
+    let garden = crate::load_garden(&subg.garden_path);
+    for entry in garden.entries() {
+        println!("{}", entry.cidr);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -139,6 +146,36 @@ mod tests {
             test.subg.assert().success().stdout("").stderr("");
             test.load();
             assert_eq!(test.garden.find_by_name("test"), None);
+        }
+    }
+
+    mod cidrs {
+        use super::*;
+
+        fn new_cidrs_test() -> Test {
+            let mut test = tests::new_test();
+            test.store();
+            test.subg.arg("cidrs");
+            test
+        }
+
+        #[test]
+        fn no_cidrs() {
+            let mut test = new_cidrs_test();
+            test.subg.assert().success().stdout("").stderr("");
+        }
+
+        #[test]
+        fn has_cidrs() {
+            let mut test = new_cidrs_test();
+            test.garden.allocate(4, Some("test1")).unwrap();
+            test.garden.allocate(6, Some("test2")).unwrap();
+            test.store();
+            test.subg
+                .assert()
+                .success()
+                .stdout("10.10.0.0/28\n10.10.0.64/26\n")
+                .stderr("");
         }
     }
 }

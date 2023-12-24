@@ -76,6 +76,9 @@ fn main() {
         SubgCommands::Free(args) => {
             subnet::free(&subg.args, &args);
         }
+        SubgCommands::Cidrs(_) => {
+            subnet::cidrs(&subg.args);
+        }
     }
 }
 

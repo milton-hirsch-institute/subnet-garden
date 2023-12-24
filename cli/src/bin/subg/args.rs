@@ -41,11 +41,16 @@ pub(crate) struct FreeArgs {
     pub(crate) identifier: String,
 }
 
+#[derive(Debug, clap::Args)]
+/// List subnets
+pub(crate) struct CidrsArgs {}
+
 #[derive(Debug, clap::Subcommand)]
 pub(crate) enum SubgCommands {
-    Init(init::InitArgs),
     Allocate(AllocateArgs),
+    Cidrs(CidrsArgs),
     Free(FreeArgs),
+    Init(init::InitArgs),
 }
 
 #[derive(Debug, clap::Args)]
