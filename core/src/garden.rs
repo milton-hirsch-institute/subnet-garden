@@ -95,7 +95,7 @@ impl SubnetGarden {
             Some(name) => Some(name.to_string()),
             None => None,
         };
-        if subspace.name == name_as_string {
+        if subspace.name.as_deref() == name {
             return Ok(());
         }
 
