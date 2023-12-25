@@ -91,10 +91,6 @@ impl SubnetGarden {
         };
 
         // Ignore if name is not changing
-        let name_as_string = match name {
-            Some(name) => Some(name.to_string()),
-            None => None,
-        };
         if subspace.name.as_deref() == name {
             return Ok(());
         }
@@ -113,7 +109,7 @@ impl SubnetGarden {
         }
 
         // Update record name
-        subspace.name = name_as_string;
+        subspace.name = name.map(|name| name.to_string());
         Ok(())
     }
 
