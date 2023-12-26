@@ -11,6 +11,32 @@ use itertools::Itertools;
 use std::net::{Ipv4Addr, Ipv6Addr};
 use std::str::FromStr;
 
+mod contains {
+    use super::*;
+
+    #[test]
+    fn does_not_contain() {
+        let mut instance = new_test_garden();
+        let space = instance.space_mut("test4").unwrap();
+        space.allocate(4, None).unwrap();
+        for cidr in [
+            "10.10.0.0/25",
+            "10.10.1.0/25",
+            "10.10.0.0/23",
+            "20.20.0.0/24",
+        ] {
+            assert!(!space.contains(&IpCidr::from_str(cidr).unwrap()));
+        }
+    }
+    #[test]
+    fn contains() {
+        let mut instance = new_test_garden();
+        let space = instance.space_mut("test4").unwrap();
+        let allocated = space.allocate(4, None).unwrap();
+        assert!(space.contains(&allocated));
+    }
+}
+
 mod allocate {
     use super::*;
 

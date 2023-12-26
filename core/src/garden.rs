@@ -49,6 +49,13 @@ impl SubnetGarden {
         self.names.get(name).copied()
     }
 
+    pub fn contains(&self, cidr: &IpCidr) -> bool {
+        if let Some(subspace) = self.root.find_record(cidr) {
+            return subspace.state == State::Allocated;
+        }
+        false
+    }
+
     pub fn allocate(&mut self, bits: Bits, name: Option<&str>) -> AllocateResult<IpCidr> {
         match self.root.find_free_space(bits) {
             Some(subspace) => {
@@ -85,7 +92,7 @@ impl SubnetGarden {
 
     pub fn rename(&mut self, cidr: &IpCidr, name: Option<&str>) -> RenameResult<()> {
         // Find record that is being renamed
-        let subspace: &mut Subspace = match self.root.find_record(cidr) {
+        let subspace: &mut Subspace = match self.root.find_record_mut(cidr) {
             Some(record) => record,
             None => return Err(RenameError::NoSuchObject),
         };

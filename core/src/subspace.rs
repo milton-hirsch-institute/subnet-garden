@@ -141,17 +141,31 @@ impl Subspace {
         self.high.as_deref_mut().unwrap().claim(cidr, name)
     }
 
-    pub(crate) fn find_record(&mut self, cidr: &IpCidr) -> Option<&mut Self> {
+    pub(crate) fn find_record(&self, cidr: &IpCidr) -> Option<&Self> {
         if !util::cidr_contains(&self.cidr, cidr) {
             return None;
         }
         if self.cidr == *cidr {
             return Some(self);
         }
-        let found_low = self.low.as_deref_mut()?.find_record(cidr);
+        let found_low = self.low.as_deref()?.find_record(cidr);
         return match found_low {
             Some(_) => found_low,
-            None => self.high.as_deref_mut()?.find_record(cidr),
+            None => self.high.as_deref()?.find_record(cidr),
+        };
+    }
+
+    pub(crate) fn find_record_mut(&mut self, cidr: &IpCidr) -> Option<&mut Self> {
+        if !util::cidr_contains(&self.cidr, cidr) {
+            return None;
+        }
+        if self.cidr == *cidr {
+            return Some(self);
+        }
+        let found_low = self.low.as_deref_mut()?.find_record_mut(cidr);
+        return match found_low {
+            Some(_) => found_low,
+            None => self.high.as_deref_mut()?.find_record_mut(cidr),
         };
     }
 }
