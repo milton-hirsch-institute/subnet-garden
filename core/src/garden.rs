@@ -45,6 +45,10 @@ impl SubnetGarden {
         &self.root.cidr
     }
 
+    pub fn allocated_count(&self) -> usize {
+        self.root.allocated_count
+    }
+
     pub fn find_by_name(&self, name: &str) -> Option<IpCidr> {
         self.names.get(name).copied()
     }
@@ -57,7 +61,7 @@ impl SubnetGarden {
     }
 
     pub fn allocate(&mut self, bits: Bits, name: Option<&str>) -> AllocateResult<IpCidr> {
-        match self.root.find_free_space(bits) {
+        match self.root.allocate_free_space(bits) {
             Some(subspace) => {
                 if let Some(name) = name {
                     if self.names.contains_key(name) {
@@ -66,7 +70,6 @@ impl SubnetGarden {
                     subspace.name = Some(name.to_string());
                     self.names.insert(name.to_string(), subspace.cidr);
                 }
-                subspace.state = State::Allocated;
                 Ok(subspace.cidr)
             }
             None => Err(AllocateError::NoSpaceAvailable),

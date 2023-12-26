@@ -46,6 +46,7 @@ mod allocate {
         let space = instance.space_mut("test4").unwrap();
         let result = space.allocate(17, None);
         assert_eq!(result.err(), Some(AllocateError::NoSpaceAvailable));
+        assert_eq!(space.allocated_count(), space.cidrs().len());
     }
 
     #[test]
@@ -55,6 +56,7 @@ mod allocate {
         space.allocate(16, None).unwrap();
         let result = space.allocate(16, None);
         assert_eq!(result.err(), Some(AllocateError::NoSpaceAvailable));
+        assert_eq!(space.allocated_count(), space.cidrs().len());
     }
 
     #[test]
@@ -64,6 +66,7 @@ mod allocate {
         space.allocate(4, Some("a-name")).unwrap();
         let result = space.allocate(4, Some("a-name"));
         assert_eq!(result.err(), Some(AllocateError::DuplicateName));
+        assert_eq!(space.allocated_count(), space.cidrs().len());
     }
 
     #[test]
@@ -73,6 +76,7 @@ mod allocate {
         space.allocate(4, Some("10.20.0.16/28")).unwrap();
         let result = space.allocate(4, None);
         assert_eq!(result.err(), None);
+        assert_eq!(space.allocated_count(), space.cidrs().len());
     }
 
     #[test]
@@ -82,6 +86,7 @@ mod allocate {
         let result = space.allocate(4, Some("a-name")).unwrap();
         let looked_up = space.find_by_name("a-name").unwrap();
         assert_eq!(looked_up, result);
+        assert_eq!(space.allocated_count(), space.cidrs().len());
     }
 
     #[test]
@@ -93,6 +98,7 @@ mod allocate {
             result,
             IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap())
         );
+        assert_eq!(space.allocated_count(), space.cidrs().len());
     }
 
     #[test]
@@ -104,6 +110,7 @@ mod allocate {
             result,
             IpCidr::V6(Ipv6Cidr::new(Ipv6Addr::new(1, 2, 3, 4, 10, 20, 0, 0), 124).unwrap())
         );
+        assert_eq!(space.allocated_count(), space.cidrs().len());
     }
 
     #[test]
@@ -120,6 +127,7 @@ mod allocate {
             result2,
             IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 1, 0), 24).unwrap())
         );
+        assert_eq!(space.allocated_count(), space.cidrs().len());
     }
 
     #[test]
@@ -142,6 +150,7 @@ mod free {
         let mut instance = new_test_garden();
         let garden = instance.space_mut("test4").unwrap();
         assert!(!garden.free(&IpCidr::from_str("20.20.0.0/16").unwrap()));
+        assert_eq!(garden.allocated_count(), garden.cidrs().len());
     }
 
     #[test]
@@ -163,6 +172,7 @@ mod free {
                 let cidr = cidrs[*index];
                 free_test(garden, &cidr);
             }
+            assert_eq!(garden.allocated_count(), garden.cidrs().len());
         }
     }
 }
@@ -178,6 +188,7 @@ mod claim {
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 21, 0, 0), 28).unwrap());
         let result = space.claim(&cidr, None);
         assert_eq!(result, Err(AllocateError::NoSpaceAvailable));
+        assert_eq!(space.allocated_count(), space.cidrs().len());
     }
 
     #[test]
@@ -188,6 +199,7 @@ mod claim {
         space.claim(&cidr, None).unwrap();
         let result = space.claim(&cidr, None);
         assert_eq!(result, Err(AllocateError::NoSpaceAvailable));
+        assert_eq!(space.allocated_count(), space.cidrs().len());
     }
 
     #[test]
@@ -198,6 +210,7 @@ mod claim {
         space.allocate(16, None).unwrap();
         let result = space.claim(&cidr, None);
         assert_eq!(result, Err(AllocateError::NoSpaceAvailable));
+        assert_eq!(space.allocated_count(), space.cidrs().len());
     }
 
     #[test]
@@ -208,6 +221,7 @@ mod claim {
         space.allocate(4, Some("a-name")).unwrap();
         let result = space.claim(&cidr, Some("a-name"));
         assert_eq!(result, Err(AllocateError::DuplicateName));
+        assert_eq!(space.allocated_count(), space.cidrs().len());
     }
 
     #[test]
@@ -217,6 +231,7 @@ mod claim {
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
         let result = space.claim(&cidr, None);
         assert_eq!(result, Ok(()));
+        assert_eq!(space.allocated_count(), space.cidrs().len());
     }
 
     #[test]
@@ -228,6 +243,7 @@ mod claim {
         assert_eq!(result, Ok(()));
         let looked_up = space.find_by_name("a-name").unwrap();
         assert_eq!(looked_up, cidr);
+        assert_eq!(space.allocated_count(), space.cidrs().len());
     }
 }
 

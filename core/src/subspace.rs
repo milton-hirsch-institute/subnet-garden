@@ -20,6 +20,7 @@ pub(crate) struct Subspace {
     pub(crate) high: Option<Box<Self>>,
     pub(crate) low: Option<Box<Self>>,
     pub(crate) state: State,
+    pub(crate) allocated_count: usize,
 }
 
 impl Subspace {
@@ -30,6 +31,7 @@ impl Subspace {
             high: None,
             low: None,
             state: State::Free,
+            allocated_count: 0,
         }
     }
     pub(crate) fn host_length(self: &Self) -> Bits {
@@ -59,22 +61,36 @@ impl Subspace {
         self.high = Some(Box::new(Subspace::new(high_cidr)));
     }
 
-    pub(crate) fn find_free_space(&mut self, host_length: Bits) -> Option<&mut Self> {
+    pub(crate) fn allocate_free_space(&mut self, host_length: Bits) -> Option<&mut Self> {
         if host_length > self.host_length() {
             return None;
         }
         if self.state == State::Free {
             if host_length == self.host_length() {
+                self.state = State::Allocated;
+                self.allocated_count += 1;
                 return Some(self);
             } else {
                 self.split();
             }
         }
         if self.state == State::Unavailable {
-            let found_low = self.low.as_deref_mut()?.find_free_space(host_length);
+            let found_low = self.low.as_deref_mut()?.allocate_free_space(host_length);
             return match found_low {
-                Some(_) => found_low,
-                None => self.high.as_deref_mut()?.find_free_space(host_length),
+                Some(_) => {
+                    self.allocated_count += 1;
+                    found_low
+                }
+                None => {
+                    let found_high = self.high.as_deref_mut()?.allocate_free_space(host_length);
+                    match found_high {
+                        Some(_) => {
+                            self.allocated_count += 1;
+                            found_high
+                        }
+                        None => None,
+                    }
+                }
             };
         }
         return None;
@@ -89,6 +105,7 @@ impl Subspace {
                 true => {
                     self.state = State::Free;
                     self.name = None;
+                    self.allocated_count -= 1;
                     return true;
                 }
                 false => {
@@ -101,6 +118,7 @@ impl Subspace {
                 let high = self.high.as_deref_mut().unwrap();
                 let freed = low.free(cidr) || high.free(cidr);
                 if freed {
+                    self.allocated_count -= 1;
                     if low.state == State::Free && high.state == State::Free {
                         self.low = None;
                         self.high = None;
@@ -123,6 +141,7 @@ impl Subspace {
             State::Free => {
                 if self.cidr == *cidr {
                     self.state = State::Allocated;
+                    self.allocated_count += 1;
                     self.name = match name {
                         Some(name) => Some(name.to_string()),
                         None => None,
@@ -134,11 +153,13 @@ impl Subspace {
             State::Unavailable => {}
         }
 
-        if self.low.as_deref_mut().unwrap().claim(cidr, name) {
+        if self.low.as_deref_mut().unwrap().claim(cidr, name)
+            || self.high.as_deref_mut().unwrap().claim(cidr, name)
+        {
+            self.allocated_count += 1;
             return true;
         }
-
-        self.high.as_deref_mut().unwrap().claim(cidr, name)
+        false
     }
 
     pub(crate) fn find_record(&self, cidr: &IpCidr) -> Option<&Self> {
