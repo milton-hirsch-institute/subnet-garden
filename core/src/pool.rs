@@ -67,9 +67,9 @@ impl SubnetPool {
                     if self.names.contains_key(name) {
                         return Err(AllocateError::DuplicateName);
                     }
-                    self.names.insert(name.to_string(), cidr.clone());
+                    self.names.insert(name.to_string(), cidr);
                 }
-                Ok(cidr.clone())
+                Ok(cidr)
             }
             None => Err(AllocateError::NoSpaceAvailable),
         }

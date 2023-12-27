@@ -34,6 +34,23 @@ impl Subspace {
             allocated_count: 0,
         }
     }
+
+    fn update_info(&mut self) {
+        if self.state == State::Allocated {
+            self.allocated_count = 1;
+        } else {
+            let high_count = match &self.high {
+                Some(high) => high.allocated_count,
+                None => 0,
+            };
+            let low_count = match &self.low {
+                Some(low) => low.allocated_count,
+                None => 0,
+            };
+            self.allocated_count = high_count + low_count;
+        }
+    }
+
     pub(crate) fn host_length(self: &Self) -> Bits {
         return util::max_bits(&self.cidr) - self.cidr.network_length();
     }
@@ -65,16 +82,16 @@ impl Subspace {
         &mut self,
         host_length: Bits,
         name: Option<&str>,
-    ) -> Option<&IpCidr> {
+    ) -> Option<IpCidr> {
         if host_length > self.host_length() {
             return None;
         }
         if self.state == State::Free {
             if host_length == self.host_length() {
                 self.state = State::Allocated;
-                self.allocated_count += 1;
+                self.update_info();
                 self.name = name.map(|s| s.to_string());
-                return Some(&self.cidr);
+                return Some(self.cidr);
             } else {
                 self.split();
             }
@@ -86,7 +103,7 @@ impl Subspace {
                 .allocate_free_space(host_length, name);
             return match found_low {
                 Some(_) => {
-                    self.allocated_count += 1;
+                    self.update_info();
                     found_low
                 }
                 None => {
@@ -96,7 +113,7 @@ impl Subspace {
                         .allocate_free_space(host_length, name);
                     match found_high {
                         Some(_) => {
-                            self.allocated_count += 1;
+                            self.update_info();
                             found_high
                         }
                         None => None,
@@ -116,7 +133,7 @@ impl Subspace {
                 true => {
                     self.state = State::Free;
                     self.name = None;
-                    self.allocated_count -= 1;
+                    self.update_info();
                     return true;
                 }
                 false => {
@@ -129,12 +146,12 @@ impl Subspace {
                 let high = self.high.as_deref_mut().unwrap();
                 let freed = low.free(cidr) || high.free(cidr);
                 if freed {
-                    self.allocated_count -= 1;
                     if low.state == State::Free && high.state == State::Free {
                         self.low = None;
                         self.high = None;
                         self.state = State::Free;
                     }
+                    self.update_info();
                 }
 
                 freed
@@ -152,7 +169,7 @@ impl Subspace {
             State::Free => {
                 if self.cidr == *cidr {
                     self.state = State::Allocated;
-                    self.allocated_count += 1;
+                    self.update_info();
                     self.name = match name {
                         Some(name) => Some(name.to_string()),
                         None => None,
@@ -167,7 +184,7 @@ impl Subspace {
         if self.low.as_deref_mut().unwrap().claim(cidr, name)
             || self.high.as_deref_mut().unwrap().claim(cidr, name)
         {
-            self.allocated_count += 1;
+            self.update_info();
             return true;
         }
         false
