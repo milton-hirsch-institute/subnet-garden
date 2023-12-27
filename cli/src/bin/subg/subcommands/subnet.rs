@@ -34,7 +34,7 @@ pub(crate) fn free(subg: &SubgArgs, args: &FreeArgs) {
 
 pub(crate) fn cidrs(subg: &SubgArgs) {
     let pool = crate::load_pool(&subg.pool_path);
-    for entry in pool.entries() {
+    for entry in pool.records() {
         println!("{}", entry.cidr);
     }
 }
@@ -83,6 +83,7 @@ mod tests {
 
     mod allocate {
         use super::*;
+        use subnet_garden_core::CidrRecord;
         fn new_allocate_test(bits: &str, name: Option<&str>) -> Test {
             let mut test = tests::new_test();
             test.store();
@@ -111,7 +112,7 @@ mod tests {
             let mut test = new_allocate_test("8", Some("test"));
             test.subg.assert().success().stdout("").stderr("");
             test.load();
-            let subnets = test.pool.entries().to_vec();
+            let subnets: Vec<&CidrRecord> = test.pool.records().collect();
             assert_eq!(subnets.len(), 1);
             assert_eq!(subnets[0].name.clone().unwrap(), "test");
             assert_eq!(subnets[0].cidr.to_string(), "10.10.0.0/24");
@@ -122,7 +123,7 @@ mod tests {
             let mut test = new_allocate_test("8", None);
             test.subg.assert().success().stdout("").stderr("");
             test.load();
-            let subnets = test.pool.entries().to_vec();
+            let subnets: Vec<&CidrRecord> = test.pool.records().collect();
             assert_eq!(subnets.len(), 1);
             assert_eq!(subnets[0].name, None);
             assert_eq!(subnets[0].cidr.to_string(), "10.10.0.0/24");
@@ -250,6 +251,7 @@ mod tests {
 
     mod claim {
         use super::*;
+        use subnet_garden_core::CidrRecord;
         fn new_claim_test(cidr: &str, name: Option<&str>) -> Test {
             let mut test = tests::new_test();
             test.store();
@@ -279,7 +281,7 @@ mod tests {
             let mut test = new_claim_test("10.10.0.0/24", None);
             test.subg.assert().success().stdout("").stderr("");
             test.load();
-            let subnets = test.pool.entries().to_vec();
+            let subnets: Vec<&CidrRecord> = test.pool.records().collect();
             assert_eq!(subnets.len(), 1);
             assert_eq!(subnets[0].name, None);
             assert_eq!(subnets[0].cidr.to_string(), "10.10.0.0/24");
@@ -290,7 +292,7 @@ mod tests {
             let mut test = new_claim_test("10.10.0.0/24", Some("test"));
             test.subg.assert().success().stdout("").stderr("");
             test.load();
-            let subnets = test.pool.entries().to_vec();
+            let subnets: Vec<&CidrRecord> = test.pool.records().collect();
             assert_eq!(subnets.len(), 1);
             assert_eq!(subnets[0].name.clone().unwrap(), "test");
             assert_eq!(subnets[0].cidr.to_string(), "10.10.0.0/24");
@@ -299,6 +301,7 @@ mod tests {
 
     mod rename {
         use super::*;
+        use subnet_garden_core::CidrRecord;
         fn new_rename_test(identifier: &str, name: Option<&str>) -> Test {
             let mut test = tests::new_test();
             test.store();
@@ -344,7 +347,7 @@ mod tests {
             test.store();
             test.subg.assert().success().stdout("").stderr("");
             test.load();
-            let subnets = test.pool.entries().to_vec();
+            let subnets: Vec<&CidrRecord> = test.pool.records().collect();
             assert_eq!(subnets.len(), 1);
             assert_eq!(subnets[0].name.clone().unwrap(), "test2");
             assert_eq!(subnets[0].cidr.to_string(), "10.10.0.0/28");
@@ -357,7 +360,7 @@ mod tests {
             test.store();
             test.subg.assert().success().stdout("").stderr("");
             test.load();
-            let subnets = test.pool.entries().to_vec();
+            let subnets: Vec<&CidrRecord> = test.pool.records().collect();
             assert_eq!(subnets.len(), 1);
             assert_eq!(subnets[0].name.clone().unwrap(), "test2");
             assert_eq!(subnets[0].cidr.to_string(), "10.10.0.0/28");

@@ -25,23 +25,6 @@ impl SubnetPool {
         }
     }
 
-    fn list_allocated_subspaces(&self) -> Vec<&Subspace> {
-        let mut subspaces = Vec::new();
-        let mut stack = Vec::new();
-        stack.push(&self.root);
-        while let Some(subspace) = stack.pop() {
-            match subspace.state {
-                State::Allocated => subspaces.push(subspace),
-                State::Free => {}
-                State::Unavailable => {
-                    stack.push(subspace.high.as_deref().unwrap());
-                    stack.push(subspace.low.as_deref().unwrap());
-                }
-            }
-        }
-        return subspaces;
-    }
-
     fn iter_allocated_subspaces(&self) -> impl Iterator<Item = &Subspace> {
         let mut stack = Vec::new();
         stack.push(&self.root);
@@ -153,21 +136,6 @@ impl SubnetPool {
             .map(|subspace| &subspace.record.cidr)
     }
 
-    pub fn entries(&self) -> Vec<CidrRecord> {
-        let mut allocated_subspaces = self.list_allocated_subspaces();
-        allocated_subspaces
-            .sort_by(|subspace1, subspace2| subspace1.record.cidr.cmp(&subspace2.record.cidr));
-        let mut entries = Vec::new();
-        entries.reserve(allocated_subspaces.len());
-        for subspace in allocated_subspaces {
-            entries.push(CidrRecord::new(
-                subspace.record.cidr,
-                subspace.record.name.as_deref(),
-            ));
-        }
-        entries
-    }
-
     pub fn records(&self) -> impl Iterator<Item = &CidrRecord> {
         self.iter_allocated_subspaces()
             .map(|subspace| &subspace.record)
@@ -178,9 +146,8 @@ impl serde::Serialize for SubnetPool {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut pool = serializer.serialize_struct("SubnetPool", 2)?;
         pool.serialize_field("cidr", &self.root.record.cidr.to_string())?;
-        let mut entries = self.entries();
-        entries.sort_by(|record1, record2| record1.cmp(record2));
-        pool.serialize_field("subnets", &entries)?;
+        let records: Vec<&CidrRecord> = self.records().collect();
+        pool.serialize_field("subnets", &records)?;
 
         pool.end()
     }

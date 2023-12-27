@@ -372,43 +372,6 @@ mod cidrs {
     }
 }
 
-mod entries {
-    use super::*;
-    use crate::CidrRecord;
-
-    #[test]
-    fn success() {
-        let mut pool = new_test_pool();
-        pool.allocate(4, Some("a-name")).unwrap();
-        pool.allocate(4, Some("b-name")).unwrap();
-        pool.allocate(4, None).unwrap();
-        let mut entries = pool.entries();
-        entries.sort();
-        assert_eq!(entries.len(), 3);
-        assert_eq!(
-            entries[0],
-            CidrRecord::new(
-                IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap()),
-                Some("a-name")
-            )
-        );
-        assert_eq!(
-            entries[1],
-            CidrRecord::new(
-                IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 16), 28).unwrap()),
-                Some("b-name")
-            )
-        );
-        assert_eq!(
-            entries[2],
-            CidrRecord::new(
-                IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 32), 28).unwrap()),
-                None
-            )
-        );
-    }
-}
-
 mod records {
     use super::*;
     use crate::CidrRecord;
