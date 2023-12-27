@@ -11,7 +11,7 @@ use std::path::Path;
 use std::process::exit;
 use subcommands::init;
 use subcommands::subnet;
-use subnet_garden_core::garden;
+use subnet_garden_core::pool;
 
 mod args;
 mod subcommands;
@@ -33,33 +33,33 @@ where
     }
 }
 
-fn load_garden(garden_path: &str) -> garden::SubnetGarden {
-    let path = Path::new(garden_path);
+fn load_pool(pool_path: &str) -> pool::SubnetPool {
+    let path = Path::new(pool_path);
     if !path.exists() {
-        eprintln!("Garden file does not exist at {}", path.display());
+        eprintln!("Subnet pool file does not exist at {}", path.display());
         exit(exitcode::NOINPUT);
     }
     if !path.is_file() {
         eprintln!("Path is not a file at {}", path.display());
         exit(exitcode::NOINPUT);
     }
-    let garden_file = File::open(path).unwrap();
-    serde_json::from_reader(garden_file).unwrap()
+    let pool_file = File::open(path).unwrap();
+    serde_json::from_reader(pool_file).unwrap()
 }
 
-fn store_space(garden_path: &str, garden: &garden::SubnetGarden) {
-    let path = Path::new(garden_path);
+fn store_pool(pool_path: &str, pool: &pool::SubnetPool) {
+    let path = Path::new(pool_path);
 
-    let mut garden_file = result(
+    let mut pool_file = result(
         File::create(path),
         exitcode::CANTCREAT,
-        &format!("Could not create garden file at {}", path.display()),
+        &format!("Could not create pool file at {}", path.display()),
     );
 
     result(
-        serde_json::to_writer_pretty(&mut garden_file, &garden),
+        serde_json::to_writer_pretty(&mut pool_file, &pool),
         exitcode::CANTCREAT,
-        &format!("Could not serialize garden file at {}", path.display()),
+        &format!("Could not serialize pool file at {}", path.display()),
     );
 }
 
@@ -105,31 +105,31 @@ mod tests {
     pub(crate) struct Test {
         pub(crate) subg: assert_cmd::Command,
         pub(crate) _dir: assert_fs::TempDir,
-        pub(crate) subgarden_path: ChildPath,
-        pub(crate) garden: garden::SubnetGarden,
+        pub(crate) pool_path: ChildPath,
+        pub(crate) pool: pool::SubnetPool,
     }
 
     impl Test {
         pub(crate) fn store(&self) {
-            store_space(self.subgarden_path.to_str().unwrap(), &self.garden);
+            store_pool(self.pool_path.to_str().unwrap(), &self.pool);
         }
 
         pub(crate) fn load(&mut self) {
-            let garden_path = self.subgarden_path.to_str().unwrap();
-            self.garden = load_garden(garden_path);
+            let pool_path = self.pool_path.to_str().unwrap();
+            self.pool = load_pool(pool_path);
         }
     }
 
     pub(crate) fn new_test_with_path(path: &str) -> Test {
         let mut test = assert_cmd::Command::cargo_bin(SUBG_COMMAND).unwrap();
         let dir = assert_fs::TempDir::new().unwrap();
-        let subgarden_path = dir.child(path);
-        test.args(&["--garden-path", subgarden_path.to_str().unwrap()]);
+        let pool_path = dir.child(path);
+        test.args(&["--pool-path", pool_path.to_str().unwrap()]);
         Test {
             subg: test,
             _dir: dir,
-            subgarden_path,
-            garden: garden::SubnetGarden::new(TEST_CIDR.parse().unwrap()),
+            pool_path,
+            pool: pool::SubnetPool::new(TEST_CIDR.parse().unwrap()),
         }
     }
 

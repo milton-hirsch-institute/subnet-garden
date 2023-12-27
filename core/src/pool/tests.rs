@@ -10,12 +10,12 @@ use itertools::Itertools;
 use std::net::{Ipv4Addr, Ipv6Addr};
 use std::str::FromStr;
 
-fn new_test_garden() -> SubnetGarden {
-    SubnetGarden::new(TEST_CIDR4)
+fn new_test_pool() -> SubnetPool {
+    SubnetPool::new(TEST_CIDR4)
 }
 
-fn new_test_garden6() -> SubnetGarden {
-    SubnetGarden::new(TEST_CIDR6)
+fn new_test_pool6() -> SubnetPool {
+    SubnetPool::new(TEST_CIDR6)
 }
 
 mod contains {
@@ -23,22 +23,22 @@ mod contains {
 
     #[test]
     fn does_not_contain() {
-        let mut space = new_test_garden();
-        space.allocate(4, None).unwrap();
+        let mut pool = new_test_pool();
+        pool.allocate(4, None).unwrap();
         for cidr in [
             "10.10.0.0/25",
             "10.10.1.0/25",
             "10.10.0.0/23",
             "20.20.0.0/24",
         ] {
-            assert!(!space.contains(&IpCidr::from_str(cidr).unwrap()));
+            assert!(!pool.contains(&IpCidr::from_str(cidr).unwrap()));
         }
     }
     #[test]
     fn contains() {
-        let mut space = new_test_garden();
-        let allocated = space.allocate(4, None).unwrap();
-        assert!(space.contains(&allocated));
+        let mut pool = new_test_pool();
+        let allocated = pool.allocate(4, None).unwrap();
+        assert!(pool.contains(&allocated));
     }
 }
 
@@ -47,90 +47,90 @@ mod allocate {
 
     #[test]
     fn too_many_bits() {
-        let mut space = new_test_garden();
-        let result = space.allocate(17, None);
+        let mut pool = new_test_pool();
+        let result = pool.allocate(17, None);
         assert_eq!(result.err(), Some(AllocateError::NoSpaceAvailable));
-        assert_eq!(space.allocated_count(), space.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().len());
     }
 
     #[test]
-    fn no_space_available() {
-        let mut space = new_test_garden();
-        space.allocate(16, None).unwrap();
-        let result = space.allocate(16, None);
+    fn no_pool_available() {
+        let mut pool = new_test_pool();
+        pool.allocate(16, None).unwrap();
+        let result = pool.allocate(16, None);
         assert_eq!(result.err(), Some(AllocateError::NoSpaceAvailable));
-        assert_eq!(space.allocated_count(), space.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().len());
     }
 
     #[test]
     fn allocate_name_already_exists() {
-        let mut space = new_test_garden();
-        space.allocate(4, Some("a-name")).unwrap();
-        let result = space.allocate(4, Some("a-name"));
+        let mut pool = new_test_pool();
+        pool.allocate(4, Some("a-name")).unwrap();
+        let result = pool.allocate(4, Some("a-name"));
         assert_eq!(result.err(), Some(AllocateError::DuplicateName));
-        assert_eq!(space.allocated_count(), space.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().len());
     }
 
     #[test]
     fn name_is_not_cidr_record() {
-        let mut space = new_test_garden();
-        space.allocate(4, Some("10.20.0.16/28")).unwrap();
-        let result = space.allocate(4, None);
+        let mut pool = new_test_pool();
+        pool.allocate(4, Some("10.20.0.16/28")).unwrap();
+        let result = pool.allocate(4, None);
         assert_eq!(result.err(), None);
-        assert_eq!(space.allocated_count(), space.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().len());
     }
 
     #[test]
     fn allocate_named() {
-        let mut space = new_test_garden();
-        let result = space.allocate(4, Some("a-name")).unwrap();
-        let looked_up = space.find_by_name("a-name").unwrap();
+        let mut pool = new_test_pool();
+        let result = pool.allocate(4, Some("a-name")).unwrap();
+        let looked_up = pool.find_by_name("a-name").unwrap();
         assert_eq!(looked_up, result);
-        assert_eq!(space.allocated_count(), space.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().len());
     }
 
     #[test]
     fn allocate_success_v4() {
-        let mut space = new_test_garden();
-        let result = space.allocate(4, None).unwrap();
+        let mut pool = new_test_pool();
+        let result = pool.allocate(4, None).unwrap();
         assert_eq!(
             result,
             IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap())
         );
-        assert_eq!(space.allocated_count(), space.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().len());
     }
 
     #[test]
     fn allocate_success_v6() {
-        let mut space = new_test_garden6();
-        let result = space.allocate(4, None).unwrap();
+        let mut pool = new_test_pool6();
+        let result = pool.allocate(4, None).unwrap();
         assert_eq!(
             result,
             IpCidr::V6(Ipv6Cidr::new(Ipv6Addr::new(1, 2, 3, 4, 10, 20, 0, 0), 124).unwrap())
         );
-        assert_eq!(space.allocated_count(), space.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().len());
     }
 
     #[test]
     fn allocate_multi_sizes() {
-        let mut space = new_test_garden();
-        let result1 = space.allocate(4, None).unwrap();
+        let mut pool = new_test_pool();
+        let result1 = pool.allocate(4, None).unwrap();
         assert_eq!(
             result1,
             IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap())
         );
-        let result2 = space.allocate(8, None).unwrap();
+        let result2 = pool.allocate(8, None).unwrap();
         assert_eq!(
             result2,
             IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 1, 0), 24).unwrap())
         );
-        assert_eq!(space.allocated_count(), space.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().len());
     }
 
     #[test]
     fn max_bits() {
-        let mut space = new_test_garden();
-        let result = space.allocate(16, None).unwrap();
+        let mut pool = new_test_pool();
+        let result = pool.allocate(16, None).unwrap();
         assert_eq!(
             result,
             IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 16).unwrap())
@@ -143,30 +143,30 @@ mod free {
 
     #[test]
     fn out_of_range() {
-        let mut space = new_test_garden();
-        assert!(!space.free(&IpCidr::from_str("20.20.0.0/16").unwrap()));
-        assert_eq!(space.allocated_count(), space.cidrs().len());
+        let mut pool = new_test_pool();
+        assert!(!pool.free(&IpCidr::from_str("20.20.0.0/16").unwrap()));
+        assert_eq!(pool.allocated_count(), pool.cidrs().len());
     }
 
     #[test]
     fn free() {
         let index_list = vec![0, 1, 2, 3];
         for indices in index_list.iter().permutations(index_list.len()) {
-            let mut space = new_test_garden();
+            let mut pool = new_test_pool();
             let mut cidrs = vec![];
             for _ in 0..index_list.len() {
-                cidrs.push(space.allocate(14, None).unwrap());
+                cidrs.push(pool.allocate(14, None).unwrap());
             }
-            fn free_test(garden: &mut SubnetGarden, cidr: &IpCidr) {
-                assert!(garden.free(&cidr));
-                assert!(!garden.free(&cidr));
-                garden.claim(cidr, None).unwrap();
+            fn free_test(pool: &mut SubnetPool, cidr: &IpCidr) {
+                assert!(pool.free(&cidr));
+                assert!(!pool.free(&cidr));
+                pool.claim(cidr, None).unwrap();
             }
             for index in indices {
                 let cidr = cidrs[*index];
-                free_test(&mut space, &cidr);
+                free_test(&mut pool, &cidr);
             }
-            assert_eq!(space.allocated_count(), space.cidrs().len());
+            assert_eq!(pool.allocated_count(), pool.cidrs().len());
         }
     }
 }
@@ -177,61 +177,61 @@ mod claim {
 
     #[test]
     fn out_of_range() {
-        let mut space = new_test_garden();
+        let mut pool = new_test_pool();
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 21, 0, 0), 28).unwrap());
-        let result = space.claim(&cidr, None);
+        let result = pool.claim(&cidr, None);
         assert_eq!(result, Err(AllocateError::NoSpaceAvailable));
-        assert_eq!(space.allocated_count(), space.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().len());
     }
 
     #[test]
     fn already_claimed() {
-        let mut space = new_test_garden();
+        let mut pool = new_test_pool();
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
-        space.claim(&cidr, None).unwrap();
-        let result = space.claim(&cidr, None);
+        pool.claim(&cidr, None).unwrap();
+        let result = pool.claim(&cidr, None);
         assert_eq!(result, Err(AllocateError::NoSpaceAvailable));
-        assert_eq!(space.allocated_count(), space.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().len());
     }
 
     #[test]
     fn already_allocated() {
-        let mut space = new_test_garden();
+        let mut pool = new_test_pool();
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
-        space.allocate(16, None).unwrap();
-        let result = space.claim(&cidr, None);
+        pool.allocate(16, None).unwrap();
+        let result = pool.claim(&cidr, None);
         assert_eq!(result, Err(AllocateError::NoSpaceAvailable));
-        assert_eq!(space.allocated_count(), space.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().len());
     }
 
     #[test]
     fn already_named() {
-        let mut space = new_test_garden();
+        let mut pool = new_test_pool();
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 16), 28).unwrap());
-        space.allocate(4, Some("a-name")).unwrap();
-        let result = space.claim(&cidr, Some("a-name"));
+        pool.allocate(4, Some("a-name")).unwrap();
+        let result = pool.claim(&cidr, Some("a-name"));
         assert_eq!(result, Err(AllocateError::DuplicateName));
-        assert_eq!(space.allocated_count(), space.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().len());
     }
 
     #[test]
     fn unnamed() {
-        let mut space = new_test_garden();
+        let mut pool = new_test_pool();
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
-        let result = space.claim(&cidr, None);
+        let result = pool.claim(&cidr, None);
         assert_eq!(result, Ok(()));
-        assert_eq!(space.allocated_count(), space.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().len());
     }
 
     #[test]
     fn named() {
-        let mut space = new_test_garden();
+        let mut pool = new_test_pool();
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
-        let result = space.claim(&cidr, Some("a-name"));
+        let result = pool.claim(&cidr, Some("a-name"));
         assert_eq!(result, Ok(()));
-        let looked_up = space.find_by_name("a-name").unwrap();
+        let looked_up = pool.find_by_name("a-name").unwrap();
         assert_eq!(looked_up, cidr);
-        assert_eq!(space.allocated_count(), space.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().len());
     }
 }
 
@@ -241,49 +241,49 @@ mod rename {
 
     #[test]
     fn not_found() {
-        let mut space = new_test_garden();
+        let mut pool = new_test_pool();
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 21, 0, 0), 28).unwrap());
-        let result = space.rename(&cidr, Some("a-name"));
+        let result = pool.rename(&cidr, Some("a-name"));
         assert_eq!(result, Err(RenameError::NoSuchObject));
-        assert_eq!(space.find_by_name("a-name"), None);
+        assert_eq!(pool.find_by_name("a-name"), None);
     }
     #[test]
     fn already_not_set() {
-        let mut space = new_test_garden();
+        let mut pool = new_test_pool();
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
-        space.claim(&cidr, None).unwrap();
-        let result = space.rename(&cidr, None);
+        pool.claim(&cidr, None).unwrap();
+        let result = pool.rename(&cidr, None);
         assert_eq!(result, Ok(()));
     }
     #[test]
     fn same_name() {
-        let mut space = new_test_garden();
+        let mut pool = new_test_pool();
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
-        space.claim(&cidr, Some("same-name")).unwrap();
-        let result = space.rename(&cidr, Some("same-name"));
+        pool.claim(&cidr, Some("same-name")).unwrap();
+        let result = pool.rename(&cidr, Some("same-name"));
         assert_eq!(result, Ok(()));
-        assert_eq!(space.find_by_name("same-name").unwrap(), cidr);
+        assert_eq!(pool.find_by_name("same-name").unwrap(), cidr);
     }
     #[test]
     fn already_exists() {
-        let mut space = new_test_garden();
+        let mut pool = new_test_pool();
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 16), 28).unwrap());
-        let existing_cidr = space.allocate(4, Some("already-exists")).unwrap();
-        space.claim(&cidr, Some("old-name")).unwrap();
-        let result = space.rename(&cidr, Some("already-exists"));
+        let existing_cidr = pool.allocate(4, Some("already-exists")).unwrap();
+        pool.claim(&cidr, Some("old-name")).unwrap();
+        let result = pool.rename(&cidr, Some("already-exists"));
         assert_eq!(result, Err(RenameError::DuplicateName));
-        assert_eq!(space.find_by_name("already-exists").unwrap(), existing_cidr);
-        assert_eq!(space.find_by_name("old-name").unwrap(), cidr);
+        assert_eq!(pool.find_by_name("already-exists").unwrap(), existing_cidr);
+        assert_eq!(pool.find_by_name("old-name").unwrap(), cidr);
     }
 
     #[test]
     fn success() {
-        let mut space = new_test_garden();
-        let cidr = space.allocate(4, Some("old-name")).unwrap();
-        let result = space.rename(&cidr, Some("new-name"));
+        let mut pool = new_test_pool();
+        let cidr = pool.allocate(4, Some("old-name")).unwrap();
+        let result = pool.rename(&cidr, Some("new-name"));
         assert_eq!(result, Ok(()));
-        assert_eq!(space.find_by_name("new-name").unwrap(), cidr);
-        assert_eq!(space.find_by_name("old-name"), None);
+        assert_eq!(pool.find_by_name("new-name").unwrap(), cidr);
+        assert_eq!(pool.find_by_name("old-name"), None);
     }
 }
 
@@ -291,11 +291,11 @@ mod names {
     use super::*;
     #[test]
     fn success() {
-        let mut space = new_test_garden();
-        space.allocate(4, Some("a-name")).unwrap();
-        space.allocate(4, Some("b-name")).unwrap();
-        space.allocate(4, None).unwrap();
-        let mut names = space.names();
+        let mut pool = new_test_pool();
+        pool.allocate(4, Some("a-name")).unwrap();
+        pool.allocate(4, Some("b-name")).unwrap();
+        pool.allocate(4, None).unwrap();
+        let mut names = pool.names();
         names.sort();
         assert_eq!(names.len(), 2);
         assert_eq!(names[0], "a-name");
@@ -307,21 +307,21 @@ mod cidrs {
     use super::*;
     #[test]
     fn no_cidrs() {
-        let space = new_test_garden();
-        let cidrs = space.cidrs();
+        let pool = new_test_pool();
+        let cidrs = pool.cidrs();
         assert_eq!(cidrs.len(), 0);
     }
 
     #[test]
     fn some() {
-        let mut space = new_test_garden();
-        space.allocate(4, None).unwrap();
-        space.allocate(5, None).unwrap();
-        space.allocate(5, None).unwrap();
-        space.allocate(4, None).unwrap();
-        space.allocate(4, None).unwrap();
-        space.allocate(4, None).unwrap();
-        let cidrs = space.cidrs();
+        let mut pool = new_test_pool();
+        pool.allocate(4, None).unwrap();
+        pool.allocate(5, None).unwrap();
+        pool.allocate(5, None).unwrap();
+        pool.allocate(4, None).unwrap();
+        pool.allocate(4, None).unwrap();
+        pool.allocate(4, None).unwrap();
+        let cidrs = pool.cidrs();
         assert_eq!(cidrs.len(), 6);
         assert_eq!(
             &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap()),
@@ -356,11 +356,11 @@ mod entries {
 
     #[test]
     fn success() {
-        let mut space = new_test_garden();
-        space.allocate(4, Some("a-name")).unwrap();
-        space.allocate(4, Some("b-name")).unwrap();
-        space.allocate(4, None).unwrap();
-        let mut entries = space.entries();
+        let mut pool = new_test_pool();
+        pool.allocate(4, Some("a-name")).unwrap();
+        pool.allocate(4, Some("b-name")).unwrap();
+        pool.allocate(4, None).unwrap();
+        let mut entries = pool.entries();
         entries.sort();
         assert_eq!(entries.len(), 3);
         assert_eq!(
@@ -393,7 +393,7 @@ mod entries {
         #[test]
         fn parse_bad_network() {
             let json = r#"{"cidr":"bad-network", "subnets": []}"#;
-            let err = serde_json::from_str::<SubnetGarden>(json).unwrap_err();
+            let err = serde_json::from_str::<SubnetPool>(json).unwrap_err();
             assert_eq!(
                 err.to_string(),
                 "couldn't parse address in network: \
@@ -406,7 +406,7 @@ mod entries {
         fn allocation_error() {
             let json =
                 r#"{"cidr":"10.10.0.0/24", "subnets": [{"cidr": "10.20.0.0/24", "name": null}]}"#;
-            let err = serde_json::from_str::<SubnetGarden>(json).unwrap_err();
+            let err = serde_json::from_str::<SubnetPool>(json).unwrap_err();
             assert_eq!(
                 err.to_string(),
                 "No space available at line 1 column 76".to_string()
@@ -415,12 +415,12 @@ mod entries {
 
         #[test]
         fn success() {
-            let mut space = SubnetGarden::new(TEST_CIDR4);
-            space.allocate(4, Some("a-name")).unwrap();
-            space.allocate(4, Some("b-name")).unwrap();
-            space.allocate(4, None).unwrap();
+            let mut pool = SubnetPool::new(TEST_CIDR4);
+            pool.allocate(4, Some("a-name")).unwrap();
+            pool.allocate(4, Some("b-name")).unwrap();
+            pool.allocate(4, None).unwrap();
 
-            let json = to_string(&space).unwrap();
+            let json = to_string(&pool).unwrap();
             assert_eq!(
                 json,
                 "{\
@@ -431,8 +431,8 @@ mod entries {
                     {\"cidr\":\"10.20.0.32/28\",\"name\":null}\
                     ]}"
             );
-            let deserialize: SubnetGarden = serde_json::from_str(&json).unwrap();
-            assert_eq!(deserialize, space);
+            let deserialize: SubnetPool = serde_json::from_str(&json).unwrap();
+            assert_eq!(deserialize, pool);
         }
     }
 }

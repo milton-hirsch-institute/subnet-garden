@@ -4,7 +4,7 @@
 use cidr::IpCidr;
 use subnet_garden_core::Bits;
 
-pub(crate) const DEFAULT_STORAGE_PATH: &str = "subnet-garden.json";
+pub(crate) const DEFAULT_STORAGE_PATH: &str = "subnet-garden-pool.json";
 
 pub(crate) const SUBG_COMMAND: &str = "subg";
 
@@ -12,14 +12,14 @@ pub(crate) mod init {
     use cidr::IpCidr;
 
     #[derive(Debug, clap::Args)]
-    /// Initialize the subnet garden file
+    /// Initialize the subnet garden pool file
     pub(crate) struct InitArgs {
         #[arg(short, long, default_value_t)]
-        /// Force initialization even if the garden file already exists
+        /// Force initialization even if the pool file already exists
         pub(crate) force: bool,
 
         #[arg()]
-        /// Garden subnet CIDR
+        /// Pool subnet CIDR
         pub(crate) cidr: IpCidr,
     }
 }
@@ -88,10 +88,10 @@ pub(crate) enum SubgCommands {
 }
 
 #[derive(Debug, clap::Args)]
-/// Subnet gardener command line interface
+/// Subnet garden command line interface
 pub(crate) struct SubgArgs {
-    #[arg(short, long, default_value = DEFAULT_STORAGE_PATH, env = "SUBG_GARDEN_PATH")]
-    pub(crate) garden_path: String,
+    #[arg(short, long, default_value = DEFAULT_STORAGE_PATH, env = "SUBG_POOL_PATH")]
+    pub(crate) pool_path: String,
 }
 
 #[derive(Debug, clap::Parser)]

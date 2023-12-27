@@ -12,14 +12,14 @@ use serde::ser::SerializeStruct;
 use std::collections::HashMap;
 
 #[derive(PartialEq, Debug)]
-pub struct SubnetGarden {
+pub struct SubnetPool {
     root: Subspace,
     names: HashMap<String, IpCidr>,
 }
 
-impl SubnetGarden {
+impl SubnetPool {
     pub fn new(cidr: IpCidr) -> Self {
-        SubnetGarden {
+        SubnetPool {
             root: Subspace::new(cidr),
             names: HashMap::new(),
         }
@@ -152,19 +152,19 @@ impl SubnetGarden {
     }
 }
 
-impl serde::Serialize for SubnetGarden {
+impl serde::Serialize for SubnetPool {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut space = serializer.serialize_struct("MemorySpace", 2)?;
-        space.serialize_field("cidr", &self.root.cidr.to_string())?;
+        let mut pool = serializer.serialize_struct("SubnetPool", 2)?;
+        pool.serialize_field("cidr", &self.root.cidr.to_string())?;
         let mut entries = self.entries();
         entries.sort_by(|record1, record2| record1.cmp(record2));
-        space.serialize_field("subnets", &entries)?;
+        pool.serialize_field("subnets", &entries)?;
 
-        space.end()
+        pool.end()
     }
 }
 
-impl<'s> serde::Deserialize<'s> for SubnetGarden {
+impl<'s> serde::Deserialize<'s> for SubnetPool {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: serde::Deserializer<'s>,
@@ -179,22 +179,22 @@ impl<'s> serde::Deserialize<'s> for SubnetGarden {
         fn load_cidrs(
             entries: &Vec<CidrRecord>,
             cidr: &IpCidr,
-        ) -> Result<SubnetGarden, AllocateError> {
-            let mut space = SubnetGarden::new(*cidr);
+        ) -> Result<SubnetPool, AllocateError> {
+            let mut pool = SubnetPool::new(*cidr);
             for entry in entries {
                 let entry_name = entry.name.as_deref();
-                space.claim(&entry.cidr, entry_name)?;
+                pool.claim(&entry.cidr, entry_name)?;
             }
-            Ok(space)
+            Ok(pool)
         }
-        struct MemorySpaceVisitor;
-        impl<'s> serde::de::Visitor<'s> for MemorySpaceVisitor {
-            type Value = SubnetGarden;
+        struct SubspacePoolVisitor;
+        impl<'s> serde::de::Visitor<'s> for SubspacePoolVisitor {
+            type Value = SubnetPool;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-                formatter.write_str("struct MemorySpace")
+                formatter.write_str("struct SubspacePool")
             }
-            fn visit_seq<V>(self, mut seq: V) -> Result<SubnetGarden, V::Error>
+            fn visit_seq<V>(self, mut seq: V) -> Result<SubnetPool, V::Error>
             where
                 V: serde::de::SeqAccess<'s>,
             {
@@ -241,6 +241,6 @@ impl<'s> serde::Deserialize<'s> for SubnetGarden {
             }
         }
         const FIELDS: &[&str] = &["cidr", "subnets"];
-        deserializer.deserialize_struct("MemorySpace", FIELDS, MemorySpaceVisitor)
+        deserializer.deserialize_struct("SubspacePool", FIELDS, SubspacePoolVisitor)
     }
 }

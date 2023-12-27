@@ -6,18 +6,18 @@ use cidr::IpCidr;
 use std::process::exit;
 
 pub(crate) fn allocate(subg: &SubgArgs, args: &AllocateArgs) {
-    let mut garden = crate::load_garden(&subg.garden_path);
+    let mut pool = crate::load_pool(&subg.pool_path);
     crate::result(
-        garden.allocate(args.bits, args.name.as_deref()),
+        pool.allocate(args.bits, args.name.as_deref()),
         exitcode::SOFTWARE,
         "Could not allocate subnet",
     );
-    crate::store_space(&subg.garden_path, &garden);
+    crate::store_pool(&subg.pool_path, &pool);
 }
 
 pub(crate) fn free(subg: &SubgArgs, args: &FreeArgs) {
-    let mut garden = crate::load_garden(&subg.garden_path);
-    let cidr = match garden.find_by_name(&args.identifier.as_str()) {
+    let mut pool = crate::load_pool(&subg.pool_path);
+    let cidr = match pool.find_by_name(&args.identifier.as_str()) {
         Some(cidr) => cidr,
         None => crate::result(
             args.identifier.parse::<IpCidr>(),
@@ -25,23 +25,23 @@ pub(crate) fn free(subg: &SubgArgs, args: &FreeArgs) {
             "Could not parse arg IDENTIFIER",
         ),
     };
-    if !garden.free(&cidr) {
+    if !pool.free(&cidr) {
         eprintln!("Could not free subnet {}", cidr);
         exit(exitcode::SOFTWARE);
     }
-    crate::store_space(&subg.garden_path, &garden);
+    crate::store_pool(&subg.pool_path, &pool);
 }
 
 pub(crate) fn cidrs(subg: &SubgArgs) {
-    let garden = crate::load_garden(&subg.garden_path);
-    for entry in garden.entries() {
+    let pool = crate::load_pool(&subg.pool_path);
+    for entry in pool.entries() {
         println!("{}", entry.cidr);
     }
 }
 
 pub(crate) fn names(subg: &SubgArgs) {
-    let garden = crate::load_garden(&subg.garden_path);
-    let mut names = garden.names();
+    let pool = crate::load_pool(&subg.pool_path);
+    let mut names = pool.names();
     names.sort();
     for name in names {
         println!("{}", name);
@@ -49,18 +49,18 @@ pub(crate) fn names(subg: &SubgArgs) {
 }
 
 pub(crate) fn claim(subg: &SubgArgs, args: &ClaimArgs) {
-    let mut garden = crate::load_garden(&subg.garden_path);
+    let mut pool = crate::load_pool(&subg.pool_path);
     crate::result(
-        garden.claim(&args.cidr, args.name.as_deref()),
+        pool.claim(&args.cidr, args.name.as_deref()),
         exitcode::SOFTWARE,
         "Could not claim subnet",
     );
-    crate::store_space(&subg.garden_path, &garden);
+    crate::store_pool(&subg.pool_path, &pool);
 }
 
 pub(crate) fn rename(subg: &SubgArgs, args: &RenameArgs) {
-    let mut garden = crate::load_garden(&subg.garden_path);
-    let cidr = match garden.find_by_name(&args.identifier.as_str()) {
+    let mut pool = crate::load_pool(&subg.pool_path);
+    let cidr = match pool.find_by_name(&args.identifier.as_str()) {
         Some(cidr) => cidr,
         None => crate::result(
             args.identifier.parse::<IpCidr>(),
@@ -69,11 +69,11 @@ pub(crate) fn rename(subg: &SubgArgs, args: &RenameArgs) {
         ),
     };
     crate::result(
-        garden.rename(&cidr, args.name.as_deref()),
+        pool.rename(&cidr, args.name.as_deref()),
         exitcode::SOFTWARE,
         "Could not rename subnet",
     );
-    crate::store_space(&subg.garden_path, &garden);
+    crate::store_pool(&subg.pool_path, &pool);
 }
 
 #[cfg(test)]
@@ -96,7 +96,7 @@ mod tests {
         #[test]
         fn allocate_failure() {
             let mut test = new_allocate_test("8", Some("test"));
-            test.garden.allocate(16, None).unwrap();
+            test.pool.allocate(16, None).unwrap();
             test.store();
             test.subg
                 .assert()
@@ -111,7 +111,7 @@ mod tests {
             let mut test = new_allocate_test("8", Some("test"));
             test.subg.assert().success().stdout("").stderr("");
             test.load();
-            let subnets = test.garden.entries().to_vec();
+            let subnets = test.pool.entries().to_vec();
             assert_eq!(subnets.len(), 1);
             assert_eq!(subnets[0].name.clone().unwrap(), "test");
             assert_eq!(subnets[0].cidr.to_string(), "10.10.0.0/24");
@@ -122,7 +122,7 @@ mod tests {
             let mut test = new_allocate_test("8", None);
             test.subg.assert().success().stdout("").stderr("");
             test.load();
-            let subnets = test.garden.entries().to_vec();
+            let subnets = test.pool.entries().to_vec();
             assert_eq!(subnets.len(), 1);
             assert_eq!(subnets[0].name, None);
             assert_eq!(subnets[0].cidr.to_string(), "10.10.0.0/24");
@@ -168,21 +168,21 @@ mod tests {
         #[test]
         fn free_success_with_name() {
             let mut test = new_free_test("test");
-            test.garden.allocate(4, Some("test")).unwrap();
+            test.pool.allocate(4, Some("test")).unwrap();
             test.store();
             test.subg.assert().success().stdout("").stderr("");
             test.load();
-            assert_eq!(test.garden.find_by_name("test"), None);
+            assert_eq!(test.pool.find_by_name("test"), None);
         }
 
         #[test]
         fn free_success_with_cidr() {
             let mut test = new_free_test("10.10.0.0/28");
-            test.garden.allocate(4, Some("test")).unwrap();
+            test.pool.allocate(4, Some("test")).unwrap();
             test.store();
             test.subg.assert().success().stdout("").stderr("");
             test.load();
-            assert_eq!(test.garden.find_by_name("test"), None);
+            assert_eq!(test.pool.find_by_name("test"), None);
         }
     }
 
@@ -205,8 +205,8 @@ mod tests {
         #[test]
         fn has_cidrs() {
             let mut test = new_cidrs_test();
-            test.garden.allocate(4, Some("test1")).unwrap();
-            test.garden.allocate(6, Some("test2")).unwrap();
+            test.pool.allocate(4, Some("test1")).unwrap();
+            test.pool.allocate(6, Some("test2")).unwrap();
             test.store();
             test.subg
                 .assert()
@@ -235,10 +235,10 @@ mod tests {
         #[test]
         fn has_names() {
             let mut test = new_names_test();
-            test.garden.allocate(4, Some("test1")).unwrap();
-            test.garden.allocate(5, None).unwrap();
-            test.garden.allocate(6, Some("test2")).unwrap();
-            test.garden.allocate(4, Some("test0")).unwrap();
+            test.pool.allocate(4, Some("test1")).unwrap();
+            test.pool.allocate(5, None).unwrap();
+            test.pool.allocate(6, Some("test2")).unwrap();
+            test.pool.allocate(4, Some("test0")).unwrap();
             test.store();
             test.subg
                 .assert()
@@ -279,7 +279,7 @@ mod tests {
             let mut test = new_claim_test("10.10.0.0/24", None);
             test.subg.assert().success().stdout("").stderr("");
             test.load();
-            let subnets = test.garden.entries().to_vec();
+            let subnets = test.pool.entries().to_vec();
             assert_eq!(subnets.len(), 1);
             assert_eq!(subnets[0].name, None);
             assert_eq!(subnets[0].cidr.to_string(), "10.10.0.0/24");
@@ -290,7 +290,7 @@ mod tests {
             let mut test = new_claim_test("10.10.0.0/24", Some("test"));
             test.subg.assert().success().stdout("").stderr("");
             test.load();
-            let subnets = test.garden.entries().to_vec();
+            let subnets = test.pool.entries().to_vec();
             assert_eq!(subnets.len(), 1);
             assert_eq!(subnets[0].name.clone().unwrap(), "test");
             assert_eq!(subnets[0].cidr.to_string(), "10.10.0.0/24");
@@ -326,8 +326,8 @@ mod tests {
         #[test]
         fn rename_failure() {
             let mut test = new_rename_test("10.10.0.0/24", Some("test"));
-            test.garden.allocate(4, Some("test")).unwrap();
-            test.garden.allocate(4, None).unwrap();
+            test.pool.allocate(4, Some("test")).unwrap();
+            test.pool.allocate(4, None).unwrap();
             test.store();
             test.subg
                 .assert()
@@ -340,11 +340,11 @@ mod tests {
         #[test]
         fn success_with_name() {
             let mut test = new_rename_test("test", Some("test2"));
-            test.garden.allocate(4, Some("test")).unwrap();
+            test.pool.allocate(4, Some("test")).unwrap();
             test.store();
             test.subg.assert().success().stdout("").stderr("");
             test.load();
-            let subnets = test.garden.entries().to_vec();
+            let subnets = test.pool.entries().to_vec();
             assert_eq!(subnets.len(), 1);
             assert_eq!(subnets[0].name.clone().unwrap(), "test2");
             assert_eq!(subnets[0].cidr.to_string(), "10.10.0.0/28");
@@ -353,11 +353,11 @@ mod tests {
         #[test]
         fn success_with_cidr() {
             let mut test = new_rename_test("10.10.0.0/28", Some("test2"));
-            test.garden.allocate(4, Some("test")).unwrap();
+            test.pool.allocate(4, Some("test")).unwrap();
             test.store();
             test.subg.assert().success().stdout("").stderr("");
             test.load();
-            let subnets = test.garden.entries().to_vec();
+            let subnets = test.pool.entries().to_vec();
             assert_eq!(subnets.len(), 1);
             assert_eq!(subnets[0].name.clone().unwrap(), "test2");
             assert_eq!(subnets[0].cidr.to_string(), "10.10.0.0/28");
