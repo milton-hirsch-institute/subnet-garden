@@ -127,8 +127,8 @@ impl SubnetPool {
         Ok(())
     }
 
-    pub fn names(&self) -> Vec<String> {
-        self.names.keys().cloned().collect()
+    pub fn names(&self) -> impl Iterator<Item = String> + '_ {
+        self.names.iter().map(|(name, _)| name.to_string())
     }
 
     pub fn cidrs(&self) -> impl Iterator<Item = &IpCidr> {

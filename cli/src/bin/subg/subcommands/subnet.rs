@@ -41,7 +41,7 @@ pub(crate) fn cidrs(subg: &SubgArgs) {
 
 pub(crate) fn names(subg: &SubgArgs) {
     let pool = crate::load_pool(&subg.pool_path);
-    let mut names = pool.names();
+    let mut names: Vec<String> = pool.names().collect();
     names.sort();
     for name in names {
         println!("{}", name);
