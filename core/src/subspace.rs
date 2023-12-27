@@ -1,9 +1,9 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::util;
 use crate::util::available_bits;
 use crate::Bits;
+use crate::{util, CidrRecord};
 use cidr::IpCidr;
 use cidr_utils::separator;
 use std::cmp;
@@ -17,8 +17,7 @@ pub(crate) enum State {
 
 #[derive(PartialEq, Debug)]
 pub(crate) struct Subspace {
-    pub(crate) cidr: IpCidr,
-    pub(crate) name: Option<String>,
+    pub(crate) record: CidrRecord,
     pub(crate) high: Option<Box<Self>>,
     pub(crate) low: Option<Box<Self>>,
     pub(crate) state: State,
@@ -29,8 +28,7 @@ pub(crate) struct Subspace {
 impl Subspace {
     pub(crate) fn new(cidr: IpCidr) -> Self {
         Subspace {
-            cidr,
-            name: None,
+            record: CidrRecord::new(cidr, None),
             high: None,
             low: None,
             state: State::Free,
@@ -47,7 +45,7 @@ impl Subspace {
             }
             State::Free => {
                 self.allocated_count = 0;
-                self.max_available_bits = available_bits(&self.cidr);
+                self.max_available_bits = available_bits(&self.record.cidr);
             }
             State::Unavailable => {
                 let low = self.low.as_deref_mut().unwrap();
@@ -59,15 +57,15 @@ impl Subspace {
     }
 
     pub(crate) fn host_length(self: &Self) -> Bits {
-        return util::available_bits(&self.cidr);
+        return util::available_bits(&self.record.cidr);
     }
 
     pub(crate) fn split(self: &mut Self) {
         self.state = State::Unavailable;
-        let new_network_length = self.cidr.network_length() + 1;
+        let new_network_length = self.record.cidr.network_length() + 1;
         let low_cidr: IpCidr;
         let high_cidr: IpCidr;
-        match self.cidr {
+        match self.record.cidr {
             IpCidr::V4(cidr) => {
                 let subnets = separator::Ipv4CidrSeparator::sub_networks(&cidr, new_network_length);
                 let subnets_vec = subnets.unwrap();
@@ -97,8 +95,8 @@ impl Subspace {
             if host_length == self.host_length() {
                 self.state = State::Allocated;
                 self.update_info();
-                self.name = name.map(|s| s.to_string());
-                return Some(self.cidr);
+                self.record.name = name.map(|s| s.to_string());
+                return Some(self.record.cidr);
             } else {
                 self.split();
             }
@@ -131,15 +129,15 @@ impl Subspace {
         return None;
     }
     pub(crate) fn free(&mut self, cidr: &IpCidr) -> bool {
-        if !util::cidr_contains(&self.cidr, cidr) {
+        if !util::cidr_contains(&self.record.cidr, cidr) {
             return false;
         }
 
         match self.state {
-            State::Allocated => match self.cidr == *cidr {
+            State::Allocated => match self.record.cidr == *cidr {
                 true => {
                     self.state = State::Free;
-                    self.name = None;
+                    self.record.name = None;
                     self.update_info();
                     return true;
                 }
@@ -167,17 +165,17 @@ impl Subspace {
     }
 
     pub(crate) fn claim(&mut self, cidr: &IpCidr, name: Option<&str>) -> bool {
-        if !util::cidr_contains(&self.cidr, cidr) {
+        if !util::cidr_contains(&self.record.cidr, cidr) {
             return false;
         }
 
         match self.state {
             State::Allocated => return false,
             State::Free => {
-                if self.cidr == *cidr {
+                if self.record.cidr == *cidr {
                     self.state = State::Allocated;
                     self.update_info();
-                    self.name = match name {
+                    self.record.name = match name {
                         Some(name) => Some(name.to_string()),
                         None => None,
                     };
@@ -198,10 +196,10 @@ impl Subspace {
     }
 
     pub(crate) fn find_record(&self, cidr: &IpCidr) -> Option<&Self> {
-        if !util::cidr_contains(&self.cidr, cidr) {
+        if !util::cidr_contains(&self.record.cidr, cidr) {
             return None;
         }
-        if self.cidr == *cidr {
+        if self.record.cidr == *cidr {
             return Some(self);
         }
         let found_low = self.low.as_deref()?.find_record(cidr);
@@ -212,10 +210,10 @@ impl Subspace {
     }
 
     pub(crate) fn find_record_mut(&mut self, cidr: &IpCidr) -> Option<&mut Self> {
-        if !util::cidr_contains(&self.cidr, cidr) {
+        if !util::cidr_contains(&self.record.cidr, cidr) {
             return None;
         }
-        if self.cidr == *cidr {
+        if self.record.cidr == *cidr {
             return Some(self);
         }
         let found_low = self.low.as_deref_mut()?.find_record_mut(cidr);

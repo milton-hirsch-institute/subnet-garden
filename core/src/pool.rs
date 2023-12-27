@@ -122,7 +122,7 @@ impl SubnetPool {
         };
 
         // Ignore if name is not changing
-        if subspace.name.as_deref() == name {
+        if subspace.record.name.as_deref() == name {
             return Ok(());
         }
 
@@ -135,12 +135,12 @@ impl SubnetPool {
         }
 
         // Remove old name
-        if let Some(record_name) = &subspace.name {
+        if let Some(record_name) = &subspace.record.name {
             self.names.remove(record_name);
         }
 
         // Update record name
-        subspace.name = name.map(|name| name.to_string());
+        subspace.record.name = name.map(|name| name.to_string());
         Ok(())
     }
 
@@ -150,18 +150,19 @@ impl SubnetPool {
 
     pub fn cidrs(&self) -> impl Iterator<Item = &IpCidr> {
         self.iter_allocated_subspaces()
-            .map(|subspace| &subspace.cidr)
+            .map(|subspace| &subspace.record.cidr)
     }
 
     pub fn entries(&self) -> Vec<crate::CidrRecord> {
         let mut allocated_subspaces = self.list_allocated_subspaces();
-        allocated_subspaces.sort_by(|subspace1, subspace2| subspace1.cidr.cmp(&subspace2.cidr));
+        allocated_subspaces
+            .sort_by(|subspace1, subspace2| subspace1.record.cidr.cmp(&subspace2.record.cidr));
         let mut entries = Vec::new();
         entries.reserve(allocated_subspaces.len());
         for subspace in allocated_subspaces {
             entries.push(crate::CidrRecord::new(
-                subspace.cidr,
-                subspace.name.as_deref(),
+                subspace.record.cidr,
+                subspace.record.name.as_deref(),
             ));
         }
         entries
@@ -171,7 +172,7 @@ impl SubnetPool {
 impl serde::Serialize for SubnetPool {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let mut pool = serializer.serialize_struct("SubnetPool", 2)?;
-        pool.serialize_field("cidr", &self.root.cidr.to_string())?;
+        pool.serialize_field("cidr", &self.root.record.cidr.to_string())?;
         let mut entries = self.entries();
         entries.sort_by(|record1, record2| record1.cmp(record2));
         pool.serialize_field("subnets", &entries)?;
