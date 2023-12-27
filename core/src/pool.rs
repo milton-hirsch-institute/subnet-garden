@@ -42,6 +42,24 @@ impl SubnetPool {
         return subspaces;
     }
 
+    fn iter_allocated_subspaces(&self) -> impl Iterator<Item = &Subspace> {
+        let mut stack = Vec::new();
+        stack.push(&self.root);
+        std::iter::from_fn(move || {
+            while let Some(subspace) = stack.pop() {
+                match subspace.state {
+                    State::Allocated => return Some(subspace),
+                    State::Free => {}
+                    State::Unavailable => {
+                        stack.push(subspace.high.as_deref().unwrap());
+                        stack.push(subspace.low.as_deref().unwrap());
+                    }
+                }
+            }
+            None
+        })
+    }
+
     #[inline(always)]
     pub fn allocated_count(&self) -> usize {
         self.root.allocated_count
@@ -138,6 +156,11 @@ impl SubnetPool {
             cidrs.push(&subspace.cidr);
         }
         cidrs
+    }
+
+    pub fn iter_cidrs(&self) -> impl Iterator<Item = &IpCidr> {
+        self.iter_allocated_subspaces()
+            .map(|subspace| &subspace.cidr)
     }
 
     pub fn entries(&self) -> Vec<crate::CidrRecord> {

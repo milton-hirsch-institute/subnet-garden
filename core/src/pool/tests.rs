@@ -375,6 +375,50 @@ mod cidrs {
     }
 }
 
+mod iter_cidrs {
+    use super::*;
+    #[test]
+    fn no_cidrs() {
+        let pool = new_test_pool();
+        let cidrs = pool.iter_cidrs();
+        assert_eq!(cidrs.count(), 0);
+    }
+
+    #[test]
+    fn some() {
+        let mut pool = new_test_pool();
+        for bits in [4, 5, 5, 4, 4, 4].iter() {
+            pool.allocate(*bits, None).unwrap();
+        }
+        let mut cidrs = pool.iter_cidrs();
+        assert_eq!(
+            &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap()),
+            cidrs.next().unwrap(),
+        );
+        assert_eq!(
+            &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 16), 28).unwrap()),
+            cidrs.next().unwrap(),
+        );
+        assert_eq!(
+            &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 32), 27).unwrap()),
+            cidrs.next().unwrap(),
+        );
+        assert_eq!(
+            &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 64), 27).unwrap()),
+            cidrs.next().unwrap(),
+        );
+        assert_eq!(
+            &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 96), 28).unwrap()),
+            cidrs.next().unwrap(),
+        );
+        assert_eq!(
+            &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 112), 28).unwrap()),
+            cidrs.next().unwrap(),
+        );
+        assert_eq!(cidrs.count(), 0);
+    }
+}
+
 mod entries {
     use super::*;
     use crate::CidrRecord;
