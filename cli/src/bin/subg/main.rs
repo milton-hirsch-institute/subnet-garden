@@ -88,6 +88,9 @@ fn main() {
         SubgCommands::Rename(args) => {
             subnet::rename(&subg.args, &args);
         }
+        SubgCommands::MaxAvailable(_) => {
+            subnet::max_bits(&subg.args);
+        }
     }
 }
 

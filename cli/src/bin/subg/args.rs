@@ -76,6 +76,10 @@ pub(crate) struct RenameArgs {
     pub(crate) name: Option<String>,
 }
 
+#[derive(Debug, clap::Args)]
+/// Largest available subnet (by bits)
+pub(crate) struct MaxAvailableArgs {}
+
 #[derive(Debug, clap::Subcommand)]
 pub(crate) enum SubgCommands {
     Allocate(AllocateArgs),
@@ -83,6 +87,7 @@ pub(crate) enum SubgCommands {
     Claim(ClaimArgs),
     Free(FreeArgs),
     Init(init::InitArgs),
+    MaxAvailable(MaxAvailableArgs),
     Names(NamesArgs),
     Rename(RenameArgs),
 }

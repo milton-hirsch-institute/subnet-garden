@@ -76,6 +76,12 @@ pub(crate) fn rename(subg: &SubgArgs, args: &RenameArgs) {
     crate::store_pool(&subg.pool_path, &pool);
 }
 
+pub(crate) fn max_bits(subg: &SubgArgs) {
+    let pool = crate::load_pool(&subg.pool_path);
+    let largest = pool.max_available_bits();
+    println!("{}", largest);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -364,6 +370,36 @@ mod tests {
             assert_eq!(subnets.len(), 1);
             assert_eq!(subnets[0].name.clone().unwrap(), "test2");
             assert_eq!(subnets[0].cidr.to_string(), "10.10.0.0/28");
+        }
+    }
+
+    mod max_available {
+        use super::*;
+        fn new_max_available_test() -> Test {
+            let mut test = tests::new_test();
+            test.store();
+            test.subg.arg("max-available");
+            test
+        }
+
+        #[test]
+        fn no_subnets() {
+            let mut test = new_max_available_test();
+            test.subg.assert().success().stdout("16\n").stderr("");
+        }
+
+        #[test]
+        fn has_subnets() {
+            let mut test = new_max_available_test();
+            test.pool.allocate(4, Some("test1")).unwrap();
+            test.pool.allocate(6, Some("test2")).unwrap();
+            test.store();
+            test.subg.assert().success().stdout("15\n").stderr("");
+
+            test.pool.allocate(14, Some("test3")).unwrap();
+            test.pool.allocate(15, Some("test4")).unwrap();
+            test.store();
+            test.subg.assert().success().stdout("13\n").stderr("");
         }
     }
 }
