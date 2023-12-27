@@ -62,14 +62,14 @@ impl SubnetPool {
 
     pub fn allocate(&mut self, bits: Bits, name: Option<&str>) -> AllocateResult<IpCidr> {
         match self.root.allocate_free_space(bits, name) {
-            Some(subspace) => {
+            Some(cidr) => {
                 if let Some(name) = name {
                     if self.names.contains_key(name) {
                         return Err(AllocateError::DuplicateName);
                     }
-                    self.names.insert(name.to_string(), subspace.cidr);
+                    self.names.insert(name.to_string(), cidr.clone());
                 }
-                Ok(subspace.cidr)
+                Ok(cidr.clone())
             }
             None => Err(AllocateError::NoSpaceAvailable),
         }

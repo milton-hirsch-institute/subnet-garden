@@ -65,7 +65,7 @@ impl Subspace {
         &mut self,
         host_length: Bits,
         name: Option<&str>,
-    ) -> Option<&Self> {
+    ) -> Option<&IpCidr> {
         if host_length > self.host_length() {
             return None;
         }
@@ -74,7 +74,7 @@ impl Subspace {
                 self.state = State::Allocated;
                 self.allocated_count += 1;
                 self.name = name.map(|s| s.to_string());
-                return Some(self);
+                return Some(&self.cidr);
             } else {
                 self.split();
             }
