@@ -50,7 +50,7 @@ mod allocate {
         let mut pool = new_test_pool();
         let result = pool.allocate(17, None);
         assert_eq!(result.err(), Some(AllocateError::NoSpaceAvailable));
-        assert_eq!(pool.allocated_count(), pool.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().count());
     }
 
     #[test]
@@ -59,7 +59,7 @@ mod allocate {
         pool.allocate(16, None).unwrap();
         let result = pool.allocate(16, None);
         assert_eq!(result.err(), Some(AllocateError::NoSpaceAvailable));
-        assert_eq!(pool.allocated_count(), pool.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().count());
     }
 
     #[test]
@@ -68,7 +68,7 @@ mod allocate {
         pool.allocate(4, Some("a-name")).unwrap();
         let result = pool.allocate(4, Some("a-name"));
         assert_eq!(result.err(), Some(AllocateError::DuplicateName));
-        assert_eq!(pool.allocated_count(), pool.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().count());
     }
 
     #[test]
@@ -77,7 +77,7 @@ mod allocate {
         pool.allocate(4, Some("10.20.0.16/28")).unwrap();
         let result = pool.allocate(4, None);
         assert_eq!(result.err(), None);
-        assert_eq!(pool.allocated_count(), pool.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().count());
     }
 
     #[test]
@@ -86,7 +86,7 @@ mod allocate {
         let result = pool.allocate(4, Some("a-name")).unwrap();
         let looked_up = pool.find_by_name("a-name").unwrap();
         assert_eq!(looked_up, result);
-        assert_eq!(pool.allocated_count(), pool.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().count());
     }
 
     #[test]
@@ -97,7 +97,7 @@ mod allocate {
             result,
             IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap())
         );
-        assert_eq!(pool.allocated_count(), pool.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().count());
     }
 
     #[test]
@@ -108,7 +108,7 @@ mod allocate {
             result,
             IpCidr::V6(Ipv6Cidr::new(Ipv6Addr::new(1, 2, 3, 4, 10, 20, 0, 0), 124).unwrap())
         );
-        assert_eq!(pool.allocated_count(), pool.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().count());
     }
 
     #[test]
@@ -124,7 +124,7 @@ mod allocate {
             result2,
             IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 1, 0), 24).unwrap())
         );
-        assert_eq!(pool.allocated_count(), pool.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().count());
     }
 
     #[test]
@@ -170,7 +170,7 @@ mod free {
     fn out_of_range() {
         let mut pool = new_test_pool();
         assert!(!pool.free(&IpCidr::from_str("20.20.0.0/16").unwrap()));
-        assert_eq!(pool.allocated_count(), pool.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().count());
     }
 
     #[test]
@@ -191,7 +191,7 @@ mod free {
                 let cidr = cidrs[*index];
                 free_test(&mut pool, &cidr);
             }
-            assert_eq!(pool.allocated_count(), pool.cidrs().len());
+            assert_eq!(pool.allocated_count(), pool.cidrs().count());
         }
     }
 }
@@ -206,7 +206,7 @@ mod claim {
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 21, 0, 0), 28).unwrap());
         let result = pool.claim(&cidr, None);
         assert_eq!(result, Err(AllocateError::NoSpaceAvailable));
-        assert_eq!(pool.allocated_count(), pool.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().count());
     }
 
     #[test]
@@ -216,7 +216,7 @@ mod claim {
         pool.claim(&cidr, None).unwrap();
         let result = pool.claim(&cidr, None);
         assert_eq!(result, Err(AllocateError::NoSpaceAvailable));
-        assert_eq!(pool.allocated_count(), pool.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().count());
     }
 
     #[test]
@@ -226,7 +226,7 @@ mod claim {
         pool.allocate(16, None).unwrap();
         let result = pool.claim(&cidr, None);
         assert_eq!(result, Err(AllocateError::NoSpaceAvailable));
-        assert_eq!(pool.allocated_count(), pool.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().count());
     }
 
     #[test]
@@ -236,7 +236,7 @@ mod claim {
         pool.allocate(4, Some("a-name")).unwrap();
         let result = pool.claim(&cidr, Some("a-name"));
         assert_eq!(result, Err(AllocateError::DuplicateName));
-        assert_eq!(pool.allocated_count(), pool.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().count());
     }
 
     #[test]
@@ -245,7 +245,7 @@ mod claim {
         let cidr = IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap());
         let result = pool.claim(&cidr, None);
         assert_eq!(result, Ok(()));
-        assert_eq!(pool.allocated_count(), pool.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().count());
     }
 
     #[test]
@@ -256,7 +256,7 @@ mod claim {
         assert_eq!(result, Ok(()));
         let looked_up = pool.find_by_name("a-name").unwrap();
         assert_eq!(looked_up, cidr);
-        assert_eq!(pool.allocated_count(), pool.cidrs().len());
+        assert_eq!(pool.allocated_count(), pool.cidrs().count());
     }
 }
 
@@ -334,53 +334,6 @@ mod cidrs {
     fn no_cidrs() {
         let pool = new_test_pool();
         let cidrs = pool.cidrs();
-        assert_eq!(cidrs.len(), 0);
-    }
-
-    #[test]
-    fn some() {
-        let mut pool = new_test_pool();
-        pool.allocate(4, None).unwrap();
-        pool.allocate(5, None).unwrap();
-        pool.allocate(5, None).unwrap();
-        pool.allocate(4, None).unwrap();
-        pool.allocate(4, None).unwrap();
-        pool.allocate(4, None).unwrap();
-        let cidrs = pool.cidrs();
-        assert_eq!(cidrs.len(), 6);
-        assert_eq!(
-            &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap()),
-            cidrs[0],
-        );
-        assert_eq!(
-            &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 16), 28).unwrap()),
-            cidrs[1],
-        );
-        assert_eq!(
-            &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 32), 27).unwrap()),
-            cidrs[2],
-        );
-        assert_eq!(
-            &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 64), 27).unwrap()),
-            cidrs[3],
-        );
-        assert_eq!(
-            &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 96), 28).unwrap()),
-            cidrs[4],
-        );
-        assert_eq!(
-            &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 112), 28).unwrap()),
-            cidrs[5],
-        );
-    }
-}
-
-mod iter_cidrs {
-    use super::*;
-    #[test]
-    fn no_cidrs() {
-        let pool = new_test_pool();
-        let cidrs = pool.iter_cidrs();
         assert_eq!(cidrs.count(), 0);
     }
 
@@ -390,7 +343,7 @@ mod iter_cidrs {
         for bits in [4, 5, 5, 4, 4, 4].iter() {
             pool.allocate(*bits, None).unwrap();
         }
-        let mut cidrs = pool.iter_cidrs();
+        let mut cidrs = pool.cidrs();
         assert_eq!(
             &IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap()),
             cidrs.next().unwrap(),

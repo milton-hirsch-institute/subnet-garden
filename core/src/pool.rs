@@ -148,17 +148,7 @@ impl SubnetPool {
         self.names.keys().cloned().collect()
     }
 
-    pub fn cidrs(&self) -> Vec<&IpCidr> {
-        let allocated_subspaces = self.list_allocated_subspaces();
-        let mut cidrs = Vec::new();
-        cidrs.reserve(allocated_subspaces.len());
-        for subspace in allocated_subspaces {
-            cidrs.push(&subspace.cidr);
-        }
-        cidrs
-    }
-
-    pub fn iter_cidrs(&self) -> impl Iterator<Item = &IpCidr> {
+    pub fn cidrs(&self) -> impl Iterator<Item = &IpCidr> {
         self.iter_allocated_subspaces()
             .map(|subspace| &subspace.cidr)
     }
