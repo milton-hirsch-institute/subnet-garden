@@ -153,19 +153,24 @@ impl SubnetPool {
             .map(|subspace| &subspace.record.cidr)
     }
 
-    pub fn entries(&self) -> Vec<crate::CidrRecord> {
+    pub fn entries(&self) -> Vec<CidrRecord> {
         let mut allocated_subspaces = self.list_allocated_subspaces();
         allocated_subspaces
             .sort_by(|subspace1, subspace2| subspace1.record.cidr.cmp(&subspace2.record.cidr));
         let mut entries = Vec::new();
         entries.reserve(allocated_subspaces.len());
         for subspace in allocated_subspaces {
-            entries.push(crate::CidrRecord::new(
+            entries.push(CidrRecord::new(
                 subspace.record.cidr,
                 subspace.record.name.as_deref(),
             ));
         }
         entries
+    }
+
+    pub fn records(&self) -> impl Iterator<Item = &CidrRecord> {
+        self.iter_allocated_subspaces()
+            .map(|subspace| &subspace.record)
     }
 }
 
@@ -220,7 +225,7 @@ impl<'s> serde::Deserialize<'s> for SubnetPool {
                     .ok_or_else(|| serde::de::Error::missing_field("cidr"))?;
                 let cidr = cidr.parse::<IpCidr>().map_err(serde::de::Error::custom)?;
                 let entries = seq
-                    .next_element::<Vec<crate::CidrRecord>>()?
+                    .next_element::<Vec<CidrRecord>>()?
                     .ok_or_else(|| serde::de::Error::missing_field("subnets"))?;
 
                 Ok(load_cidrs(&entries, &cidr).map_err(serde::de::Error::custom)?)
@@ -230,7 +235,7 @@ impl<'s> serde::Deserialize<'s> for SubnetPool {
                 V: serde::de::MapAccess<'s>,
             {
                 let mut cidr: Option<IpCidr> = None;
-                let mut entries: Option<Vec<crate::CidrRecord>> = None;
+                let mut entries: Option<Vec<CidrRecord>> = None;
                 while let Some(key) = map.next_key()? {
                     match key {
                         Field::Cidr => {

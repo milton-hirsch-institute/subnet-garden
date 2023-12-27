@@ -407,54 +407,90 @@ mod entries {
             )
         );
     }
+}
 
-    mod serialize {
-        use super::*;
-        use serde_json::to_string;
+mod records {
+    use super::*;
+    use crate::CidrRecord;
 
-        #[test]
-        fn parse_bad_network() {
-            let json = r#"{"cidr":"bad-network", "subnets": []}"#;
-            let err = serde_json::from_str::<SubnetPool>(json).unwrap_err();
-            assert_eq!(
-                err.to_string(),
-                "couldn't parse address in network: \
+    #[test]
+    fn success() {
+        let mut pool = new_test_pool();
+        pool.allocate(4, Some("a-name")).unwrap();
+        pool.allocate(4, Some("b-name")).unwrap();
+        pool.allocate(4, None).unwrap();
+        let mut entries: Vec<&CidrRecord> = pool.records().collect();
+        entries.sort();
+        assert_eq!(entries.len(), 3);
+        assert_eq!(
+            entries[0],
+            &CidrRecord::new(
+                IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap()),
+                Some("a-name")
+            )
+        );
+        assert_eq!(
+            entries[1],
+            &CidrRecord::new(
+                IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 16), 28).unwrap()),
+                Some("b-name")
+            )
+        );
+        assert_eq!(
+            entries[2],
+            &CidrRecord::new(
+                IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 32), 28).unwrap()),
+                None
+            )
+        );
+    }
+}
+mod serialize {
+    use super::*;
+    use serde_json::to_string;
+
+    #[test]
+    fn parse_bad_network() {
+        let json = r#"{"cidr":"bad-network", "subnets": []}"#;
+        let err = serde_json::from_str::<SubnetPool>(json).unwrap_err();
+        assert_eq!(
+            err.to_string(),
+            "couldn't parse address in network: \
                     invalid IP address syntax at line 1 column 21"
-                    .to_string()
-            );
-        }
+                .to_string()
+        );
+    }
 
-        #[test]
-        fn allocation_error() {
-            let json =
-                r#"{"cidr":"10.10.0.0/24", "subnets": [{"cidr": "10.20.0.0/24", "name": null}]}"#;
-            let err = serde_json::from_str::<SubnetPool>(json).unwrap_err();
-            assert_eq!(
-                err.to_string(),
-                "No space available at line 1 column 76".to_string()
-            );
-        }
+    #[test]
+    fn allocation_error() {
+        let json =
+            r#"{"cidr":"10.10.0.0/24", "subnets": [{"cidr": "10.20.0.0/24", "name": null}]}"#;
+        let err = serde_json::from_str::<SubnetPool>(json).unwrap_err();
+        assert_eq!(
+            err.to_string(),
+            "No space available at line 1 column 76".to_string()
+        );
+    }
 
-        #[test]
-        fn success() {
-            let mut pool = SubnetPool::new(TEST_CIDR4);
-            pool.allocate(4, Some("a-name")).unwrap();
-            pool.allocate(4, Some("b-name")).unwrap();
-            pool.allocate(4, None).unwrap();
+    #[test]
+    fn success() {
+        let mut pool = SubnetPool::new(TEST_CIDR4);
+        pool.allocate(4, Some("a-name")).unwrap();
+        pool.allocate(4, Some("b-name")).unwrap();
+        pool.allocate(4, None).unwrap();
 
-            let json = to_string(&pool).unwrap();
-            assert_eq!(
-                json,
-                "{\
+        let json = to_string(&pool).unwrap();
+        assert_eq!(
+            json,
+            "{\
                     \"cidr\":\"10.20.0.0/16\",\
                     \"subnets\":[\
                     {\"cidr\":\"10.20.0.0/28\",\"name\":\"a-name\"},\
                     {\"cidr\":\"10.20.0.16/28\",\"name\":\"b-name\"},\
                     {\"cidr\":\"10.20.0.32/28\",\"name\":null}\
                     ]}"
-            );
-            let deserialize: SubnetPool = serde_json::from_str(&json).unwrap();
-            assert_eq!(deserialize, pool);
-        }
+        );
+        let deserialize: SubnetPool = serde_json::from_str(&json).unwrap();
+        assert_eq!(deserialize, pool);
     }
 }
