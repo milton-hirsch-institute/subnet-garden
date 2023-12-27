@@ -9,7 +9,6 @@ use std::str::FromStr;
 
 pub mod errors;
 pub mod garden;
-pub mod library;
 mod subspace;
 mod util;
 
