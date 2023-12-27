@@ -41,14 +41,18 @@ impl SubnetPool {
         }
         return subspaces;
     }
-    pub fn cidr(&self) -> &IpCidr {
-        &self.root.cidr
-    }
 
+    #[inline(always)]
     pub fn allocated_count(&self) -> usize {
         self.root.allocated_count
     }
 
+    #[inline(always)]
+    pub fn max_available_bits(&self) -> Bits {
+        self.root.max_available_bits
+    }
+
+    #[inline(always)]
     pub fn find_by_name(&self, name: &str) -> Option<IpCidr> {
         self.names.get(name).copied()
     }

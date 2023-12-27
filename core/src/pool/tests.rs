@@ -128,13 +128,38 @@ mod allocate {
     }
 
     #[test]
-    fn max_bits() {
+    fn max_subnet_allocation() {
         let mut pool = new_test_pool();
         let result = pool.allocate(16, None).unwrap();
         assert_eq!(
             result,
             IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 16).unwrap())
         );
+    }
+
+    #[test]
+    fn max_available_bits() {
+        let mut pool = new_test_pool();
+        assert_eq!(pool.max_available_bits(), 16);
+
+        // Use up all the bits!
+        let result = pool.allocate(16, None).unwrap();
+        assert_eq!(pool.max_available_bits(), 0);
+        pool.free(&result);
+        assert_eq!(pool.max_available_bits(), 16);
+
+        let net1 = pool.allocate(14, None).unwrap();
+        assert_eq!(pool.max_available_bits(), 15);
+        let net2 = pool.allocate(15, None).unwrap();
+        assert_eq!(pool.max_available_bits(), 14);
+        let net3 = pool.allocate(13, None).unwrap();
+        assert_eq!(pool.max_available_bits(), 13);
+        pool.free(&net1);
+        assert_eq!(pool.max_available_bits(), 14);
+        pool.free(&net3);
+        assert_eq!(pool.max_available_bits(), 15);
+        pool.free(&net2);
+        assert_eq!(pool.max_available_bits(), 16);
     }
 }
 

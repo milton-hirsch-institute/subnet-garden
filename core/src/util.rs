@@ -4,11 +4,17 @@
 use crate::Bits;
 use cidr::IpCidr;
 
+#[inline(always)]
 pub fn max_bits(cidr: &IpCidr) -> Bits {
     match cidr {
         IpCidr::V4(_) => 32,
         IpCidr::V6(_) => 128,
     }
+}
+
+#[inline(always)]
+pub fn available_bits(cidr: &IpCidr) -> Bits {
+    max_bits(cidr) - cidr.network_length()
 }
 
 pub fn cidr_contains(outer: &IpCidr, inner: &IpCidr) -> bool {
@@ -33,6 +39,20 @@ mod tests {
         #[test]
         fn v4() {
             assert_eq!(max_bits(&TEST_CIDR4), 32);
+        }
+    }
+
+    mod available_bits {
+        use super::*;
+
+        #[test]
+        fn v6() {
+            assert_eq!(available_bits(&TEST_CIDR6), 16);
+        }
+
+        #[test]
+        fn v4() {
+            assert_eq!(available_bits(&TEST_CIDR4), 16);
         }
     }
 

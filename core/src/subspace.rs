@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::util;
+use crate::util::available_bits;
 use crate::Bits;
 use cidr::IpCidr;
 use cidr_utils::separator;
+use std::cmp;
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum State {
@@ -21,6 +23,7 @@ pub(crate) struct Subspace {
     pub(crate) low: Option<Box<Self>>,
     pub(crate) state: State,
     pub(crate) allocated_count: usize,
+    pub(crate) max_available_bits: Bits,
 }
 
 impl Subspace {
@@ -32,27 +35,31 @@ impl Subspace {
             low: None,
             state: State::Free,
             allocated_count: 0,
+            max_available_bits: util::available_bits(&cidr),
         }
     }
 
     fn update_info(&mut self) {
-        if self.state == State::Allocated {
-            self.allocated_count = 1;
-        } else {
-            let high_count = match &self.high {
-                Some(high) => high.allocated_count,
-                None => 0,
-            };
-            let low_count = match &self.low {
-                Some(low) => low.allocated_count,
-                None => 0,
-            };
-            self.allocated_count = high_count + low_count;
+        match self.state {
+            State::Allocated => {
+                self.allocated_count = 1;
+                self.max_available_bits = 0;
+            }
+            State::Free => {
+                self.allocated_count = 0;
+                self.max_available_bits = available_bits(&self.cidr);
+            }
+            State::Unavailable => {
+                let low = self.low.as_deref_mut().unwrap();
+                let high = self.high.as_deref_mut().unwrap();
+                self.allocated_count = low.allocated_count + high.allocated_count;
+                self.max_available_bits = cmp::max(low.max_available_bits, high.max_available_bits);
+            }
         }
     }
 
     pub(crate) fn host_length(self: &Self) -> Bits {
-        return util::max_bits(&self.cidr) - self.cidr.network_length();
+        return util::available_bits(&self.cidr);
     }
 
     pub(crate) fn split(self: &mut Self) {
