@@ -88,7 +88,7 @@ impl Subspace {
         host_length: Bits,
         name: Option<&str>,
     ) -> Option<IpCidr> {
-        if host_length > self.host_length() {
+        if host_length > self.max_available_bits {
             return None;
         }
         if self.state == State::Free {

@@ -320,7 +320,7 @@ mod names {
         pool.allocate(4, Some("a-name")).unwrap();
         pool.allocate(4, Some("b-name")).unwrap();
         pool.allocate(4, None).unwrap();
-        let mut names = pool.names();
+        let mut names: Vec<String> = pool.names().collect();
         names.sort();
         assert_eq!(names.len(), 2);
         assert_eq!(names[0], "a-name");
