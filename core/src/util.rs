@@ -13,7 +13,7 @@ pub fn max_bits(cidr: &IpCidr) -> Bits {
 }
 
 #[inline(always)]
-pub fn available_bits(cidr: &IpCidr) -> Bits {
+pub fn host_length(cidr: &IpCidr) -> Bits {
     max_bits(cidr) - cidr.network_length()
 }
 
@@ -47,12 +47,12 @@ mod tests {
 
         #[test]
         fn v6() {
-            assert_eq!(available_bits(&TEST_CIDR6), 16);
+            assert_eq!(host_length(&TEST_CIDR6), 16);
         }
 
         #[test]
         fn v4() {
-            assert_eq!(available_bits(&TEST_CIDR4), 16);
+            assert_eq!(host_length(&TEST_CIDR4), 16);
         }
     }
 

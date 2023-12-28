@@ -1,7 +1,7 @@
 // Copyright 2023 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::util::available_bits;
+use crate::util::host_length;
 use crate::Bits;
 use crate::{util, CidrRecord};
 use cidr::IpCidr;
@@ -33,7 +33,7 @@ impl Subspace {
             low: None,
             state: State::Free,
             allocated_count: 0,
-            max_available_bits: util::available_bits(&cidr),
+            max_available_bits: util::host_length(&cidr),
         }
     }
 
@@ -45,7 +45,7 @@ impl Subspace {
             }
             State::Free => {
                 self.allocated_count = 0;
-                self.max_available_bits = available_bits(&self.record.cidr);
+                self.max_available_bits = host_length(&self.record.cidr);
             }
             State::Unavailable => {
                 let low = self.low.as_deref_mut().unwrap();
@@ -57,7 +57,7 @@ impl Subspace {
     }
 
     pub(crate) fn host_length(self: &Self) -> Bits {
-        return util::available_bits(&self.record.cidr);
+        return host_length(&self.record.cidr);
     }
 
     pub(crate) fn split(self: &mut Self) {
