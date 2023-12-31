@@ -153,7 +153,7 @@ mod tests {
     );
     mod cidr_record {
         use super::*;
-        use serde_test::assert_tokens;
+        use serde_test::{assert_de_tokens_error, assert_tokens};
         use std::str::FromStr;
 
         #[test]
@@ -208,12 +208,18 @@ mod tests {
 
         #[test]
         fn deserialize_as_sequence() {
-            let cidr = IpCidr::from_str("10.20.30.0/24").unwrap();
-            let name = Some("foo");
-            let record = CidrRecord::new(cidr, name);
-            let serialized = postcard::to_vec::<CidrRecord, 1000>(&record).unwrap();
-            let unserialized: CidrRecord = postcard::from_bytes(&serialized).unwrap();
-            assert_eq!(unserialized, record);
+            assert_de_tokens_error::<CidrRecord>(
+                &[
+                    serde_test::Token::Struct {
+                        name: "CidrRecord",
+                        len: 2,
+                    },
+                    serde_test::Token::Str("cidr"),
+                    serde_test::Token::Str("invalid"),
+                    serde_test::Token::StructEnd,
+                ],
+                "couldn't parse address in network: invalid IP address syntax",
+            );
         }
     }
 }
