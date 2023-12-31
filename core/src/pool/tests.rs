@@ -410,28 +410,69 @@ mod records {
 }
 mod serialize {
     use super::*;
-    use serde_json::to_string;
+    use serde_test::{assert_de_tokens_error, assert_tokens};
 
     #[test]
     fn parse_bad_network() {
-        let json = r#"{"cidr":"bad-network", "subnets": []}"#;
-        let err = serde_json::from_str::<SubnetPool>(json).unwrap_err();
-        assert_eq!(
-            err.to_string(),
-            "couldn't parse address in network: \
-                    invalid IP address syntax at line 1 column 21"
-                .to_string()
+        assert_de_tokens_error::<SubnetPool>(
+            &[
+                serde_test::Token::Struct {
+                    name: "SubnetPool",
+                    len: 2,
+                },
+                serde_test::Token::Str("cidr"),
+                serde_test::Token::Str("invalid"),
+                serde_test::Token::StructEnd,
+            ],
+            "couldn't parse address in network: invalid IP address syntax",
         );
     }
 
     #[test]
     fn allocation_error() {
-        let json =
-            r#"{"cidr":"10.10.0.0/24", "subnets": [{"cidr": "10.20.0.0/24", "name": null}]}"#;
-        let err = serde_json::from_str::<SubnetPool>(json).unwrap_err();
-        assert_eq!(
-            err.to_string(),
-            "No space available at line 1 column 76".to_string()
+        assert_de_tokens_error::<SubnetPool>(
+            &[
+                serde_test::Token::Struct {
+                    name: "SubnetPool",
+                    len: 2,
+                },
+                serde_test::Token::Str("cidr"),
+                serde_test::Token::Str("10.10.0.0/24"),
+                serde_test::Token::Str("subnets"),
+                serde_test::Token::Seq { len: Some(3) },
+                serde_test::Token::Struct {
+                    name: "CidrRecord",
+                    len: 2,
+                },
+                serde_test::Token::Str("cidr"),
+                serde_test::Token::Str("10.20.0.0/24"),
+                serde_test::Token::Str("name"),
+                serde_test::Token::Some,
+                serde_test::Token::Str("a-name"),
+                serde_test::Token::StructEnd,
+                serde_test::Token::Struct {
+                    name: "CidrRecord",
+                    len: 2,
+                },
+                serde_test::Token::Str("cidr"),
+                serde_test::Token::Str("10.20.0.16/28"),
+                serde_test::Token::Str("name"),
+                serde_test::Token::Some,
+                serde_test::Token::Str("b-name"),
+                serde_test::Token::StructEnd,
+                serde_test::Token::Struct {
+                    name: "CidrRecord",
+                    len: 2,
+                },
+                serde_test::Token::Str("cidr"),
+                serde_test::Token::Str("10.20.0.32/28"),
+                serde_test::Token::Str("name"),
+                serde_test::Token::None,
+                serde_test::Token::StructEnd,
+                serde_test::Token::SeqEnd,
+                serde_test::Token::StructEnd,
+            ],
+            "No space available",
         );
     }
 
@@ -442,18 +483,49 @@ mod serialize {
         pool.allocate(4, Some("b-name")).unwrap();
         pool.allocate(4, None).unwrap();
 
-        let json = to_string(&pool).unwrap();
-        assert_eq!(
-            json,
-            "{\
-                    \"cidr\":\"10.20.0.0/16\",\
-                    \"subnets\":[\
-                    {\"cidr\":\"10.20.0.0/28\",\"name\":\"a-name\"},\
-                    {\"cidr\":\"10.20.0.16/28\",\"name\":\"b-name\"},\
-                    {\"cidr\":\"10.20.0.32/28\",\"name\":null}\
-                    ]}"
+        assert_tokens(
+            &pool,
+            &[
+                serde_test::Token::Struct {
+                    name: "SubnetPool",
+                    len: 2,
+                },
+                serde_test::Token::Str("cidr"),
+                serde_test::Token::Str("10.20.0.0/16"),
+                serde_test::Token::Str("subnets"),
+                serde_test::Token::Seq { len: Some(3) },
+                serde_test::Token::Struct {
+                    name: "CidrRecord",
+                    len: 2,
+                },
+                serde_test::Token::Str("cidr"),
+                serde_test::Token::Str("10.20.0.0/28"),
+                serde_test::Token::Str("name"),
+                serde_test::Token::Some,
+                serde_test::Token::Str("a-name"),
+                serde_test::Token::StructEnd,
+                serde_test::Token::Struct {
+                    name: "CidrRecord",
+                    len: 2,
+                },
+                serde_test::Token::Str("cidr"),
+                serde_test::Token::Str("10.20.0.16/28"),
+                serde_test::Token::Str("name"),
+                serde_test::Token::Some,
+                serde_test::Token::Str("b-name"),
+                serde_test::Token::StructEnd,
+                serde_test::Token::Struct {
+                    name: "CidrRecord",
+                    len: 2,
+                },
+                serde_test::Token::Str("cidr"),
+                serde_test::Token::Str("10.20.0.32/28"),
+                serde_test::Token::Str("name"),
+                serde_test::Token::None,
+                serde_test::Token::StructEnd,
+                serde_test::Token::SeqEnd,
+                serde_test::Token::StructEnd,
+            ],
         );
-        let deserialize: SubnetPool = serde_json::from_str(&json).unwrap();
-        assert_eq!(deserialize, pool);
     }
 }

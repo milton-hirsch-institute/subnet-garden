@@ -176,8 +176,8 @@ impl<'s> serde::Deserialize<'s> for SubnetPool {
             }
             Ok(pool)
         }
-        struct SubspacePoolVisitor;
-        impl<'s> serde::de::Visitor<'s> for SubspacePoolVisitor {
+        struct SubnetPoolVisitor;
+        impl<'s> serde::de::Visitor<'s> for SubnetPoolVisitor {
             type Value = SubnetPool;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -230,6 +230,6 @@ impl<'s> serde::Deserialize<'s> for SubnetPool {
             }
         }
         const FIELDS: &[&str] = &["cidr", "subnets"];
-        deserializer.deserialize_struct("SubspacePool", FIELDS, SubspacePoolVisitor)
+        deserializer.deserialize_struct("SubnetPool", FIELDS, SubnetPoolVisitor)
     }
 }
