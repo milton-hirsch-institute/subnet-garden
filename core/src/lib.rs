@@ -41,7 +41,7 @@ impl CidrRecord {
 }
 
 impl serde::Serialize for CidrRecord {
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
@@ -153,6 +153,7 @@ mod tests {
     );
     mod cidr_record {
         use super::*;
+        use serde_test::assert_tokens;
         use std::str::FromStr;
 
         #[test]
@@ -165,14 +166,44 @@ mod tests {
         }
 
         #[test]
-        fn serialize() {
+        fn serialize_named() {
             let cidr = IpCidr::from_str("10.20.30.0/24").unwrap();
-            let name = Some("foo");
-            let record = CidrRecord::new(cidr, name);
-            let serialized = serde_json::to_string(&record).unwrap();
-            assert_eq!(serialized, r#"{"cidr":"10.20.30.0/24","name":"foo"}"#);
-            let unserialized: CidrRecord = serde_json::from_str(&serialized).unwrap();
-            assert_eq!(unserialized, record);
+            let record = CidrRecord::new(cidr, Some("a-record"));
+            assert_tokens(
+                &record,
+                &[
+                    serde_test::Token::Struct {
+                        name: "CidrRecord",
+                        len: 2,
+                    },
+                    serde_test::Token::Str("cidr"),
+                    serde_test::Token::Str("10.20.30.0/24"),
+                    serde_test::Token::Str("name"),
+                    serde_test::Token::Some,
+                    serde_test::Token::Str("a-record"),
+                    serde_test::Token::StructEnd,
+                ],
+            );
+        }
+
+        #[test]
+        fn serialize_unnamed() {
+            let cidr = IpCidr::from_str("10.20.30.0/24").unwrap();
+            let record = CidrRecord::new(cidr, None);
+            assert_tokens(
+                &record,
+                &[
+                    serde_test::Token::Struct {
+                        name: "CidrRecord",
+                        len: 2,
+                    },
+                    serde_test::Token::Str("cidr"),
+                    serde_test::Token::Str("10.20.30.0/24"),
+                    serde_test::Token::Str("name"),
+                    serde_test::Token::None,
+                    serde_test::Token::StructEnd,
+                ],
+            );
         }
 
         #[test]
@@ -182,16 +213,6 @@ mod tests {
             let record = CidrRecord::new(cidr, name);
             let serialized = postcard::to_vec::<CidrRecord, 1000>(&record).unwrap();
             let unserialized: CidrRecord = postcard::from_bytes(&serialized).unwrap();
-            assert_eq!(unserialized, record);
-        }
-
-        #[test]
-        fn deserialize_missing_name() {
-            let cidr = IpCidr::from_str("10.20.30.0/24").unwrap();
-            let record = CidrRecord::new(cidr, None);
-            let serialized = serde_json::to_string(&record).unwrap();
-            assert_eq!(serialized, r#"{"cidr":"10.20.30.0/24","name":null}"#);
-            let unserialized: CidrRecord = serde_json::from_str(&serialized).unwrap();
             assert_eq!(unserialized, record);
         }
     }
