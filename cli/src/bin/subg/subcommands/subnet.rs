@@ -1,4 +1,4 @@
-// Copyright 2023 The Milton Hirsch Institute, B.V.
+// Copyright 2023-2024 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::args::{AllocateArgs, ClaimArgs, FreeArgs, RenameArgs, SubgArgs};

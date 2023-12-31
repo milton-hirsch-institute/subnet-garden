@@ -19,6 +19,7 @@ clap = { version="^4", features = ["cargo", "derive", "env"] }
 exitcode = "^1"
 subnet-garden-core = { path = "../core", version="^0.1" }
 serde_json = "^1"
+serde_yaml = "^0.9"
 
 [dev-dependencies]
 assert_cmd = "^2"

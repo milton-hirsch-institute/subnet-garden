@@ -1,4 +1,4 @@
-// Copyright 2023 The Milton Hirsch Institute, B.V.
+// Copyright 2023-2024 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
 use cidr::IpCidr;
@@ -95,7 +95,7 @@ pub(crate) enum SubgCommands {
 #[derive(Debug, clap::Args)]
 /// Subnet garden command line interface
 pub(crate) struct SubgArgs {
-    #[arg(short, long, default_value = DEFAULT_STORAGE_PATH, env = "SUBG_POOL_PATH")]
+    #[arg(short = 'p', long, default_value = DEFAULT_STORAGE_PATH, env = "SUBG_POOL_PATH")]
     pub(crate) pool_path: String,
 }
 
