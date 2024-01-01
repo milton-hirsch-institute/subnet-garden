@@ -23,7 +23,7 @@ repos:
     rev: v1.5.4
     hooks:
       - id: insert-license
-        files: \.(toml|yaml|yml|md|sh)
+        files: \.(toml|yaml|yml|sh)
         args:
           - --use-current-year
       - id: insert-license
@@ -32,6 +32,12 @@ repos:
           - --use-current-year
           - --comment-style
           - //
+      - id: insert-license
+        files: \.(md)
+        args:
+          - --use-current-year
+          - --comment-style
+          - "<!-- || -->"
 
   - repo: https://github.com/doublify/pre-commit-rust
     rev: v1.0
