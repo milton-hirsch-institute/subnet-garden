@@ -1,4 +1,4 @@
-// Copyright 2023 The Milton Hirsch Institute, B.V.
+// Copyright 2023-2024 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::args::init::InitArgs;
@@ -90,8 +90,35 @@ mod tests {
     }
 
     #[test]
+    fn bad_pool_file_extension() {
+        let mut test = tests::new_test_with_path("ok-name.bad-ext");
+        test.subg.arg("init").arg(TEST_CIDR);
+        test.subg
+            .assert()
+            .failure()
+            .code(exitcode::USAGE)
+            .stdout("")
+            .stderr("Unknown pool file extension: bad-ext\n");
+    }
+
+    #[test]
+    fn no_pool_file_extension() {
+        let mut test = tests::new_test_with_path("ok-name");
+        test.subg.arg("init").arg(TEST_CIDR);
+        test.subg
+            .assert()
+            .failure()
+            .code(exitcode::USAGE)
+            .stdout("")
+            .stderr(format!(
+                "Pool file has no extension: {}\n",
+                test.pool_path.display()
+            ));
+    }
+
+    #[test]
     fn bad_pool_file() {
-        let mut test = tests::new_test_with_path("/bad/path");
+        let mut test = tests::new_test_with_path("/bad/path.yaml");
         test.subg.arg("init").arg(TEST_CIDR);
         test.subg
             .assert()
