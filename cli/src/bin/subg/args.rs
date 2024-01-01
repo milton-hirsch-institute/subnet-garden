@@ -4,7 +4,7 @@
 use cidr::IpCidr;
 use subnet_garden_core::Bits;
 
-pub(crate) const DEFAULT_STORAGE_PATH: &str = "subnet-garden-pool.json";
+pub(crate) const DEFAULT_STORAGE_PATH: &str = "subnet-garden-pool.yaml";
 
 pub(crate) const SUBG_COMMAND: &str = "subg";
 

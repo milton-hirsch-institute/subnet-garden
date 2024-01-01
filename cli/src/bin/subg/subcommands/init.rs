@@ -39,7 +39,7 @@ mod tests {
         test.subg.assert().success().stdout("").stderr("");
 
         let pool = pool::SubnetPool::new(TEST_CIDR.parse().unwrap());
-        let expected_content = serde_json::to_string_pretty(&pool).unwrap();
+        let expected_content = serde_yaml::to_string(&pool).unwrap();
         test.pool_path.assert(expected_content);
     }
 
@@ -67,7 +67,7 @@ mod tests {
         test.subg.assert().success().stdout("").stderr("");
 
         let pool = pool::SubnetPool::new(TEST_CIDR.parse().unwrap());
-        let expected_content = serde_json::to_string_pretty(&pool).unwrap();
+        let expected_content = serde_yaml::to_string(&pool).unwrap();
         test.pool_path.assert(expected_content);
     }
 
