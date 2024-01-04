@@ -57,7 +57,7 @@ subg init fc00::/112
 You can specify alternate names for the pool file using the `--pool-path` option:
 
 ```shell
-subg init --pool-path lab-network.yaml 10.10.0.0/16
+subg init --pool-path institute-network.yaml 10.10.0.0/16
 ```
 
 You can also set the `SUBG_POOL_PATH` environment variable to specify the pool file.
