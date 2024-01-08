@@ -1,7 +1,7 @@
 // Copyright 2023-2024 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::args::{AllocateArgs, ClaimArgs, FreeArgs, RenameArgs, SubgArgs};
+use crate::args::{AllocateArgs, CidrsArgs, ClaimArgs, FreeArgs, RenameArgs, SubgArgs};
 use cidr::IpCidr;
 use std::process::exit;
 
@@ -32,10 +32,37 @@ pub(crate) fn free(subg: &SubgArgs, args: &FreeArgs) {
     crate::store_pool(&subg.pool_path, &pool);
 }
 
-pub(crate) fn cidrs(subg: &SubgArgs) {
+pub(crate) fn cidrs(subg: &SubgArgs, args: &CidrsArgs) {
+    fn pad(mut s: String, width: usize) -> String {
+        while s.len() < width {
+            s.push(' ');
+        }
+        s
+    }
+
     let pool = crate::load_pool(&subg.pool_path);
+
+    if args.long {
+        println!("total {}", pool.allocated_count());
+    }
+
+    let max_cidr_width = match args.long {
+        true => pool
+            .records()
+            .map(|r| r.cidr.to_string().len())
+            .max()
+            .unwrap_or(0),
+        false => 0,
+    };
     for entry in pool.records() {
-        println!("{}", entry.cidr);
+        let mut cidr = entry.cidr.to_string();
+        if args.long {
+            cidr = pad(cidr, max_cidr_width);
+            let name = entry.name.clone().unwrap_or("-".to_string());
+            println!("{} {}", cidr, name);
+        } else {
+            println!("{}", cidr);
+        }
     }
 }
 
@@ -219,6 +246,26 @@ mod tests {
                 .assert()
                 .success()
                 .stdout("10.10.0.0/28\n10.10.0.64/26\n")
+                .stderr("");
+        }
+
+        #[test]
+        fn has_cidrs_long() {
+            let mut test = new_cidrs_test();
+            test.subg.arg("-l");
+            test.pool.allocate(4, Some("test1")).unwrap();
+            test.pool.allocate(6, None).unwrap();
+            test.pool.allocate(6, Some("test2")).unwrap();
+            test.store();
+            test.subg
+                .assert()
+                .success()
+                .stdout(
+                    "total 3\n\
+                         10.10.0.0/28   test1\n\
+                         10.10.0.64/26  -\n\
+                         10.10.0.128/26 test2\n",
+                )
                 .stderr("");
         }
     }

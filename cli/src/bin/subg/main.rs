@@ -134,8 +134,8 @@ fn main() {
         SubgCommands::Free(args) => {
             subnet::free(&subg.args, &args);
         }
-        SubgCommands::Cidrs(_) => {
-            subnet::cidrs(&subg.args);
+        SubgCommands::Cidrs(args) => {
+            subnet::cidrs(&subg.args, &args);
         }
         SubgCommands::Names(_) => {
             subnet::names(&subg.args);

@@ -46,7 +46,11 @@ pub(crate) struct FreeArgs {
 
 #[derive(Debug, clap::Args)]
 /// List allocate CIDRs
-pub(crate) struct CidrsArgs {}
+pub(crate) struct CidrsArgs {
+    #[arg(short)]
+    /// List CIDRs in long format
+    pub(crate) long: bool,
+}
 
 #[derive(Debug, clap::Args)]
 /// List named subnets
