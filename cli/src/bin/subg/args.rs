@@ -54,7 +54,11 @@ pub(crate) struct CidrsArgs {
 
 #[derive(Debug, clap::Args)]
 /// List named subnets
-pub(crate) struct NamesArgs {}
+pub(crate) struct NamesArgs {
+    #[arg(short)]
+    /// List named CIDRs in long format
+    pub(crate) long: bool,
+}
 
 #[derive(Debug, clap::Args)]
 /// Claim subnet

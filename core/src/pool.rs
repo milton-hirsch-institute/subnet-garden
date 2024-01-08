@@ -1,4 +1,4 @@
-// Copyright 2023 The Milton Hirsch Institute, B.V.
+// Copyright 2023-2024 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
 #[cfg(test)]
@@ -46,6 +46,11 @@ impl SubnetPool {
     #[inline(always)]
     pub fn allocated_count(&self) -> usize {
         self.root.allocated_count
+    }
+
+    #[inline(always)]
+    pub fn named_count(&self) -> usize {
+        self.names.len()
     }
 
     #[inline(always)]

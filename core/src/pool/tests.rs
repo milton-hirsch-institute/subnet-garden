@@ -1,4 +1,4 @@
-// Copyright 2023 The Milton Hirsch Institute, B.V.
+// Copyright 2023-2024 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
 use super::*;
@@ -39,6 +39,24 @@ mod contains {
         let mut pool = new_test_pool();
         let allocated = pool.allocate(4, None).unwrap();
         assert!(pool.contains(&allocated));
+    }
+}
+
+mod named_count {
+    use super::*;
+    #[test]
+    fn no_named() {
+        let pool = new_test_pool();
+        assert_eq!(pool.named_count(), 0);
+    }
+
+    #[test]
+    fn some_named() {
+        let mut pool = new_test_pool();
+        pool.allocate(4, Some("a-name")).unwrap();
+        pool.allocate(4, Some("b-name")).unwrap();
+        pool.allocate(4, None).unwrap();
+        assert_eq!(pool.named_count(), 2);
     }
 }
 

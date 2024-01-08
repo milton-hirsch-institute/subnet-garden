@@ -1,7 +1,8 @@
 // Copyright 2023-2024 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::args::{AllocateArgs, CidrsArgs, ClaimArgs, FreeArgs, RenameArgs, SubgArgs};
+use crate::args::{AllocateArgs, CidrsArgs, ClaimArgs, FreeArgs, NamesArgs, RenameArgs, SubgArgs};
+use crate::util;
 use cidr::IpCidr;
 use std::process::exit;
 
@@ -33,13 +34,6 @@ pub(crate) fn free(subg: &SubgArgs, args: &FreeArgs) {
 }
 
 pub(crate) fn cidrs(subg: &SubgArgs, args: &CidrsArgs) {
-    fn pad(mut s: String, width: usize) -> String {
-        while s.len() < width {
-            s.push(' ');
-        }
-        s
-    }
-
     let pool = crate::load_pool(&subg.pool_path);
 
     if args.long {
@@ -57,7 +51,7 @@ pub(crate) fn cidrs(subg: &SubgArgs, args: &CidrsArgs) {
     for entry in pool.records() {
         let mut cidr = entry.cidr.to_string();
         if args.long {
-            cidr = pad(cidr, max_cidr_width);
+            util::right_pad(&mut cidr, max_cidr_width);
             let name = entry.name.clone().unwrap_or("-".to_string());
             println!("{} {}", cidr, name);
         } else {
@@ -66,12 +60,29 @@ pub(crate) fn cidrs(subg: &SubgArgs, args: &CidrsArgs) {
     }
 }
 
-pub(crate) fn names(subg: &SubgArgs) {
+pub(crate) fn names(subg: &SubgArgs, args: &NamesArgs) {
     let pool = crate::load_pool(&subg.pool_path);
+
+    if args.long {
+        println!("total {} of {}", pool.named_count(), pool.allocated_count());
+    }
+
+    let max_name_width = match args.long {
+        true => pool.names().map(|n| n.len()).max().unwrap_or(0),
+        false => 0,
+    };
+
     let mut names: Vec<String> = pool.names().collect();
     names.sort();
-    for name in names {
-        println!("{}", name);
+    for mut name in names {
+        if args.long {
+            let cidr = pool.find_by_name(&name).unwrap();
+            let cidr_string = cidr.to_string();
+            util::right_pad(&mut name, max_name_width);
+            println!("{} {}", name, cidr_string);
+        } else {
+            println!("{}", name);
+        }
     }
 }
 
@@ -298,6 +309,27 @@ mod tests {
                 .assert()
                 .success()
                 .stdout("test0\ntest1\ntest2\n")
+                .stderr("");
+        }
+
+        #[test]
+        fn has_names_long() {
+            let mut test = new_names_test();
+            test.subg.arg("-l");
+            test.pool.allocate(4, Some("test1")).unwrap();
+            test.pool.allocate(5, None).unwrap();
+            test.pool.allocate(6, Some("test2")).unwrap();
+            test.pool.allocate(4, Some("test-zero")).unwrap();
+            test.store();
+            test.subg
+                .assert()
+                .success()
+                .stdout(
+                    "total 3 of 4\n\
+                         test-zero 10.10.0.16/28\n\
+                         test1     10.10.0.0/28\n\
+                         test2     10.10.0.64/26\n",
+                )
                 .stderr("");
         }
     }

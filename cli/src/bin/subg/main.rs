@@ -17,6 +17,8 @@ use subnet_garden_core::pool;
 
 mod args;
 mod subcommands;
+mod util;
+
 fn show_error(err: impl Error, message: &str, exit_code: ExitCode) -> ! {
     eprintln!("{}", message);
     eprintln!("{}", err);
@@ -137,8 +139,8 @@ fn main() {
         SubgCommands::Cidrs(args) => {
             subnet::cidrs(&subg.args, &args);
         }
-        SubgCommands::Names(_) => {
-            subnet::names(&subg.args);
+        SubgCommands::Names(args) => {
+            subnet::names(&subg.args, &args);
         }
         SubgCommands::Claim(args) => {
             subnet::claim(&subg.args, &args);
