@@ -13,5 +13,4 @@ resolver = "2"
 authors = ["The Milton Hirsch Institute, B.V."]
 edition = "2021"
 license = "Apache-2.0"
-license-file = "LICENSE.txt"
 documentation = "https://github.com/milton-hirsch-institute/subnet-garden/blob/main/README.md"
