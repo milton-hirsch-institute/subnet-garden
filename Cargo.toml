@@ -12,7 +12,13 @@ resolver = "2"
 [workspace.package]
 authors = ["The Milton Hirsch Institute, B.V."]
 edition = "2021"
+keywords = [
+    "subnet",
+    "cidr",
+    "cidr-blocks",
+]
 license = "Apache-2.0"
 documentation = "https://github.com/milton-hirsch-institute/subnet-garden/blob/main/README.md"
 homepage = "https://github.com/milton-hirsch-institute/subnet-garden"
 repository = "https://github.com/milton-hirsch-institute/subnet-garden"
+version = "0.1.0"

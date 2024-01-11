@@ -3,15 +3,16 @@
 
 [package]
 name = "subg"
-version = "0.1.0"
+version.workspace = true
 description = "Command line interface for managing IPv4 and IPv6 subnets"
 authors.workspace = true
 documentation.workspace = true
 edition.workspace = true
 homepage.workspace = true
-repository.workspace = true
+keywords.workspace = true
 license.workspace = true
 readme.workspace = true
+repository.workspace = true
 
 [[bin]]
 name = "subg"
