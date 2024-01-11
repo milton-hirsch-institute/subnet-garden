@@ -1,11 +1,15 @@
-# Copyright 2023 The Milton Hirsch Institute, B.V.
+# Copyright 2023-2024 The Milton Hirsch Institute, B.V.
 # SPDX-License-Identifier: Apache-2.0
 
 [package]
 name = "subnet-garden-core"
-authors = ["The Milton Hirsch Institute, B.V."]
 version = "0.1.0"
-edition = "2021"
+authors.workspace = true
+documentation.workspace = true
+edition.workspace = true
+license-file.workspace = true
+license.workspace = true
+readme.workspace = true
 
 [dependencies]
 cidr = "^0.2"

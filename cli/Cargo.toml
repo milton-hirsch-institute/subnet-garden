@@ -3,9 +3,13 @@
 
 [package]
 name = "subg"
-authors = ["The Milton Hirsch Institute, B.V."]
 version = "0.1.0"
-edition = "2021"
+authors.workspace = true
+documentation.workspace = true
+edition.workspace = true
+license-file.workspace = true
+license.workspace = true
+readme.workspace = true
 
 [[bin]]
 name = "subg"

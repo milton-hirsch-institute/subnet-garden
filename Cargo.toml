@@ -1,4 +1,4 @@
-# Copyright 2023 The Milton Hirsch Institute, B.V.
+# Copyright 2023-2024 The Milton Hirsch Institute, B.V.
 # SPDX-License-Identifier: Apache-2.0
 
 [workspace]
@@ -8,3 +8,10 @@ members = [
     "core",
 ]
 resolver = "2"
+
+[workspace.package]
+authors = ["The Milton Hirsch Institute, B.V."]
+edition = "2021"
+license = "Apache-2.0"
+license-file = "LICENSE.txt"
+documentation = "https://github.com/milton-hirsch-institute/subnet-garden/blob/main/README.md"
