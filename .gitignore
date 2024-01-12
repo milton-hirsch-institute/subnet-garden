@@ -3,3 +3,4 @@ target/
 *.orig
 *.tfstate
 *.tfstate.backup
+*.lock.hcl

@@ -5,10 +5,16 @@ module "pool" {
   source = "./subgpool"
 }
 
-output "cdir" {
-  value = module.pool.cidr
+resource aws_vpc "institute" {
+    cidr_block = module.pool.cidr
 }
 
-output "pool" {
-  value = module.pool.subnets
+resource aws_subnet "tardigrade_lab" {
+  vpc_id = aws_vpc.institute.id
+  cidr_block = module.pool.subnets["tardigrade-lab"]
+}
+
+resource aws_subnet "rotifer_lab" {
+  vpc_id = aws_vpc.institute.id
+  cidr_block = module.pool.subnets["rotifer-lab"]
 }
