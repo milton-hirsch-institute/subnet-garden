@@ -1,3 +1,5 @@
 target/
 .idea/
 *.orig
+*.tfstate
+*.tfstate.backup

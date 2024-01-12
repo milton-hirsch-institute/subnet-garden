@@ -1,4 +1,4 @@
-# Copyright 2023 The Milton Hirsch Institute, B.V.
+# Copyright 2023-2024 The Milton Hirsch Institute, B.V.
 # SPDX-License-Identifier: Apache-2.0
 
 repos:
@@ -23,7 +23,7 @@ repos:
     rev: v1.5.4
     hooks:
       - id: insert-license
-        files: \.(toml|yaml|yml|sh)
+        files: \.(toml|yaml|yml|sh|tf)
         args:
           - --use-current-year
       - id: insert-license

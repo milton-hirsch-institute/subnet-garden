@@ -1,0 +1,11 @@
+# Copyright 2024 The Milton Hirsch Institute, B.V.
+# SPDX-License-Identifier: Apache-2.0
+
+cidr: 10.10.0.0/16
+subnets:
+- cidr: 10.10.0.0/24
+  name: tardigrade-lab
+- cidr: 10.10.1.0/24
+  name: rotifer-lab
+- cidr: 10.10.110.0/24
+  name: null
