@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::args::{Subg, SubgCommands};
-use clap;
+
 use clap::Parser;
 use exitcode::ExitCode;
 use std::error::Error;
@@ -69,7 +69,7 @@ fn parse_pool_path(pool_path: &str) -> (&Path, PoolFormat) {
     (path, format)
 }
 
-fn load_pool<'a>(pool_path: &str) -> pool::SubnetPool {
+fn load_pool(pool_path: &str) -> pool::SubnetPool {
     let (path, pool_format) = parse_pool_path(pool_path);
     if !path.exists() {
         eprintln!("Subnet pool file does not exist at {}", path.display());
@@ -186,7 +186,7 @@ mod tests {
         let mut test = assert_cmd::Command::cargo_bin(SUBG_COMMAND).unwrap();
         let dir = assert_fs::TempDir::new().unwrap();
         let pool_path = dir.child(path);
-        test.args(&["--pool-path", pool_path.to_str().unwrap()]);
+        test.args(["--pool-path", pool_path.to_str().unwrap()]);
         Test {
             subg: test,
             _dir: dir,
@@ -196,7 +196,7 @@ mod tests {
     }
 
     pub(crate) fn new_test() -> Test {
-        return new_test_with_path(DEFAULT_STORAGE_PATH);
+        new_test_with_path(DEFAULT_STORAGE_PATH)
     }
 
     #[test]

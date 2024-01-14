@@ -193,7 +193,7 @@ mod free {
 
     #[test]
     fn free() {
-        let index_list = vec![0, 1, 2, 3];
+        let index_list = [0, 1, 2, 3];
         for indices in index_list.iter().permutations(index_list.len()) {
             let mut pool = new_test_pool();
             let mut cidrs = vec![];
@@ -201,8 +201,8 @@ mod free {
                 cidrs.push(pool.allocate(14, None).unwrap());
             }
             fn free_test(pool: &mut SubnetPool, cidr: &IpCidr) {
-                assert!(pool.free(&cidr));
-                assert!(!pool.free(&cidr));
+                assert!(pool.free(cidr));
+                assert!(!pool.free(cidr));
                 pool.claim(cidr, None).unwrap();
             }
             for index in indices {

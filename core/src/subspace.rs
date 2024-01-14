@@ -56,11 +56,11 @@ impl Subspace {
         }
     }
 
-    pub(crate) fn host_length(self: &Self) -> Bits {
-        return host_length(&self.record.cidr);
+    pub(crate) fn host_length(&self) -> Bits {
+        host_length(&self.record.cidr)
     }
 
-    pub(crate) fn split(self: &mut Self) {
+    pub(crate) fn split(&mut self) {
         self.state = State::Unavailable;
         let new_network_length = self.record.cidr.network_length() + 1;
         let low_cidr: IpCidr;
@@ -126,7 +126,7 @@ impl Subspace {
                 }
             };
         }
-        return None;
+        None
     }
     pub(crate) fn free(&mut self, cidr: &IpCidr) -> bool {
         if !util::cidr_contains(&self.record.cidr, cidr) {
@@ -139,11 +139,9 @@ impl Subspace {
                     self.state = State::Free;
                     self.record.name = None;
                     self.update_info();
-                    return true;
+                    true
                 }
-                false => {
-                    return false;
-                }
+                false => false,
             },
             State::Free => false,
             State::Unavailable => {
@@ -175,10 +173,7 @@ impl Subspace {
                 if self.record.cidr == *cidr {
                     self.state = State::Allocated;
                     self.update_info();
-                    self.record.name = match name {
-                        Some(name) => Some(name.to_string()),
-                        None => None,
-                    };
+                    self.record.name = name.map(|name| name.to_string());
                     return true;
                 }
                 self.split();
