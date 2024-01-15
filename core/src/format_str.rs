@@ -2,6 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 #![allow(dead_code)]
 
+mod parser;
+
+#[derive(Debug, PartialEq)]
+pub(in crate::format_str) enum ParseError {
+    InvalidFormat(String),
+}
+
 pub(crate) type Segments = Vec<Segment>;
 pub(crate) type Args<'a> = Vec<&'a str>;
 
@@ -16,7 +23,7 @@ pub(crate) enum Segment {
     Text(String),
     Variable,
 }
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub(crate) struct StringFormat {
     segments: Segments,
 }
@@ -42,6 +49,10 @@ impl StringFormat {
             Some(_) => Err(FormatError::TooManyArguments),
             None => Ok(result),
         }
+    }
+
+    fn parse(text: &str) -> Result<Self, ParseError> {
+        parser::parse(text)
     }
 }
 
@@ -85,6 +96,32 @@ mod tests {
             assert_eq!(
                 format.format(&vec!["111", "222"]),
                 Ok("aaa111bbb222ccc".to_string())
+            );
+        }
+    }
+
+    mod parse {
+        use super::*;
+
+        #[test]
+        fn invalid_format() {
+            assert_eq!(
+                StringFormat::parse("aaa\\"),
+                Err(ParseError::InvalidFormat(
+                    "Unexpected end of format".to_string()
+                ))
+            );
+        }
+
+        #[test]
+        fn success() {
+            assert_eq!(
+                StringFormat::parse("aaa\\{}bbb{}ccc"),
+                Ok(StringFormat::new(vec![
+                    Segment::Text("aaa{}bbb".to_string()),
+                    Segment::Variable,
+                    Segment::Text("ccc".to_string())
+                ]))
             );
         }
     }
