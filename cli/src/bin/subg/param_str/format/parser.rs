@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::param_str::format::{ParseError, Segment, StringFormat};
-use crate::state_machine::state;
-use crate::state_machine::{ParseResult, State};
+use crate::state_machine::{state, state_machine, StateMachine};
+use crate::state_machine::{ParseResult, State, Termination};
 
 type FormatState = State<BuildFormat, char, ParseError>;
 type FormatResult = ParseResult<BuildFormat, char, ParseError>;
+type FormatTermination = Termination<BuildFormat, char, ParseError>;
 
 static TEXT_STATE: FormatState = state(|b, c| -> FormatResult {
     match c {
@@ -39,6 +40,17 @@ static VARIABLE_STATE: FormatState = state(|b, c| -> FormatResult {
     }
 });
 
+static TERMINATION: FormatTermination = |last_state, b| -> Result<(), ParseError> {
+    if last_state == TEXT_STATE {
+        b.add_text_segment();
+        Ok(())
+    } else {
+        Err(ParseError::InvalidFormat(
+            "Unexpected end of format".to_string(),
+        ))
+    }
+};
+
 #[derive(Debug, PartialEq)]
 struct BuildFormat {
     current_text: String,
@@ -68,46 +80,21 @@ impl BuildFormat {
     }
 }
 
-#[derive(Debug, PartialEq)]
-struct FormatMachine<B, L, E> {
-    current_state: State<B, L, E>,
-}
-
-impl<B, L, E> FormatMachine<B, L, E> {
-    #[inline(always)]
-    fn current_state(&self) -> State<B, L, E> {
-        self.current_state
-    }
-
-    #[inline(always)]
-    fn set_state(&mut self, state: State<B, L, E>) {
-        self.current_state = state;
-    }
-}
+static FORMAT_MACHINE: StateMachine<BuildFormat, char, ParseError> =
+    state_machine(TEXT_STATE, TERMINATION);
 
 pub fn parse(format: &str) -> Result<StringFormat, ParseError> {
-    let mut m = FormatMachine {
-        current_state: TEXT_STATE,
-    };
-    let mut b = BuildFormat {
+    let mut build_format = BuildFormat {
         current_text: String::new(),
         result: Vec::new(),
     };
-
-    for c in format.chars() {
-        let current_state = m.current_state();
-        let next_state = current_state.next(&mut b, c)?;
-        m.set_state(next_state)
-    }
-
-    if m.current_state() == TEXT_STATE {
-        b.add_text_segment();
-        return Ok(StringFormat::new(b.result()));
-    }
-
-    Err(ParseError::InvalidFormat(
-        "Unexpected end of format".to_string(),
-    ))
+    FORMAT_MACHINE.run(
+        &mut build_format,
+        format.chars().collect::<Vec<char>>().iter(),
+    )?;
+    Ok(StringFormat {
+        segments: build_format.result(),
+    })
 }
 
 #[cfg(test)]
