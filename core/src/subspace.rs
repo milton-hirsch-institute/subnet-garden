@@ -1,4 +1,4 @@
-// Copyright 2023 The Milton Hirsch Institute, B.V.
+// Copyright 2023-2024 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::util::host_length;
@@ -69,13 +69,13 @@ impl Subspace {
             IpCidr::V4(cidr) => {
                 let subnets = separator::Ipv4CidrSeparator::sub_networks(&cidr, new_network_length);
                 let subnets_vec = subnets.unwrap();
-                low_cidr = IpCidr::V4(*subnets_vec.get(0).unwrap());
+                low_cidr = IpCidr::V4(*subnets_vec.first().unwrap());
                 high_cidr = IpCidr::V4(*subnets_vec.get(1).unwrap());
             }
             IpCidr::V6(cidr) => {
                 let subnets = separator::Ipv6CidrSeparator::sub_networks(&cidr, new_network_length);
                 let subnets_vec = subnets.unwrap();
-                low_cidr = IpCidr::V6(*subnets_vec.get(0).unwrap());
+                low_cidr = IpCidr::V6(*subnets_vec.first().unwrap());
                 high_cidr = IpCidr::V6(*subnets_vec.get(1).unwrap());
             }
         }
