@@ -5,7 +5,7 @@ use crate::param_str::format::{ParseError, Segment, StringFormat};
 
 #[derive(Debug, PartialEq)]
 struct State<B, L> {
-    transition: fn(b: &mut B, l: L) -> Result<Self, ParseError>,
+    transition: Transition<B, L>,
 }
 
 type ParseResult<B, L> = Result<State<B, L>, ParseError>;
