@@ -4,35 +4,35 @@
 use crate::param_str::format::{ParseError, Segment, StringFormat};
 
 #[derive(Debug, PartialEq)]
-struct State<B, L> {
-    transition: Transition<B, L>,
+struct State<B, L, E> {
+    transition: Transition<B, L, E>,
 }
 
-type ParseResult<B, L> = Result<State<B, L>, ParseError>;
+type ParseResult<B, L, E> = Result<State<B, L, E>, E>;
 
-type Transition<B, L> = fn(b: &mut B, l: L) -> ParseResult<B, L>;
+type Transition<B, L, E> = fn(b: &mut B, l: L) -> ParseResult<B, L, E>;
 
-impl<B, L> State<B, L> {
-    fn next(&self, b: &mut B, l: L) -> ParseResult<B, L> {
+impl<B, L, E> State<B, L, E> {
+    fn next(&self, b: &mut B, l: L) -> ParseResult<B, L, E> {
         let transition = self.transition;
         transition(b, l)
     }
 }
 
-impl<B, L> Clone for State<B, L> {
+impl<B, L, E> Clone for State<B, L, E> {
     fn clone(&self) -> Self {
         *self
     }
 }
 
-impl<B, L> Copy for State<B, L> {}
+impl<B, L, E> Copy for State<B, L, E> {}
 
-const fn state<B, L>(transition: Transition<B, L>) -> State<B, L> {
+const fn state<B, L, E>(transition: Transition<B, L, E>) -> State<B, L, E> {
     State { transition }
 }
 
-type FormatState = State<BuildFormat, char>;
-type FormatResult = ParseResult<BuildFormat, char>;
+type FormatState = State<BuildFormat, char, ParseError>;
+type FormatResult = ParseResult<BuildFormat, char, ParseError>;
 
 static TEXT_STATE: FormatState = state(|b, c| -> FormatResult {
     match c {
@@ -95,18 +95,18 @@ impl BuildFormat {
 }
 
 #[derive(Debug, PartialEq)]
-struct FormatMachine<B, L> {
-    current_state: State<B, L>,
+struct FormatMachine<B, L, E> {
+    current_state: State<B, L, E>,
 }
 
-impl<B, L> FormatMachine<B, L> {
+impl<B, L, E> FormatMachine<B, L, E> {
     #[inline(always)]
-    fn current_state(&self) -> State<B, L> {
+    fn current_state(&self) -> State<B, L, E> {
         self.current_state
     }
 
     #[inline(always)]
-    fn set_state(&mut self, state: State<B, L>) {
+    fn set_state(&mut self, state: State<B, L, E>) {
         self.current_state = state;
     }
 }

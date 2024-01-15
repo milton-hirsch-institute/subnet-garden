@@ -16,7 +16,6 @@ use subcommands::subnet;
 use subnet_garden_core::pool;
 
 mod args;
-mod hand_regex;
 mod param_str;
 mod subcommands;
 mod util;
