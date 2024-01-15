@@ -1,4 +1,4 @@
-// Copyright 2023 The Milton Hirsch Institute, B.V.
+// Copyright 2023-2024 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::errors::{AllocateError, CreateError, DeleteError, RenameError};
@@ -8,6 +8,7 @@ use serde::ser::SerializeStruct;
 use std::str::FromStr;
 
 pub mod errors;
+mod format_str;
 pub mod pool;
 mod subspace;
 mod util;
