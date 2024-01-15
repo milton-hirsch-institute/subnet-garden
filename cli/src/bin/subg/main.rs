@@ -17,6 +17,7 @@ use subnet_garden_core::pool;
 
 mod args;
 mod param_str;
+mod state_machine;
 mod subcommands;
 mod util;
 

@@ -2,34 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::param_str::format::{ParseError, Segment, StringFormat};
-
-#[derive(Debug, PartialEq)]
-struct State<B, L, E> {
-    transition: Transition<B, L, E>,
-}
-
-type ParseResult<B, L, E> = Result<State<B, L, E>, E>;
-
-type Transition<B, L, E> = fn(b: &mut B, l: L) -> ParseResult<B, L, E>;
-
-impl<B, L, E> State<B, L, E> {
-    fn next(&self, b: &mut B, l: L) -> ParseResult<B, L, E> {
-        let transition = self.transition;
-        transition(b, l)
-    }
-}
-
-impl<B, L, E> Clone for State<B, L, E> {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
-impl<B, L, E> Copy for State<B, L, E> {}
-
-const fn state<B, L, E>(transition: Transition<B, L, E>) -> State<B, L, E> {
-    State { transition }
-}
+use crate::state_machine::state;
+use crate::state_machine::{ParseResult, State};
 
 type FormatState = State<BuildFormat, char, ParseError>;
 type FormatResult = ParseResult<BuildFormat, char, ParseError>;
