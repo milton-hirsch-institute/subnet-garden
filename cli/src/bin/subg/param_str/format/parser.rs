@@ -3,30 +3,30 @@
 
 use crate::param_str::format::{ParseError, Segment, StringFormat};
 
-type State = fn(&mut Machine, char) -> Result<(), ParseError>;
+type State = fn(&mut Machine, &mut Building, char) -> Result<(), ParseError>;
 
-static TEXT_STATE: State = |m, c| {
+static TEXT_STATE: State = |m, b, c| {
     match c {
         '\\' => m.set_state(ESCAPE_STATE),
         '{' => {
-            m.add_text_segment();
+            b.add_text_segment();
             m.set_state(VARIABLE_STATE);
         }
-        _ => m.add_text(c),
+        _ => b.add_text(c),
     }
     Ok(())
 };
 
-static ESCAPE_STATE: State = |m, c| {
-    m.add_text(c);
+static ESCAPE_STATE: State = |m, b, c| {
+    b.add_text(c);
     m.set_state(TEXT_STATE);
     Ok(())
 };
 
-static VARIABLE_STATE: State = |m, c| {
+static VARIABLE_STATE: State = |m, b, c| {
     match c {
         '}' => {
-            m.add_variable();
+            b.add_variable();
             m.set_state(TEXT_STATE);
         }
         _ => {
@@ -39,22 +39,16 @@ static VARIABLE_STATE: State = |m, c| {
 };
 
 #[derive(Debug, PartialEq)]
-struct Machine {
-    current_state: State,
+struct Building {
     current_text: String,
     result: Vec<Segment>,
 }
 
-impl Machine {
+impl Building {
     #[inline(always)]
-    fn current_state(&self) -> State {
-        self.current_state
+    fn result(self) -> Vec<Segment> {
+        self.result
     }
-
-    fn set_state(&mut self, state: State) {
-        self.current_state = state;
-    }
-
     #[inline(always)]
     fn add_text(&mut self, c: char) {
         self.current_text.push(c);
@@ -67,25 +61,45 @@ impl Machine {
         self.current_text.truncate(0);
     }
 
+    #[inline(always)]
     fn add_variable(&mut self) {
         self.result.push(Segment::Variable);
+    }
+}
+
+#[derive(Debug, PartialEq)]
+struct Machine {
+    current_state: State,
+}
+
+impl Machine {
+    #[inline(always)]
+    fn current_state(&self) -> State {
+        self.current_state
+    }
+
+    #[inline(always)]
+    fn set_state(&mut self, state: State) {
+        self.current_state = state;
     }
 }
 
 pub fn parse(format: &str) -> Result<StringFormat, ParseError> {
     let mut m = Machine {
         current_state: TEXT_STATE,
+    };
+    let mut b = Building {
         current_text: String::new(),
         result: Vec::new(),
     };
 
     for c in format.chars() {
-        m.current_state()(&mut m, c)?;
+        m.current_state()(&mut m, &mut b, c)?;
     }
 
     if m.current_state() == TEXT_STATE {
-        m.add_text_segment();
-        return Ok(StringFormat::new(m.result));
+        b.add_text_segment();
+        return Ok(StringFormat::new(b.result()));
     }
 
     Err(ParseError::InvalidFormat(
