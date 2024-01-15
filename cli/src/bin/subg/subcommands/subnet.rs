@@ -18,7 +18,7 @@ pub(crate) fn allocate(subg: &SubgArgs, args: &AllocateArgs) {
 
 pub(crate) fn free(subg: &SubgArgs, args: &FreeArgs) {
     let mut pool = crate::load_pool(&subg.pool_path);
-    let cidr = match pool.find_by_name(&args.identifier.as_str()) {
+    let cidr = match pool.find_by_name(args.identifier.as_str()) {
         Some(cidr) => cidr,
         None => crate::result(
             args.identifier.parse::<IpCidr>(),
@@ -98,7 +98,7 @@ pub(crate) fn claim(subg: &SubgArgs, args: &ClaimArgs) {
 
 pub(crate) fn rename(subg: &SubgArgs, args: &RenameArgs) {
     let mut pool = crate::load_pool(&subg.pool_path);
-    let cidr = match pool.find_by_name(&args.identifier.as_str()) {
+    let cidr = match pool.find_by_name(args.identifier.as_str()) {
         Some(cidr) => cidr,
         None => crate::result(
             args.identifier.parse::<IpCidr>(),

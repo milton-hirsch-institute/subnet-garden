@@ -86,7 +86,7 @@ impl SubnetPool {
     }
 
     pub fn free(&mut self, cidr: &IpCidr) -> bool {
-        return self.root.free(cidr);
+        self.root.free(cidr)
     }
 
     pub fn claim(&mut self, cidr: &IpCidr, name: Option<&str>) -> AllocateResult<()> {
@@ -99,7 +99,7 @@ impl SubnetPool {
         if self.root.claim(cidr, name) {
             return Ok(());
         }
-        return Err(AllocateError::NoSpaceAvailable);
+        Err(AllocateError::NoSpaceAvailable)
     }
 
     pub fn rename(&mut self, cidr: &IpCidr, name: Option<&str>) -> RenameResult<()> {
@@ -133,7 +133,7 @@ impl SubnetPool {
     }
 
     pub fn names(&self) -> impl Iterator<Item = String> + '_ {
-        self.names.iter().map(|(name, _)| name.to_string())
+        self.names.keys().map(|name| name.to_string())
     }
 
     pub fn cidrs(&self) -> impl Iterator<Item = &IpCidr> {
@@ -200,7 +200,7 @@ impl<'s> serde::Deserialize<'s> for SubnetPool {
                     .next_element::<Vec<CidrRecord>>()?
                     .ok_or_else(|| serde::de::Error::missing_field("subnets"))?;
 
-                Ok(load_cidrs(&entries, &cidr).map_err(serde::de::Error::custom)?)
+                load_cidrs(&entries, &cidr).map_err(serde::de::Error::custom)
             }
             fn visit_map<V>(self, mut map: V) -> Result<Self::Value, V::Error>
             where
@@ -231,7 +231,7 @@ impl<'s> serde::Deserialize<'s> for SubnetPool {
                 }
                 let cidr = cidr.ok_or_else(|| serde::de::Error::missing_field("cidr"))?;
                 let subnets = entries.ok_or_else(|| serde::de::Error::missing_field("subnets"))?;
-                Ok(load_cidrs(&subnets, &cidr).map_err(serde::de::Error::custom)?)
+                load_cidrs(&subnets, &cidr).map_err(serde::de::Error::custom)
             }
         }
         const FIELDS: &[&str] = &["cidr", "subnets"];

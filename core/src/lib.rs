@@ -32,10 +32,7 @@ impl CidrRecord {
     pub(crate) fn new(cidr: IpCidr, name: Option<&str>) -> Self {
         CidrRecord {
             cidr,
-            name: match name {
-                Some(name) => Some(name.to_string()),
-                None => None,
-            },
+            name: name.map(|name| name.to_string()),
         }
     }
 }
@@ -162,7 +159,7 @@ mod tests {
             let name = Some("foo");
             let record = super::super::CidrRecord::new(cidr, name);
             assert_eq!(record.cidr, cidr);
-            assert_eq!(record.name, Some(name.unwrap().to_string()));
+            assert_eq!(record.name.as_deref(), name);
         }
 
         #[test]
