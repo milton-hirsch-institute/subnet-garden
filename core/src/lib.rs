@@ -8,7 +8,6 @@ use serde::ser::SerializeStruct;
 use std::str::FromStr;
 
 pub mod errors;
-mod param_str;
 pub mod pool;
 mod subspace;
 mod util;

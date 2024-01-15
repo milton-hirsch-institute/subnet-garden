@@ -5,35 +5,35 @@
 mod parser;
 
 #[derive(Debug, PartialEq)]
-pub(crate) enum ParseError {
+pub enum ParseError {
     InvalidFormat(String),
 }
 
-pub(crate) type Segments = Vec<Segment>;
-pub(crate) type Args<'a> = Vec<&'a str>;
+pub type Segments = Vec<Segment>;
+pub type Args<'a> = Vec<&'a str>;
 
 #[derive(Debug, PartialEq)]
-pub(crate) enum FormatError {
+pub enum FormatError {
     NotEnoughArguments,
     TooManyArguments,
 }
 
 #[derive(Debug, PartialEq)]
-pub(crate) enum Segment {
+pub enum Segment {
     Text(String),
     Variable,
 }
 #[derive(Debug, PartialEq)]
-pub(crate) struct StringFormat {
+pub struct StringFormat {
     segments: Segments,
 }
 
 impl StringFormat {
-    pub(crate) fn new(segments: Segments) -> StringFormat {
+    pub fn new(segments: Segments) -> StringFormat {
         StringFormat { segments }
     }
 
-    pub(crate) fn format(&self, args: &Args) -> Result<String, FormatError> {
+    pub fn format(&self, args: &Args) -> Result<String, FormatError> {
         let mut result = String::new();
         let mut arg_iter = args.iter();
         for segment in &self.segments {

@@ -72,7 +72,7 @@ impl Machine {
     }
 }
 
-pub(super) fn parse(format: &str) -> Result<StringFormat, ParseError> {
+pub fn parse(format: &str) -> Result<StringFormat, ParseError> {
     let mut m = Machine {
         current_state: TEXT_STATE,
         current_text: String::new(),
