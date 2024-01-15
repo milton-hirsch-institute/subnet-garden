@@ -5,7 +5,7 @@
 mod parser;
 
 #[derive(Debug, PartialEq)]
-pub(in crate::format_str) enum ParseError {
+pub(crate) enum ParseError {
     InvalidFormat(String),
 }
 

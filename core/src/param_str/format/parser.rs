@@ -1,7 +1,7 @@
 // Copyright 2024 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::format_str::{ParseError, Segment, StringFormat};
+use crate::param_str::format::{ParseError, Segment, StringFormat};
 
 type State = fn(&mut Machine, char) -> Result<(), ParseError>;
 
