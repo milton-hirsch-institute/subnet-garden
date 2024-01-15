@@ -3,48 +3,75 @@
 
 use crate::param_str::format::{ParseError, Segment, StringFormat};
 
-type State = fn(&mut Machine, &mut Building, char) -> Result<(), ParseError>;
+#[derive(Debug, PartialEq)]
+struct State<B, L> {
+    transition: fn(b: &mut B, l: L) -> Result<Self, ParseError>,
+}
 
-static TEXT_STATE: State = |m, b, c| {
+type ParseResult<B, L> = Result<State<B, L>, ParseError>;
+
+type Transition<B, L> = fn(b: &mut B, l: L) -> ParseResult<B, L>;
+
+impl<B, L> State<B, L> {
+    fn next(&self, b: &mut B, l: L) -> ParseResult<B, L> {
+        let transition = self.transition;
+        transition(b, l)
+    }
+}
+
+impl<B, L> Clone for State<B, L> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<B, L> Copy for State<B, L> {}
+
+const fn state<B, L>(transition: Transition<B, L>) -> State<B, L> {
+    State { transition }
+}
+
+type FormatState = State<BuildFormat, char>;
+type FormatResult = ParseResult<BuildFormat, char>;
+
+static TEXT_STATE: FormatState = state(|b, c| -> FormatResult {
     match c {
-        '\\' => m.set_state(ESCAPE_STATE),
+        '\\' => Ok(ESCAPE_STATE),
         '{' => {
             b.add_text_segment();
-            m.set_state(VARIABLE_STATE);
+            Ok(VARIABLE_STATE)
         }
-        _ => b.add_text(c),
+        _ => {
+            b.add_text(c);
+            Ok(TEXT_STATE)
+        }
     }
-    Ok(())
-};
+});
 
-static ESCAPE_STATE: State = |m, b, c| {
+static ESCAPE_STATE: FormatState = state(|b, c| -> FormatResult {
     b.add_text(c);
-    m.set_state(TEXT_STATE);
-    Ok(())
-};
+    Ok(TEXT_STATE)
+});
 
-static VARIABLE_STATE: State = |m, b, c| {
+static VARIABLE_STATE: FormatState = state(|b, c| -> FormatResult {
     match c {
         '}' => {
             b.add_variable();
-            m.set_state(TEXT_STATE);
+            Ok(TEXT_STATE)
         }
-        _ => {
-            return Err(ParseError::InvalidFormat(
-                format!("Expected }}, found {}", c).to_string(),
-            ));
-        }
+        _ => Err(ParseError::InvalidFormat(
+            format!("Expected }}, found {}", c).to_string(),
+        )),
     }
-    Ok(())
-};
+});
 
 #[derive(Debug, PartialEq)]
-struct Building {
+struct BuildFormat {
     current_text: String,
     result: Vec<Segment>,
 }
 
-impl Building {
+impl BuildFormat {
     #[inline(always)]
     fn result(self) -> Vec<Segment> {
         self.result
@@ -68,33 +95,35 @@ impl Building {
 }
 
 #[derive(Debug, PartialEq)]
-struct Machine {
-    current_state: State,
+struct FormatMachine<B, L> {
+    current_state: State<B, L>,
 }
 
-impl Machine {
+impl<B, L> FormatMachine<B, L> {
     #[inline(always)]
-    fn current_state(&self) -> State {
+    fn current_state(&self) -> State<B, L> {
         self.current_state
     }
 
     #[inline(always)]
-    fn set_state(&mut self, state: State) {
+    fn set_state(&mut self, state: State<B, L>) {
         self.current_state = state;
     }
 }
 
 pub fn parse(format: &str) -> Result<StringFormat, ParseError> {
-    let mut m = Machine {
+    let mut m = FormatMachine {
         current_state: TEXT_STATE,
     };
-    let mut b = Building {
+    let mut b = BuildFormat {
         current_text: String::new(),
         result: Vec::new(),
     };
 
     for c in format.chars() {
-        m.current_state()(&mut m, &mut b, c)?;
+        let current_state = m.current_state();
+        let next_state = current_state.next(&mut b, c)?;
+        m.set_state(next_state)
     }
 
     if m.current_state() == TEXT_STATE {
