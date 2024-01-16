@@ -100,7 +100,7 @@ mod tests {
         fn invalid_format() {
             assert_eq!(
                 StringFormat::parse("aaa\\"),
-                Err(ParseError::InvalidFormat(
+                Err(ParseError::InvalidValue(
                     "Unexpected end of format".to_string()
                 ))
             );

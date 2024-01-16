@@ -3,5 +3,5 @@
 
 #[derive(Debug, PartialEq)]
 pub(crate) enum ParseError {
-    InvalidFormat(String),
+    InvalidValue(String),
 }

@@ -26,7 +26,7 @@ impl BuildList {
     #[inline(always)]
     fn add_list_item(&mut self) -> Result<(), ParseError> {
         if self.current_text.is_empty() {
-            return Err(ParseError::InvalidFormat("Empty string".to_string()));
+            return Err(ParseError::InvalidValue("Empty string".to_string()));
         }
         self.result.push(self.current_text.clone());
         self.current_text.clear();
@@ -61,7 +61,7 @@ static TERMINATION: ListTermination = |last_state, b| -> Result<(), ParseError> 
         b.add_list_item()?;
         Ok(())
     } else {
-        Err(ParseError::InvalidFormat(
+        Err(ParseError::InvalidValue(
             "Unexpected end of format".to_string(),
         ))
     }
@@ -86,7 +86,7 @@ mod tests {
     fn empty_string() {
         assert_eq!(
             parse_list(""),
-            Err(ParseError::InvalidFormat("Empty string".to_string()))
+            Err(ParseError::InvalidValue("Empty string".to_string()))
         );
     }
 
@@ -111,7 +111,7 @@ mod tests {
     fn trailing_comma() {
         assert_eq!(
             parse_list("aaa,bbb,"),
-            Err(ParseError::InvalidFormat(
+            Err(ParseError::InvalidValue(
                 "Unexpected end of format".to_string()
             ))
         );

@@ -34,7 +34,7 @@ static VARIABLE_STATE: FormatState = state(|b, c| -> FormatResult {
             b.add_variable();
             Ok(TEXT_STATE)
         }
-        _ => Err(ParseError::InvalidFormat(
+        _ => Err(ParseError::InvalidValue(
             format!("Expected }}, found {}", c).to_string(),
         )),
     }
@@ -45,7 +45,7 @@ static TERMINATION: FormatTermination = |last_state, b| -> Result<(), ParseError
         b.add_text_segment();
         Ok(())
     } else {
-        Err(ParseError::InvalidFormat(
+        Err(ParseError::InvalidValue(
             "Unexpected end of format".to_string(),
         ))
     }
@@ -106,7 +106,7 @@ mod tests {
         fn missing_escape_character() {
             assert_eq!(
                 parse("aaa\\"),
-                Err(ParseError::InvalidFormat(
+                Err(ParseError::InvalidValue(
                     "Unexpected end of format".to_string()
                 ))
             );
@@ -115,14 +115,14 @@ mod tests {
         fn unexpected_variable_character() {
             assert_eq!(
                 parse("aaa{>bbb"),
-                Err(ParseError::InvalidFormat("Expected }, found >".to_string()))
+                Err(ParseError::InvalidValue("Expected }, found >".to_string()))
             );
         }
         #[test]
         fn unterminated_variable_character() {
             assert_eq!(
                 parse("aaa{"),
-                Err(ParseError::InvalidFormat(
+                Err(ParseError::InvalidValue(
                     "Unexpected end of format".to_string()
                 ))
             );
