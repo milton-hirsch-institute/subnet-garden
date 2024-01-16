@@ -3,8 +3,8 @@
 #![allow(dead_code)]
 
 use crate::param_str::parsers::errors::ParseError;
-use crate::state_machine;
-use crate::state_machine::{state, state_machine, ParseResult, State, Termination};
+use crate::util::state_machine;
+use crate::util::state_machine::{state, state_machine, ParseResult, State, Termination};
 
 #[derive(Debug, PartialEq)]
 struct BuildList {

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::param_str::parsers::errors::ParseError;
-use crate::state_machine::{state, state_machine, StateMachine};
-use crate::state_machine::{ParseResult, State, Termination};
+use crate::util::state_machine::{state, state_machine, StateMachine};
+use crate::util::state_machine::{ParseResult, State, Termination};
 
 type FormatState = State<BuildFormat, char, ParseError>;
 type FormatResult = ParseResult<BuildFormat, char, ParseError>;
