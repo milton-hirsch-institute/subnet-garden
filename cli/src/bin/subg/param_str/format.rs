@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #![allow(dead_code)]
 
-pub(crate) mod parser;
+use crate::param_str::parsers::format;
 
 #[derive(Debug, PartialEq)]
 pub enum ParseError {
@@ -52,7 +52,9 @@ impl StringFormat {
     }
 
     fn parse(text: &str) -> Result<Self, ParseError> {
-        parser::parse(text)
+        Ok(StringFormat {
+            segments: format::parse(text)?,
+        })
     }
 }
 

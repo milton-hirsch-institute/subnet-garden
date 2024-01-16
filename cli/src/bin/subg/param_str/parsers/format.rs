@@ -1,7 +1,7 @@
 // Copyright 2024 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::param_str::format::{ParseError, Segment, StringFormat};
+use crate::param_str::format::{ParseError, Segment, Segments};
 use crate::state_machine::{state, state_machine, StateMachine};
 use crate::state_machine::{ParseResult, State, Termination};
 
@@ -83,7 +83,7 @@ impl BuildFormat {
 static FORMAT_MACHINE: StateMachine<BuildFormat, char, ParseError> =
     state_machine(TEXT_STATE, TERMINATION);
 
-pub fn parse(format: &str) -> Result<StringFormat, ParseError> {
+pub fn parse(format: &str) -> Result<Segments, ParseError> {
     let mut build_format = BuildFormat {
         current_text: String::new(),
         result: Vec::new(),
@@ -92,9 +92,7 @@ pub fn parse(format: &str) -> Result<StringFormat, ParseError> {
         &mut build_format,
         format.chars().collect::<Vec<char>>().iter(),
     )?;
-    Ok(StringFormat {
-        segments: build_format.result(),
-    })
+    Ok(build_format.result())
 }
 
 #[cfg(test)]
@@ -132,24 +130,19 @@ mod tests {
 
         #[test]
         fn empty() {
-            assert_eq!(parse(""), Ok(StringFormat::new(vec![])));
+            assert_eq!(parse(""), Ok(vec![]));
         }
 
         #[test]
         fn text() {
-            assert_eq!(
-                parse("aaa"),
-                Ok(StringFormat::new(vec![Segment::Text("aaa".to_string())]))
-            );
+            assert_eq!(parse("aaa"), Ok(vec![Segment::Text("aaa".to_string())]));
         }
 
         #[test]
         fn text_with_escape() {
             assert_eq!(
                 parse("aaa\\\\bbb\\{}ccc"),
-                Ok(StringFormat::new(vec![Segment::Text(
-                    "aaa\\bbb{}ccc".to_string()
-                )]))
+                Ok(vec![Segment::Text("aaa\\bbb{}ccc".to_string())])
             );
         }
 
@@ -157,7 +150,7 @@ mod tests {
         fn text_with_escape_at_end() {
             assert_eq!(
                 parse("aaa\\\\"),
-                Ok(StringFormat::new(vec![Segment::Text("aaa\\".to_string())]))
+                Ok(vec![Segment::Text("aaa\\".to_string())])
             );
         }
     }
