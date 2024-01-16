@@ -3,7 +3,7 @@
 #![allow(dead_code)]
 
 #[derive(Debug, PartialEq)]
-struct ListCombinationIterator<T>
+pub(crate) struct ListCombinationIterator<T>
 where
     T: Clone + Default,
 {
@@ -16,7 +16,7 @@ impl<A> ListCombinationIterator<A>
 where
     A: Clone + Default,
 {
-    fn new(list: Vec<Vec<A>>) -> Option<ListCombinationIterator<A>> {
+    pub(crate) fn new(list: Vec<Vec<A>>) -> Option<ListCombinationIterator<A>> {
         if list.is_empty() {
             return None;
         }

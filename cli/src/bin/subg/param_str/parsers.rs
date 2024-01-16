@@ -3,5 +3,5 @@
 
 pub(crate) mod errors;
 pub(crate) mod format;
-mod list;
-mod range;
+pub(crate) mod list;
+pub(crate) mod range;
