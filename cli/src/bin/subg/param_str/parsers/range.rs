@@ -75,14 +75,9 @@ static START_STATE: RangeState = state(|b, c| -> RangeResult {
     }
 });
 
-static DOT_1_STATE: RangeState = state(|b, c| -> RangeResult {
+static DOT_1_STATE: RangeState = state(|_b, c| -> RangeResult {
     match c {
-        '.' => {
-            let end = b.current_text.parse::<usize>().unwrap();
-            b.set_end(end);
-            b.current_text.clear();
-            Ok(END_STATE)
-        }
+        '.' => Ok(END_STATE),
         _ => Err(ParseError::InvalidValue(
             format!("Expected '.', found {}", c).to_string(),
         )),
@@ -103,14 +98,14 @@ static END_STATE: RangeState = state(|b, c| -> RangeResult {
 
 static TERMINATION: RangeTermination = |last_state, b| -> Result<(), ParseError> {
     if last_state == END_STATE {
-        let end = b.current_text.parse::<usize>().unwrap();
-        b.set_end(end);
-        Ok(())
-    } else {
-        Err(ParseError::InvalidValue(
-            "Unexpected end of range".to_string(),
-        ))
+        if let Ok(end) = b.current_text.parse::<usize>() {
+            b.set_end(end);
+            return Ok(());
+        }
     }
+    Err(ParseError::InvalidValue(
+        "Unexpected end of range".to_string(),
+    ))
 };
 
 static RANGE_STATE_MACHINE: RangeStateMachine = state_machine(INIT_STATE, TERMINATION);
@@ -154,7 +149,7 @@ mod tests {
     fn unexpected_start_character() {
         assert_eq!(
             parse_range("0..9"),
-            Err(ParseError::InvalidValue("Expected %, found a".to_string()))
+            Err(ParseError::InvalidValue("Expected %, found 0".to_string()))
         );
     }
 
@@ -191,7 +186,7 @@ mod tests {
     #[test]
     fn unexpected_after_first_dot() {
         assert_eq!(
-            parse_range("%0..,9"),
+            parse_range("%0.,9"),
             Err(ParseError::InvalidValue(
                 "Expected '.', found ,".to_string()
             ))
