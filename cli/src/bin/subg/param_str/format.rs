@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #![allow(dead_code)]
 
-mod parser;
+pub(crate) mod parser;
 
 #[derive(Debug, PartialEq)]
 pub enum ParseError {
