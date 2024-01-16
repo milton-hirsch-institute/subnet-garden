@@ -4,8 +4,8 @@
 
 use crate::param_str::parsers::errors::ParseError;
 use crate::param_str::parsers::format;
+use crate::param_str::parsers::format::Segments;
 
-pub type Segments = Vec<Segment>;
 pub type Args<'a> = Vec<&'a str>;
 
 #[derive(Debug, PartialEq)]
