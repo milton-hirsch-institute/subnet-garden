@@ -2,12 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 #![allow(dead_code)]
 
+use crate::param_str::parsers::errors::ParseError;
 use crate::param_str::parsers::format;
-
-#[derive(Debug, PartialEq)]
-pub enum ParseError {
-    InvalidFormat(String),
-}
 
 pub type Segments = Vec<Segment>;
 pub type Args<'a> = Vec<&'a str>;
