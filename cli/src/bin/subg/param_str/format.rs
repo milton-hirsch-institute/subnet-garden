@@ -4,7 +4,7 @@
 
 use crate::param_str::parsers::errors::ParseError;
 use crate::param_str::parsers::format;
-use crate::param_str::parsers::format::Segments;
+use crate::param_str::parsers::format::{Segment, Segments};
 
 pub type Args<'a> = Vec<&'a str>;
 
@@ -14,11 +14,6 @@ pub enum FormatError {
     TooManyArguments,
 }
 
-#[derive(Debug, PartialEq)]
-pub enum Segment {
-    Text(String),
-    Variable,
-}
 #[derive(Debug, PartialEq)]
 pub struct StringFormat {
     segments: Segments,
