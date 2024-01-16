@@ -62,7 +62,7 @@ static TERMINATION: ListTermination = |last_state, b| -> Result<(), ParseError> 
         Ok(())
     } else {
         Err(ParseError::InvalidValue(
-            "Unexpected end of format".to_string(),
+            "Unexpected end of list".to_string(),
         ))
     }
 };
@@ -112,7 +112,7 @@ mod tests {
         assert_eq!(
             parse_list("aaa,bbb,"),
             Err(ParseError::InvalidValue(
-                "Unexpected end of format".to_string()
+                "Unexpected end of list".to_string()
             ))
         );
     }
