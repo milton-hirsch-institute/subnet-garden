@@ -1,7 +1,7 @@
 // Copyright 2024 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::param_str::parsers::errors::ParseError;
+use crate::param_str::errors::ParseError;
 use crate::util::state_machine::{state, state_machine, StateMachine};
 use crate::util::state_machine::{ParseResult, State, Termination};
 

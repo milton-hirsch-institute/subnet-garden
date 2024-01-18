@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #![allow(dead_code)]
 
-use crate::param_str::parsers::errors::ParseError;
+use crate::param_str::errors::ParseError;
 use crate::param_str::parsers::format::{Segment, Segments};
 use crate::param_str::parsers::{format, list, range};
 use crate::util::iter;
