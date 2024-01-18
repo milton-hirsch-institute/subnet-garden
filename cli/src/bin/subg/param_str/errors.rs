@@ -65,6 +65,22 @@ impl ArgumentError {
     }
 }
 
+impl Display for ArgumentError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "arg: {}\nif range: {}\nif list: {}",
+            self.arg, self.range_error, self.list_error
+        )
+    }
+}
+
+impl Error for ArgumentError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        None
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum FormatStringError {
     Parse(ParseError),
@@ -123,6 +139,34 @@ mod tests {
         #[test]
         fn format_error_source() {
             let err = FormatError::NotEnoughArguments;
+            assert!(err.source().is_none());
+        }
+    }
+
+    #[cfg(test)]
+    mod argument_error {
+        use super::*;
+
+        #[test]
+        fn argument_error_display() {
+            let err = ArgumentError::new(
+                "foo".to_string(),
+                ParseError::InvalidValue("bar".to_string()),
+                ParseError::InvalidValue("baz".to_string()),
+            );
+            assert_eq!(
+                format!("{}", err),
+                "arg: foo\nif range: InvalidValue: bar\nif list: InvalidValue: baz"
+            );
+        }
+
+        #[test]
+        fn argument_error_source() {
+            let err = ArgumentError::new(
+                "foo".to_string(),
+                ParseError::InvalidValue("bar".to_string()),
+                ParseError::InvalidValue("baz".to_string()),
+            );
             assert!(err.source().is_none());
         }
     }
