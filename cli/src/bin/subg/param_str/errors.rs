@@ -69,4 +69,27 @@ mod tests {
             assert!(err.source().is_none());
         }
     }
+
+    #[cfg(test)]
+    mod format_error {
+        use super::*;
+
+        #[test]
+        fn from_parse_error() {
+            let err = ParseError::InvalidValue("foo".to_string());
+            assert_eq!(
+                FormatStringError::from(err),
+                FormatStringError::Parse(ParseError::InvalidValue("foo".to_string()))
+            );
+        }
+
+        #[test]
+        fn from_format_error() {
+            let err = FormatError::NotEnoughArguments;
+            assert_eq!(
+                FormatStringError::from(err),
+                FormatStringError::Format(FormatError::NotEnoughArguments)
+            );
+        }
+    }
 }
