@@ -101,6 +101,17 @@ impl From<FormatError> for FormatStringError {
     }
 }
 
+impl Display for FormatStringError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            FormatStringError::Parse(error) => write!(f, "{}", error),
+            FormatStringError::Format(error) => write!(f, "{}", error),
+            FormatStringError::ArgumentParse(error) => write!(f, "{}", error),
+            FormatStringError::MissingArgument => write!(f, "Missing argument"),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -191,6 +202,37 @@ mod tests {
                 FormatStringError::from(err),
                 FormatStringError::Format(FormatError::NotEnoughArguments)
             );
+        }
+
+        #[test]
+        fn parse_error_display() {
+            let err = FormatStringError::Parse(ParseError::InvalidValue("foo".to_string()));
+            assert_eq!(format!("{}", err), "InvalidValue: foo");
+        }
+
+        #[test]
+        fn format_error_display() {
+            let err = FormatStringError::Format(FormatError::NotEnoughArguments);
+            assert_eq!(format!("{}", err), "Not enough arguments");
+        }
+
+        #[test]
+        fn argument_error_display() {
+            let err = FormatStringError::ArgumentParse(ArgumentError::new(
+                "foo".to_string(),
+                ParseError::InvalidValue("bar".to_string()),
+                ParseError::InvalidValue("baz".to_string()),
+            ));
+            assert_eq!(
+                format!("{}", err),
+                "arg: foo\nif range: InvalidValue: bar\nif list: InvalidValue: baz"
+            );
+        }
+
+        #[test]
+        fn missing_argument_display() {
+            let err = FormatStringError::MissingArgument;
+            assert_eq!(format!("{}", err), "Missing argument");
         }
     }
 }
