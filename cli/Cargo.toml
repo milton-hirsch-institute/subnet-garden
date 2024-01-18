@@ -27,6 +27,7 @@ exitcode = "^1"
 subnet-garden-core = { path = "../core", version="^0.1" }
 serde_json = "^1"
 serde_yaml = "^0.9"
+log = "0.4.20"
 
 [dev-dependencies]
 assert_cmd = "^2"

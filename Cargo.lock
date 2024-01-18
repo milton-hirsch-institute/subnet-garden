@@ -1566,6 +1566,7 @@ dependencies = [
  "cidr",
  "clap 4.4.11",
  "exitcode",
+ "log",
  "predicates",
  "serde_json",
  "serde_yaml",

@@ -26,16 +26,16 @@ pub(crate) fn allocate(subg: &SubgArgs, args: &AllocateArgs) {
                         crate::result(
                             pool.allocate(args.bits, Some(name.as_str())),
                             exitcode::SOFTWARE,
-                            "Could not allocate subnet",
+                            format!("Could not allocate subnet {}", name).as_str(),
                         );
                     }
                 }
                 Err(err) => {
-                    show_error(err, "Could not allocate subnet", exitcode::SOFTWARE);
+                    show_error(err, "Could not format subnet names", exitcode::SOFTWARE);
                 }
             }
         }
-    }
+    };
     crate::store_pool(&subg.pool_path, &pool);
 }
 
@@ -162,7 +162,7 @@ mod tests {
         }
 
         #[test]
-        fn allocate_failure() {
+        fn allocate_single_failure() {
             let mut test = new_allocate_test("8", Some("test"));
             test.pool.allocate(16, None).unwrap();
             test.store();
@@ -172,6 +172,39 @@ mod tests {
                 .code(exitcode::SOFTWARE)
                 .stdout("")
                 .stderr("Could not allocate subnet\nNo space available\n");
+        }
+
+        #[test]
+        fn allocate_multi_failure() {
+            let mut test = new_allocate_test("8", Some("name-{}"));
+            test.subg.arg("%0..128");
+            test.pool.allocate(15, None).unwrap();
+            test.store();
+            test.subg
+                .assert()
+                .failure()
+                .code(exitcode::SOFTWARE)
+                .stdout("")
+                .stderr("Could not allocate subnet name-128\nNo space available\n");
+        }
+
+        #[test]
+        fn allocate_format_failure() {
+            let mut test = new_allocate_test("8", Some("name-{}"));
+            test.subg.arg("%0..,");
+            test.pool.allocate(15, None).unwrap();
+            test.store();
+            test.subg
+                .assert()
+                .failure()
+                .code(exitcode::SOFTWARE)
+                .stdout("")
+                .stderr(
+                    "Could not format subnet names\n\
+                        arg: %0..,\n\
+                        if range: InvalidValue: Expected digit, found ,\n\
+                        if list: InvalidValue: Unexpected end of list\n",
+                );
         }
 
         #[test]
@@ -194,6 +227,25 @@ mod tests {
             assert_eq!(subnets.len(), 1);
             assert_eq!(subnets[0].name, None);
             assert_eq!(subnets[0].cidr.to_string(), "10.10.0.0/24");
+        }
+
+        #[test]
+        fn allocate_multiple() {
+            let mut test = new_allocate_test("8", Some("name-{}-{}"));
+            test.subg.arg("%0..1");
+            test.subg.arg("a,b");
+            test.subg.assert().success().stdout("").stderr("");
+            test.load();
+            let subnets: Vec<&CidrRecord> = test.pool.records().collect();
+            assert_eq!(subnets.len(), 4);
+            assert_eq!(subnets[0].name.clone().unwrap(), "name-0-a");
+            assert_eq!(subnets[0].cidr.to_string(), "10.10.0.0/24");
+            assert_eq!(subnets[1].name.clone().unwrap(), "name-0-b");
+            assert_eq!(subnets[1].cidr.to_string(), "10.10.1.0/24");
+            assert_eq!(subnets[2].name.clone().unwrap(), "name-1-a");
+            assert_eq!(subnets[2].cidr.to_string(), "10.10.2.0/24");
+            assert_eq!(subnets[3].name.clone().unwrap(), "name-1-b");
+            assert_eq!(subnets[3].cidr.to_string(), "10.10.3.0/24");
         }
     }
 
