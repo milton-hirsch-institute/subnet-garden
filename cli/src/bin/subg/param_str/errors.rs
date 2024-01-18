@@ -10,12 +10,6 @@ pub(crate) enum ParseError {
     InvalidValue(String),
 }
 
-impl Error for ParseError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        None
-    }
-}
-
 impl Display for ParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -24,10 +18,31 @@ impl Display for ParseError {
     }
 }
 
+impl Error for ParseError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        None
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum FormatError {
     NotEnoughArguments,
     TooManyArguments,
+}
+
+impl Display for FormatError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            FormatError::NotEnoughArguments => write!(f, "Not enough arguments"),
+            FormatError::TooManyArguments => write!(f, "Too many arguments"),
+        }
+    }
+}
+
+impl Error for FormatError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        None
+    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -69,9 +84,31 @@ mod tests {
             assert!(err.source().is_none());
         }
     }
-
     #[cfg(test)]
     mod format_error {
+        use super::*;
+
+        #[test]
+        fn not_enough_arguments_display() {
+            let err = FormatError::NotEnoughArguments;
+            assert_eq!(format!("{}", err), "Not enough arguments");
+        }
+
+        #[test]
+        fn too_many_arguments_display() {
+            let err = FormatError::TooManyArguments;
+            assert_eq!(format!("{}", err), "Too many arguments");
+        }
+
+        #[test]
+        fn format_error_source() {
+            let err = FormatError::NotEnoughArguments;
+            assert!(err.source().is_none());
+        }
+    }
+
+    #[cfg(test)]
+    mod format_string_error {
         use super::*;
 
         #[test]
