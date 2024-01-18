@@ -2,18 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 #![allow(dead_code)]
 
-use crate::param_str::errors::ParseError;
+use crate::param_str::errors::{FormatError, FormatStringError, ParseError};
 use crate::param_str::parsers::format::{Segment, Segments};
 use crate::param_str::parsers::{format, list, range};
 use crate::util::iter;
 
 pub type Args<'a> = Vec<&'a str>;
-
-#[derive(Debug, PartialEq)]
-pub enum FormatError {
-    NotEnoughArguments,
-    TooManyArguments,
-}
 
 #[derive(Debug, PartialEq)]
 pub struct StringFormat {
@@ -71,26 +65,6 @@ impl ArgumentError {
     #[inline(always)]
     pub(crate) fn list_error(&self) -> &ParseError {
         &self.list_error
-    }
-}
-
-#[derive(Debug, PartialEq)]
-enum FormatStringError {
-    Parse(ParseError),
-    Format(FormatError),
-    ArgumentParse(ArgumentError),
-    MissingArgument,
-}
-
-impl From<ParseError> for FormatStringError {
-    fn from(error: ParseError) -> Self {
-        FormatStringError::Parse(error)
-    }
-}
-
-impl From<FormatError> for FormatStringError {
-    fn from(error: FormatError) -> Self {
-        FormatStringError::Format(error)
     }
 }
 
