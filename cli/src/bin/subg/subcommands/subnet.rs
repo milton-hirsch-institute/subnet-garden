@@ -3,16 +3,39 @@
 
 use crate::args::{AllocateArgs, CidrsArgs, ClaimArgs, FreeArgs, NamesArgs, RenameArgs, SubgArgs};
 use crate::util;
+use crate::{param_str, show_error};
 use cidr::IpCidr;
 use std::process::exit;
 
 pub(crate) fn allocate(subg: &SubgArgs, args: &AllocateArgs) {
     let mut pool = crate::load_pool(&subg.pool_path);
-    crate::result(
-        pool.allocate(args.bits, args.name.as_deref()),
-        exitcode::SOFTWARE,
-        "Could not allocate subnet",
-    );
+    match &args.param {
+        None => {
+            crate::result(
+                pool.allocate(args.bits, args.name_format.as_deref()),
+                exitcode::SOFTWARE,
+                "Could not allocate subnet",
+            );
+        }
+        Some(params) => {
+            let format = args.name_format.as_deref().unwrap();
+            let param_strs: param_str::format::Args = params.iter().map(|s| s.as_str()).collect();
+            match param_str::format::format_strings(format, &param_strs) {
+                Ok(names) => {
+                    for name in names {
+                        crate::result(
+                            pool.allocate(args.bits, Some(name.as_str())),
+                            exitcode::SOFTWARE,
+                            "Could not allocate subnet",
+                        );
+                    }
+                }
+                Err(err) => {
+                    show_error(err, "Could not allocate subnet", exitcode::SOFTWARE);
+                }
+            }
+        }
+    }
     crate::store_pool(&subg.pool_path, &pool);
 }
 

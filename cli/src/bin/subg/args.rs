@@ -32,8 +32,12 @@ pub(crate) struct AllocateArgs {
     pub(crate) bits: Bits,
 
     #[arg()]
-    /// Name of the subnet to allocate
-    pub(crate) name: Option<String>,
+    /// Name or format of the subnet to allocate
+    pub(crate) name_format: Option<String>,
+
+    #[arg()]
+    /// Parameters for subnet name format
+    pub(crate) param: Option<Vec<String>>,
 }
 
 #[derive(Debug, clap::Args)]

@@ -44,7 +44,7 @@ impl StringFormat {
     }
 }
 
-fn format_strings(format: &str, args: &Args) -> Result<Vec<String>, FormatStringError> {
+pub(crate) fn format_strings(format: &str, args: &Args) -> Result<Vec<String>, FormatStringError> {
     let format = StringFormat::parse(format)?;
     let mut parsed_args = Vec::<Vec<String>>::new();
     let mut result = Vec::<String>::new();
