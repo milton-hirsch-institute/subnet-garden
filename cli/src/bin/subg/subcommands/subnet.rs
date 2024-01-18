@@ -177,7 +177,7 @@ mod tests {
         #[test]
         fn allocate_multi_failure() {
             let mut test = new_allocate_test("8", Some("name-{}"));
-            test.subg.arg("%0..128");
+            test.subg.arg("%0..129");
             test.pool.allocate(15, None).unwrap();
             test.store();
             test.subg
@@ -232,7 +232,7 @@ mod tests {
         #[test]
         fn allocate_multiple() {
             let mut test = new_allocate_test("8", Some("name-{}-{}"));
-            test.subg.arg("%0..1");
+            test.subg.arg("%0..2");
             test.subg.arg("a,b");
             test.subg.assert().success().stdout("").stderr("");
             test.load();
