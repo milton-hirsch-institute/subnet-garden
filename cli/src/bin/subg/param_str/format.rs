@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #![allow(dead_code)]
 
-use crate::param_str::errors::{FormatError, FormatStringError, ParseError};
+use crate::param_str::errors::{ArgumentError, FormatError, FormatStringError, ParseError};
 use crate::param_str::parsers::format::{Segment, Segments};
 use crate::param_str::parsers::{format, list, range};
 use crate::util::iter;
@@ -44,30 +44,6 @@ impl StringFormat {
     }
 }
 
-#[derive(Debug, PartialEq)]
-pub(crate) struct ArgumentError {
-    arg: String,
-    range_error: ParseError,
-    list_error: ParseError,
-}
-
-impl ArgumentError {
-    #[inline(always)]
-    pub(crate) fn arg(&self) -> &str {
-        &self.arg
-    }
-
-    #[inline(always)]
-    pub(crate) fn range_error(&self) -> &ParseError {
-        &self.range_error
-    }
-
-    #[inline(always)]
-    pub(crate) fn list_error(&self) -> &ParseError {
-        &self.list_error
-    }
-}
-
 fn format_strings(format: &str, args: &Args) -> Result<Vec<String>, FormatStringError> {
     let format = StringFormat::parse(format)?;
     let mut parsed_args = Vec::<Vec<String>>::new();
@@ -85,11 +61,11 @@ fn format_strings(format: &str, args: &Args) -> Result<Vec<String>, FormatString
                         parsed_args.push(list);
                     }
                     Err(list_error) => {
-                        return Err(FormatStringError::ArgumentParse(ArgumentError {
-                            arg: arg.to_string(),
+                        return Err(FormatStringError::ArgumentParse(ArgumentError::new(
+                            arg.to_string(),
                             range_error,
                             list_error,
-                        }));
+                        )));
                     }
                 }
             }

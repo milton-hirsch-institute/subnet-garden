@@ -1,7 +1,6 @@
 // Copyright 2024 The Milton Hirsch Institute, B.V.
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::param_str::format::ArgumentError;
 use std::error::Error;
 use std::fmt::Display;
 
@@ -42,6 +41,27 @@ impl Display for FormatError {
 impl Error for FormatError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         None
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub(crate) struct ArgumentError {
+    arg: String,
+    range_error: ParseError,
+    list_error: ParseError,
+}
+
+impl ArgumentError {
+    pub(crate) fn new(
+        arg: String,
+        range_error: ParseError,
+        list_error: ParseError,
+    ) -> ArgumentError {
+        ArgumentError {
+            arg,
+            range_error,
+            list_error,
+        }
     }
 }
 
