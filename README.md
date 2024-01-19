@@ -85,23 +85,56 @@ see information about managed subnets.
 ### Subnet allocation
 
 When you need to allocate a new subnet, you can do so by requesting a subnet
-that covers the number of hosts-bits you need. For example, to allocate a subnet
-that can hold 8-bits worth of hosts (256 hosts), run:
+that covers the number of hosts-bits you need.
+
+#### Allocate an anonymous subnet
+
+For example, to allocate a subnet that can hold 8-bits worth of hosts (256
+hosts), run:
 
 ```shell
 subg allocate 8
 ```
 
 This will allocate an 8-bit subnet from the pool. The location of the subnet
-is determined by available space in the pool. Subnets may be assigned names.
-Once assigned, the name may be referenced in other commands. For example, to
-allocate a subnet with a name, run:
+is determined by available space in the pool.
+
+#### Allocate a named subnet
+
+A subnets may be assigned names. Once assigned, the name may be referenced
+in other commands. For example, to allocate a subnet with a name, run:
 
 ```shell
 subg allocate 8 tardigrade-lab
 ```
 
 This will create an 8-bit subnet with the name `tardigrade-lab`.
+
+#### Allocate a set of subnets
+
+In many cases one needs to allocate a set of subnets, such as when building
+a system across multiple datacenters and availability zones. For example,
+to allocate 2 8-bit subnets in each of two availability zones and two
+regions, run:
+
+```shell
+subg allocate 8 tardigrade-project-{}-{}-{} us-east-1,eu-central-1 a,b 0..2
+```
+
+This will allocate 8 subnets in total:
+
+```text
+tardigrade-project-us-east-1-a-0
+tardigrade-project-us-east-1-a-1
+tardigrade-project-us-east-1-b-0
+tardigrade-project-us-east-1-b-1
+tardigrade-project-eu-central-1-a-0
+tardigrade-project-eu-central-1-a-1
+tardigrade-project-eu-central-1-b-0
+tardigrade-project-eu-central-1-b-1
+```
+
+#### Claim a specific CIDR
 
 In some cases you may want to allocate a subnet with a specific address. For
 example, when applying a subnet pool to an existing network. To claim
