@@ -118,7 +118,7 @@ to allocate 2 8-bit subnets in each of two availability zones and two
 regions, run:
 
 ```shell
-subg allocate 8 tardigrade-project-{}-{}-{} us-east-1,eu-central-1 a,b 0..2
+subg allocate 8 tardigrade-project-{}-{}-{} us-east-1,eu-central-1 a,b %0..2
 ```
 
 This will allocate 8 subnets in total:
@@ -187,6 +187,47 @@ claimed subnet, run:
 
 ```shell
 subg free 10.10.110.0/24
+```
+
+# Subnet name template
+
+When describing a set of subnets, the name parameter becomes a template
+used for describing the name of each new subnet. The arguments after the
+template are generated in every combination. The values are substituted
+into each `{}` placeholder in the template.
+
+## List parameters
+
+List parameters are specified as a comma-separated list of values. For
+example, to generate a list of subnets for each of the availability zones
+`a` and `b`, run:
+
+```shell
+subg allocate 8 tardigrade-experiment-az-{} a,b
+```
+
+This will create two networks, `tardigrade-experiment-az-a` and
+`tardigrade-experiment-az-b`.
+
+## Range parameters
+
+Range parameters are used to specify a range of numbers. For example, to
+generate a list of 6 subnets, run:
+
+```shell
+subg allocate 8 rotifer-experiment-{} %0..6
+```
+
+Note that the range is exclusive of the last number. This will create
+6 subnets
+
+```text
+rotifer-experiment-0
+rotifer-experiment-1
+rotifer-experiment-2
+rotifer-experiment-3
+rotifer-experiment-4
+rotifer-experiment-5
 ```
 
 # Subnet garden pool format
