@@ -5,6 +5,14 @@ use crate::param_str::errors::ParseError;
 use crate::util::state_machine::{state, state_machine, StateMachine};
 use crate::util::state_machine::{ParseResult, State, Termination};
 
+pub type Segments = Vec<Segment>;
+
+#[derive(Debug, PartialEq)]
+pub enum Segment {
+    Text(String),
+    Variable,
+}
+
 type FormatState = State<BuildFormat, char, ParseError>;
 type FormatResult = ParseResult<BuildFormat, char, ParseError>;
 type FormatTermination = Termination<BuildFormat, char, ParseError>;
@@ -154,12 +162,4 @@ mod tests {
             );
         }
     }
-}
-
-pub type Segments = Vec<Segment>;
-
-#[derive(Debug, PartialEq)]
-pub enum Segment {
-    Text(String),
-    Variable,
 }
