@@ -27,12 +27,7 @@ impl StringFormat {
                 Segment::Text(text) => result.push_str(text),
                 Segment::Variable(var_format) => match arg_iter.next() {
                     Some(arg) => {
-                        let field = match var_format.pad_char() {
-                            '0' => format!("{:0>width$}", arg, width = var_format.padding()),
-                            ' ' => format!("{:width$}", arg, width = var_format.padding()),
-                            _ => panic!("Invalid padding character: {}", var_format.pad_char()),
-                        };
-                        result.push_str(&field);
+                        result.push_str(&var_format.format(arg));
                     }
                     None => return Err(FormatError::NotEnoughArguments),
                 },

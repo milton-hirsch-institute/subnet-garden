@@ -31,6 +31,31 @@ impl VarFormat {
     pub(crate) fn new(pad_char: char, padding: usize) -> Self {
         VarFormat { pad_char, padding }
     }
+
+    pub(crate) fn format(&self, arg: &str) -> String {
+        let mut result = String::new();
+        match self.pad_char {
+            '0' => {
+                if arg.len() < self.padding() {
+                    for _ in 0..(self.padding() - arg.len()) {
+                        result.push(self.pad_char());
+                    }
+                }
+                result.push_str(arg);
+            }
+            ' ' => {
+                result.push_str(arg);
+                if arg.len() < self.padding() {
+                    for _ in 0..(self.padding() - arg.len()) {
+                        result.push(self.pad_char());
+                    }
+                }
+            }
+            _ => panic!("Invalid padding character: {}", self.pad_char),
+        }
+
+        result
+    }
 }
 
 #[cfg(test)]
