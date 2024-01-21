@@ -17,6 +17,7 @@ pub(crate) enum Align {
 pub(crate) struct VarFormat {
     pad_char: char,
     padding: usize,
+    align: Align,
 }
 
 impl VarFormat {
@@ -28,14 +29,22 @@ impl VarFormat {
         self.padding
     }
 
-    pub(crate) fn new(pad_char: char, padding: usize) -> Self {
-        VarFormat { pad_char, padding }
+    pub(crate) fn align(&self) -> Align {
+        self.align
+    }
+
+    pub(crate) fn new(pad_char: char, padding: usize, align: Align) -> Self {
+        VarFormat {
+            pad_char,
+            padding,
+            align,
+        }
     }
 
     pub(crate) fn format(&self, arg: &str) -> String {
         let mut result = String::new();
-        match self.pad_char {
-            '0' => {
+        match self.align() {
+            Align::Right => {
                 if arg.len() < self.padding() {
                     for _ in 0..(self.padding() - arg.len()) {
                         result.push(self.pad_char());
@@ -43,7 +52,7 @@ impl VarFormat {
                 }
                 result.push_str(arg);
             }
-            ' ' => {
+            Align::Left => {
                 result.push_str(arg);
                 if arg.len() < self.padding() {
                     for _ in 0..(self.padding() - arg.len()) {
@@ -51,7 +60,6 @@ impl VarFormat {
                     }
                 }
             }
-            _ => panic!("Invalid padding character: {}", self.pad_char),
         }
 
         result
@@ -61,7 +69,7 @@ impl VarFormat {
 #[cfg(test)]
 impl Default for VarFormat {
     fn default() -> Self {
-        VarFormat::new(' ', 0)
+        VarFormat::new(' ', 0, Align::Left)
     }
 }
 
@@ -173,9 +181,11 @@ impl BuildFormat {
         self.result.push(Segment::Variable(VarFormat::new(
             self.pad_char,
             self.padding,
+            self.align,
         )));
         self.pad_char = ' ';
         self.padding = 0;
+        self.align = Align::Left;
     }
 }
 
@@ -293,7 +303,7 @@ mod tests {
                 parse("x{:5}y"),
                 Ok(vec![
                     Segment::Text("x".to_string()),
-                    Segment::Variable(VarFormat::new(' ', 5)),
+                    Segment::Variable(VarFormat::new(' ', 5, Align::Left)),
                     Segment::Text("y".to_string())
                 ])
             );
@@ -305,7 +315,7 @@ mod tests {
                 parse("x{:05}y"),
                 Ok(vec![
                     Segment::Text("x".to_string()),
-                    Segment::Variable(VarFormat::new('0', 5)),
+                    Segment::Variable(VarFormat::new('0', 5, Align::Right)),
                     Segment::Text("y".to_string())
                 ])
             );
