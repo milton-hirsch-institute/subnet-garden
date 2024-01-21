@@ -7,33 +7,36 @@ use crate::util::state_machine::{ParseResult, State, Termination};
 
 pub type Segments = Vec<Segment>;
 
+#[derive(Debug, PartialEq, Copy, Clone)]
+pub(crate) enum Align {
+    Left,
+    Right,
+}
+
 #[derive(Debug, PartialEq)]
 pub(crate) struct VarFormat {
-    is_numeric: bool,
+    pad_char: char,
     padding: usize,
 }
 
 impl VarFormat {
-    pub(crate) fn is_numeric(&self) -> bool {
-        self.is_numeric
+    pub(crate) fn pad_char(&self) -> char {
+        self.pad_char
     }
 
     pub(crate) fn padding(&self) -> usize {
         self.padding
     }
 
-    pub(crate) fn new(is_numeric: bool, padding: usize) -> Self {
-        VarFormat {
-            is_numeric,
-            padding,
-        }
+    pub(crate) fn new(pad_char: char, padding: usize) -> Self {
+        VarFormat { pad_char, padding }
     }
 }
 
 #[cfg(test)]
 impl Default for VarFormat {
     fn default() -> Self {
-        VarFormat::new(false, 0)
+        VarFormat::new(' ', 0)
     }
 }
 
@@ -82,7 +85,8 @@ static PADDING_STATE: FormatState = state(|b, c| -> FormatResult {
 static START_PADDING_STATE: FormatState = state(|b, c| -> FormatResult {
     match c {
         '0' => {
-            b.is_numeric = true;
+            b.pad_char = '0';
+            b.align = Align::Right;
             Ok(PADDING_STATE)
         }
         _ => PADDING_STATE.next(b, c),
@@ -117,8 +121,9 @@ static TERMINATION: FormatTermination = |last_state, b| -> Result<(), ParseError
 struct BuildFormat {
     current_text: String,
     result: Vec<Segment>,
-    is_numeric: bool,
+    pad_char: char,
     padding: usize,
+    align: Align,
 }
 
 impl BuildFormat {
@@ -141,10 +146,10 @@ impl BuildFormat {
     #[inline(always)]
     fn add_variable(&mut self) {
         self.result.push(Segment::Variable(VarFormat::new(
-            self.is_numeric,
+            self.pad_char,
             self.padding,
         )));
-        self.is_numeric = false;
+        self.pad_char = ' ';
         self.padding = 0;
     }
 }
@@ -156,8 +161,9 @@ pub(crate) fn parse(format: &str) -> Result<Segments, ParseError> {
     let mut build_format = BuildFormat {
         current_text: String::new(),
         result: Vec::new(),
-        is_numeric: false,
+        pad_char: ' ',
         padding: 0,
+        align: Align::Left,
     };
     FORMAT_MACHINE.run(
         &mut build_format,
@@ -262,7 +268,7 @@ mod tests {
                 parse("x{:5}y"),
                 Ok(vec![
                     Segment::Text("x".to_string()),
-                    Segment::Variable(VarFormat::new(false, 5)),
+                    Segment::Variable(VarFormat::new(' ', 5)),
                     Segment::Text("y".to_string())
                 ])
             );
@@ -274,7 +280,7 @@ mod tests {
                 parse("x{:05}y"),
                 Ok(vec![
                     Segment::Text("x".to_string()),
-                    Segment::Variable(VarFormat::new(true, 5)),
+                    Segment::Variable(VarFormat::new('0', 5)),
                     Segment::Text("y".to_string())
                 ])
             );
