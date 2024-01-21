@@ -25,8 +25,14 @@ impl StringFormat {
         for segment in &self.segments {
             match segment {
                 Segment::Text(text) => result.push_str(text),
-                Segment::Variable => match arg_iter.next() {
-                    Some(arg) => result.push_str(arg),
+                Segment::Variable(var_format) => match arg_iter.next() {
+                    Some(arg) => {
+                        let field = match var_format.is_numeric() {
+                            true => format!("{:0>width$}", arg, width = var_format.padding()),
+                            false => format!("{:width$}", arg, width = var_format.padding()),
+                        };
+                        result.push_str(&field);
+                    }
                     None => return Err(FormatError::NotEnoughArguments),
                 },
             }
@@ -88,13 +94,14 @@ mod tests {
 
     mod format {
         use super::*;
+        use crate::param_str::parsers::format::VarFormat;
 
         fn format() -> StringFormat {
             StringFormat::new(vec![
                 Segment::Text("aaa".to_string()),
-                Segment::Variable,
+                Segment::Variable(VarFormat::default()),
                 Segment::Text("bbb".to_string()),
-                Segment::Variable,
+                Segment::Variable(VarFormat::default()),
                 Segment::Text("ccc".to_string()),
             ])
         }
@@ -124,31 +131,17 @@ mod tests {
                 Ok("aaa111bbb222ccc".to_string())
             );
         }
-    }
-
-    mod parse {
-        use super::*;
 
         #[test]
-        fn invalid_format() {
-            assert_eq!(
-                StringFormat::parse("aaa\\"),
-                Err(ParseError::InvalidValue(
-                    "Unexpected end of format".to_string()
-                ))
-            );
+        fn string_padding() {
+            let format = StringFormat::parse("aaa{:5}bbb").unwrap();
+            assert_eq!(format.format(&vec!["111"]), Ok("aaa111  bbb".to_string()));
         }
 
         #[test]
-        fn success() {
-            assert_eq!(
-                StringFormat::parse("aaa\\{}bbb{}ccc"),
-                Ok(StringFormat::new(vec![
-                    Segment::Text("aaa{}bbb".to_string()),
-                    Segment::Variable,
-                    Segment::Text("ccc".to_string())
-                ]))
-            );
+        fn numeric_padding() {
+            let format = StringFormat::parse("aaa{:05}bbb").unwrap();
+            assert_eq!(format.format(&vec!["111"]), Ok("aaa00111bbb".to_string()));
         }
     }
 }

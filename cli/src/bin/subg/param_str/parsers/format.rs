@@ -8,9 +8,39 @@ use crate::util::state_machine::{ParseResult, State, Termination};
 pub type Segments = Vec<Segment>;
 
 #[derive(Debug, PartialEq)]
-pub enum Segment {
+pub(crate) struct VarFormat {
+    is_numeric: bool,
+    padding: usize,
+}
+
+impl VarFormat {
+    pub(crate) fn is_numeric(&self) -> bool {
+        self.is_numeric
+    }
+
+    pub(crate) fn padding(&self) -> usize {
+        self.padding
+    }
+
+    pub(crate) fn new(is_numeric: bool, padding: usize) -> Self {
+        VarFormat {
+            is_numeric,
+            padding,
+        }
+    }
+}
+
+#[cfg(test)]
+impl Default for VarFormat {
+    fn default() -> Self {
+        VarFormat::new(false, 0)
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub(crate) enum Segment {
     Text(String),
-    Variable,
+    Variable(VarFormat),
 }
 
 type FormatState = State<BuildFormat, char, ParseError>;
@@ -36,12 +66,36 @@ static ESCAPE_STATE: FormatState = state(|b, c| -> FormatResult {
     Ok(TEXT_STATE)
 });
 
+static PADDING_STATE: FormatState = state(|b, c| -> FormatResult {
+    match c {
+        '0'..='9' => {
+            b.padding = b.padding * 10 + c.to_digit(10).unwrap() as usize;
+            Ok(PADDING_STATE)
+        }
+        '}' => VARIABLE_STATE.next(b, c),
+        _ => Err(ParseError::InvalidValue(
+            format!("Expected 0-9, found {}", c).to_string(),
+        )),
+    }
+});
+
+static START_PADDING_STATE: FormatState = state(|b, c| -> FormatResult {
+    match c {
+        '0' => {
+            b.is_numeric = true;
+            Ok(PADDING_STATE)
+        }
+        _ => PADDING_STATE.next(b, c),
+    }
+});
+
 static VARIABLE_STATE: FormatState = state(|b, c| -> FormatResult {
     match c {
         '}' => {
             b.add_variable();
             Ok(TEXT_STATE)
         }
+        ':' => Ok(START_PADDING_STATE),
         _ => Err(ParseError::InvalidValue(
             format!("Expected }}, found {}", c).to_string(),
         )),
@@ -63,6 +117,8 @@ static TERMINATION: FormatTermination = |last_state, b| -> Result<(), ParseError
 struct BuildFormat {
     current_text: String,
     result: Vec<Segment>,
+    is_numeric: bool,
+    padding: usize,
 }
 
 impl BuildFormat {
@@ -84,17 +140,24 @@ impl BuildFormat {
 
     #[inline(always)]
     fn add_variable(&mut self) {
-        self.result.push(Segment::Variable);
+        self.result.push(Segment::Variable(VarFormat::new(
+            self.is_numeric,
+            self.padding,
+        )));
+        self.is_numeric = false;
+        self.padding = 0;
     }
 }
 
 static FORMAT_MACHINE: StateMachine<BuildFormat, char, ParseError> =
     state_machine(TEXT_STATE, TERMINATION);
 
-pub fn parse(format: &str) -> Result<Segments, ParseError> {
+pub(crate) fn parse(format: &str) -> Result<Segments, ParseError> {
     let mut build_format = BuildFormat {
         current_text: String::new(),
         result: Vec::new(),
+        is_numeric: false,
+        padding: 0,
     };
     FORMAT_MACHINE.run(
         &mut build_format,
@@ -137,6 +200,25 @@ mod tests {
         }
 
         #[test]
+        fn unexepected_padding_character() {
+            assert_eq!(
+                parse("aaa{:x}"),
+                Err(ParseError::InvalidValue(
+                    "Expected 0-9, found x".to_string()
+                ))
+            );
+        }
+        #[test]
+        fn unexepected_numeric_padding_character() {
+            assert_eq!(
+                parse("aaa{:05x}"),
+                Err(ParseError::InvalidValue(
+                    "Expected 0-9, found x".to_string()
+                ))
+            );
+        }
+
+        #[test]
         fn empty() {
             assert_eq!(parse(""), Ok(vec![]));
         }
@@ -144,6 +226,18 @@ mod tests {
         #[test]
         fn text() {
             assert_eq!(parse("aaa"), Ok(vec![Segment::Text("aaa".to_string())]));
+        }
+
+        #[test]
+        fn variables() {
+            assert_eq!(
+                parse("aaa\\{}bbb{}ccc"),
+                Ok(vec![
+                    Segment::Text("aaa{}bbb".to_string()),
+                    Segment::Variable(VarFormat::default()),
+                    Segment::Text("ccc".to_string())
+                ])
+            );
         }
 
         #[test]
@@ -159,6 +253,30 @@ mod tests {
             assert_eq!(
                 parse("aaa\\\\"),
                 Ok(vec![Segment::Text("aaa\\".to_string())])
+            );
+        }
+
+        #[test]
+        fn non_numeric_padding() {
+            assert_eq!(
+                parse("x{:5}y"),
+                Ok(vec![
+                    Segment::Text("x".to_string()),
+                    Segment::Variable(VarFormat::new(false, 5)),
+                    Segment::Text("y".to_string())
+                ])
+            );
+        }
+
+        #[test]
+        fn numeric_padding() {
+            assert_eq!(
+                parse("x{:05}y"),
+                Ok(vec![
+                    Segment::Text("x".to_string()),
+                    Segment::Variable(VarFormat::new(true, 5)),
+                    Segment::Text("y".to_string())
+                ])
             );
         }
     }
