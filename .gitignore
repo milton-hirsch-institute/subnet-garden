@@ -5,3 +5,4 @@ target/
 *.tfstate.backup
 *.lock.hcl
 .terraform/
+.DS_Store
