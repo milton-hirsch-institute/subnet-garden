@@ -5,10 +5,18 @@ name: Create release PR
 on: workflow_dispatch
 jobs:
   release-pr:
+    environment: publish
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Install release-plz
-      run: cargo install release-plz --locked
-    - name: Create release PR
-      run: release-plz release-pr
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.RELEASE_PLZ_GITHUB_TOKEN }}
+
+    - name: Run release-plz
+      uses: MarcoIeni/release-plz-action@v0.5
+      with:
+        command: release-pr
+      env:
+        GITHUB_TOKEN: ${{ secrets.RELEASE_PLZ_GITHUB_TOKEN }}
+        CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
