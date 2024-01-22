@@ -1,0 +1,28 @@
+# Copyright 2024 The Milton Hirsch Institute, B.V.
+# SPDX-License-Identifier: Apache-2.0
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install pre-commit
+        run: pipx install pre-commit==3.6.0
+      - name: Run pre-commit
+        run: pre-commit run --from-ref "origin/${{ github.base_ref }}" --to-ref HEAD
+
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: cargo build
+      - name: Run tests
+        run: cargo test
