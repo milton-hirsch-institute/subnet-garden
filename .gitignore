@@ -6,3 +6,4 @@ target/
 *.lock.hcl
 .terraform/
 .DS_Store
+subnet-garden-pool.yaml
