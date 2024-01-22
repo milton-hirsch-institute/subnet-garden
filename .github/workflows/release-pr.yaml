@@ -1,0 +1,14 @@
+# Copyright 2024 The Milton Hirsch Institute, B.V.
+# SPDX-License-Identifier: Apache-2.0
+
+name: Create release PR
+on: workflow_dispatch
+jobs:
+  release-pr:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install release-plz
+      run: cargo install release-plz --locked
+    - name: Create release PR
+      run: release-plz release-pr
