@@ -23,6 +23,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build
-        run: cargo build
+        run: cargo build --locked
       - name: Run tests
-        run: cargo test
+        run: cargo test --locked
