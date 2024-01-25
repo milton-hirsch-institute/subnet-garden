@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  release-pr:
+  release:
     environment: publish
     runs-on: ubuntu-latest
     steps:
