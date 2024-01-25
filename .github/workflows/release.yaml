@@ -2,7 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 name: Create release PR
-on: workflow_dispatch
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
   release-pr:
     environment: publish
@@ -16,7 +21,7 @@ jobs:
     - name: Run release-plz
       uses: MarcoIeni/release-plz-action@v0.5
       with:
-        command: release-pr
+        command: release
       env:
         GITHUB_TOKEN: ${{ secrets.RELEASE_PLZ_GITHUB_TOKEN }}
         CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
