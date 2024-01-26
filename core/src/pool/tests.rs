@@ -426,6 +426,85 @@ mod records {
         );
     }
 }
+
+mod records_within {
+    use super::*;
+    use crate::CidrRecord;
+
+    #[test]
+    fn no_overlap() {
+        let mut pool = new_test_pool();
+        pool.allocate(4, Some("a-name")).unwrap();
+        pool.allocate(4, Some("b-name")).unwrap();
+        pool.allocate(4, None).unwrap();
+        let entries: Vec<&CidrRecord> = pool
+            .records_within(&IpCidr::from_str("20.20.0.0/16").unwrap())
+            .collect();
+        assert_eq!(entries.len(), 0);
+    }
+
+    #[test]
+    fn superset() {
+        let mut pool = new_test_pool();
+        pool.allocate(4, Some("a-name")).unwrap();
+        pool.allocate(4, Some("b-name")).unwrap();
+        pool.allocate(4, None).unwrap();
+        let mut entries: Vec<&CidrRecord> = pool
+            .records_within(&IpCidr::from_str("10.0.0.0/8").unwrap())
+            .collect();
+        entries.sort();
+        assert_eq!(entries.len(), 3);
+        assert_eq!(
+            entries[0],
+            &CidrRecord::new(
+                IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap()),
+                Some("a-name")
+            )
+        );
+        assert_eq!(
+            entries[1],
+            &CidrRecord::new(
+                IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 16), 28).unwrap()),
+                Some("b-name")
+            )
+        );
+        assert_eq!(
+            entries[2],
+            &CidrRecord::new(
+                IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 32), 28).unwrap()),
+                None
+            )
+        );
+    }
+
+    #[test]
+    fn subset() {
+        let mut pool = new_test_pool();
+        pool.allocate(4, Some("a-name")).unwrap();
+        pool.allocate(4, Some("b-name")).unwrap();
+        pool.allocate(4, None).unwrap();
+        let mut entries: Vec<&CidrRecord> = pool
+            .records_within(&IpCidr::from_str("10.20.0.0/27").unwrap())
+            .collect();
+        entries.sort();
+        assert_eq!(entries.len(), 2);
+        assert_eq!(
+            entries[0],
+            &CidrRecord::new(
+                IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 0), 28).unwrap()),
+                Some("a-name")
+            )
+        );
+        assert_eq!(
+            entries[1],
+            &CidrRecord::new(
+                IpCidr::V4(Ipv4Cidr::new(Ipv4Addr::new(10, 20, 0, 16), 28).unwrap()),
+                Some("b-name")
+            )
+        );
+    }
+}
+
 mod serialize {
     use super::*;
     use serde_test::{assert_de_tokens_error, assert_tokens};

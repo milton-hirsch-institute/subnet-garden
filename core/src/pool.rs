@@ -25,9 +25,12 @@ impl SubnetPool {
         }
     }
 
-    fn iter_allocated_subspaces(&self) -> impl Iterator<Item = &Subspace> {
+    fn iter_allocated_subspaces_from<'a>(
+        &'a self,
+        subspace: &'a Subspace,
+    ) -> impl Iterator<Item = &Subspace> {
         let mut stack = Vec::new();
-        stack.push(&self.root);
+        stack.push(subspace);
         std::iter::from_fn(move || {
             while let Some(subspace) = stack.pop() {
                 match subspace.state {
@@ -41,6 +44,10 @@ impl SubnetPool {
             }
             None
         })
+    }
+
+    fn iter_allocated_subspaces(&self) -> impl Iterator<Item = &Subspace> {
+        self.iter_allocated_subspaces_from(&self.root)
     }
 
     #[inline(always)]
@@ -141,9 +148,22 @@ impl SubnetPool {
             .map(|subspace| &subspace.record.cidr)
     }
 
-    pub fn records(&self) -> impl Iterator<Item = &CidrRecord> {
-        self.iter_allocated_subspaces()
-            .map(|subspace| &subspace.record)
+    pub fn records(&self) -> Box<dyn Iterator<Item = &CidrRecord> + '_> {
+        self.records_within(&self.root.record.cidr)
+    }
+
+    pub fn records_within(&self, cidr: &IpCidr) -> Box<dyn Iterator<Item = &CidrRecord> + '_> {
+        let start_cidr = match crate::util::cidr_contains(cidr, &self.root.record.cidr) {
+            true => &self.root.record.cidr,
+            false => cidr,
+        };
+        match self.root.find_record(start_cidr) {
+            Some(subspace) => Box::new(
+                self.iter_allocated_subspaces_from(subspace)
+                    .map(|subspace| &subspace.record),
+            ),
+            None => Box::new(std::iter::empty::<&CidrRecord>()),
+        }
     }
 }
 
