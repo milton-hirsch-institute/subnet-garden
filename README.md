@@ -239,9 +239,7 @@ Here is an example of a YAML pool file:
 cidr: 10.10.0.0/16
 subnets:
 - cidr: 10.10.0.0/24
-  name: null
 - cidr: 10.10.1.0/24
   name: tardigrade-lab
 - cidr: 10.10.110.0/24
-  name: null
 ```
