@@ -18,6 +18,12 @@ fn new_test_pool6() -> SubnetPool {
     SubnetPool::new(TEST_CIDR6)
 }
 
+#[test]
+fn test_cidr() {
+    let pool = new_test_pool();
+    assert_eq!(pool.cidr(), &TEST_CIDR4);
+}
+
 mod contains {
     use super::*;
 

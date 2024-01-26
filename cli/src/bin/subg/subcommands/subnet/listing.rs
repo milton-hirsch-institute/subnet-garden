@@ -11,15 +11,20 @@ pub(crate) fn cidrs(subg: &SubgArgs, args: &CidrsArgs) {
         println!("total {}", pool.allocated_count());
     }
 
+    let start_cidr = match args.within {
+        Some(within) => within,
+        None => *pool.cidr(),
+    };
+
     let max_cidr_width = match args.long {
         true => pool
-            .records()
+            .records_within(&start_cidr)
             .map(|r| r.cidr.to_string().len())
             .max()
             .unwrap_or(0),
         false => 0,
     };
-    for entry in pool.records() {
+    for entry in pool.records_within(&start_cidr) {
         let mut cidr = entry.cidr.to_string();
         if args.long {
             util::right_pad(&mut cidr, max_cidr_width);
@@ -106,6 +111,21 @@ mod tests {
                      10.10.0.64/26   -\n\
                      10.10.0.128/26  test2\n",
                 )
+                .stderr("");
+        }
+
+        #[test]
+        fn subset_cidrs() {
+            let mut test = new_cidrs_test();
+            test.pool.allocate(4, Some("test1")).unwrap();
+            test.pool.allocate(4, Some("test2")).unwrap();
+            test.pool.allocate(4, Some("test3")).unwrap();
+            test.subg.arg("--within").arg("10.10.0.0/27");
+            test.store();
+            test.subg
+                .assert()
+                .success()
+                .stdout("10.10.0.0/28\n10.10.0.16/28\n")
                 .stderr("");
         }
     }

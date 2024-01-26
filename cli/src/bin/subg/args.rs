@@ -62,6 +62,10 @@ pub(crate) struct CidrsArgs {
     #[arg(short)]
     /// List CIDRs in long format
     pub(crate) long: bool,
+
+    #[arg(short, long, default_value = None)]
+    /// List CIDRs within the given CIDR
+    pub(crate) within: Option<IpCidr>,
 }
 
 #[derive(Debug, clap::Args)]

@@ -51,6 +51,11 @@ impl SubnetPool {
     }
 
     #[inline(always)]
+    pub fn cidr(&self) -> &IpCidr {
+        &self.root.record.cidr
+    }
+
+    #[inline(always)]
     pub fn allocated_count(&self) -> usize {
         self.root.allocated_count
     }
