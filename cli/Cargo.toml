@@ -24,7 +24,7 @@ name = "subg"
 cidr = "^0.2"
 clap = { version="^4", features = ["cargo", "derive", "env"] }
 exitcode = "^1"
-subnet-garden-core = { path = "../core", version="^0.2" }
+subnet-garden-core = { path = "../core", version="^0.3" }
 serde_json = "^1"
 serde_yaml = "^0.9"
 log = "0.4.20"
