@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 output "cidr" {
-    value = local.cidr
+  value = local.cidr
 }
 
 output "subnets" {
