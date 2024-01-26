@@ -465,7 +465,6 @@ mod serialize {
                 serde_test::Token::Str("cidr"),
                 serde_test::Token::Str("10.20.0.0/24"),
                 serde_test::Token::Str("name"),
-                serde_test::Token::Some,
                 serde_test::Token::Str("a-name"),
                 serde_test::Token::StructEnd,
                 serde_test::Token::Struct {
@@ -475,7 +474,6 @@ mod serialize {
                 serde_test::Token::Str("cidr"),
                 serde_test::Token::Str("10.20.0.16/28"),
                 serde_test::Token::Str("name"),
-                serde_test::Token::Some,
                 serde_test::Token::Str("b-name"),
                 serde_test::Token::StructEnd,
                 serde_test::Token::Struct {
@@ -484,8 +482,6 @@ mod serialize {
                 },
                 serde_test::Token::Str("cidr"),
                 serde_test::Token::Str("10.20.0.32/28"),
-                serde_test::Token::Str("name"),
-                serde_test::Token::None,
                 serde_test::Token::StructEnd,
                 serde_test::Token::SeqEnd,
                 serde_test::Token::StructEnd,
@@ -519,7 +515,6 @@ mod serialize {
                 serde_test::Token::Str("cidr"),
                 serde_test::Token::Str("10.20.0.0/28"),
                 serde_test::Token::Str("name"),
-                serde_test::Token::Some,
                 serde_test::Token::Str("a-name"),
                 serde_test::Token::StructEnd,
                 serde_test::Token::Struct {
@@ -529,7 +524,6 @@ mod serialize {
                 serde_test::Token::Str("cidr"),
                 serde_test::Token::Str("10.20.0.16/28"),
                 serde_test::Token::Str("name"),
-                serde_test::Token::Some,
                 serde_test::Token::Str("b-name"),
                 serde_test::Token::StructEnd,
                 serde_test::Token::Struct {
@@ -538,8 +532,6 @@ mod serialize {
                 },
                 serde_test::Token::Str("cidr"),
                 serde_test::Token::Str("10.20.0.32/28"),
-                serde_test::Token::Str("name"),
-                serde_test::Token::None,
                 serde_test::Token::StructEnd,
                 serde_test::Token::SeqEnd,
                 serde_test::Token::StructEnd,

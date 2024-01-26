@@ -44,7 +44,9 @@ impl serde::Serialize for CidrRecord {
     {
         let mut structure = serializer.serialize_struct("CidrRecord", 2)?;
         structure.serialize_field("cidr", &self.cidr.to_string())?;
-        structure.serialize_field("name", &self.name)?;
+        if let Some(name) = &self.name {
+            structure.serialize_field("name", name)?;
+        }
         structure.end()
     }
 }
@@ -74,7 +76,7 @@ impl<'s> serde::Deserialize<'s> for CidrRecord {
             {
                 let cidr_str = seq
                     .next_element::<&str>()?
-                    .ok_or_else(|| serde::de::Error::missing_field("cidr"))?;
+                    .ok_or_else(|| de::Error::missing_field("cidr"))?;
                 let cidr = match IpCidr::from_str(cidr_str) {
                     Ok(cidr) => cidr,
                     Err(err) => return Err(serde::de::Error::custom(err)),
@@ -91,24 +93,24 @@ impl<'s> serde::Deserialize<'s> for CidrRecord {
                 A: de::MapAccess<'d>,
             {
                 let mut cidr: Option<IpCidr> = None;
-                let mut name: Option<Option<String>> = None;
+                let mut name: Option<String> = None;
                 while let Some(key) = map.next_key()? {
                     match key {
                         Field::Cidr => {
                             if cidr.is_some() {
-                                return Err(serde::de::Error::duplicate_field("cidr"));
+                                return Err(de::Error::duplicate_field("cidr"));
                             }
                             cidr = match map.next_value::<String>() {
                                 Ok(cidr) => match IpCidr::from_str(cidr.as_str()) {
                                     Ok(cidr) => Some(cidr),
-                                    Err(err) => return Err(serde::de::Error::custom(err)),
+                                    Err(err) => return Err(de::Error::custom(err)),
                                 },
                                 Err(err) => return Err(err),
                             };
                         }
                         Field::Name => {
                             if name.is_some() {
-                                return Err(serde::de::Error::duplicate_field("name"));
+                                return Err(de::Error::duplicate_field("name"));
                             }
                             name = Some(map.next_value()?);
                         }
@@ -116,11 +118,7 @@ impl<'s> serde::Deserialize<'s> for CidrRecord {
                 }
                 let cidr = match cidr {
                     Some(cidr) => cidr,
-                    None => return Err(serde::de::Error::missing_field("cidr")),
-                };
-                let name = match name {
-                    Some(name) => name,
-                    None => return Err(serde::de::Error::missing_field("name")),
+                    None => return Err(de::Error::missing_field("cidr")),
                 };
                 Ok(CidrRecord::new(cidr, name.as_deref()))
             }
@@ -176,7 +174,6 @@ mod tests {
                     serde_test::Token::Str("cidr"),
                     serde_test::Token::Str("10.20.30.0/24"),
                     serde_test::Token::Str("name"),
-                    serde_test::Token::Some,
                     serde_test::Token::Str("a-record"),
                     serde_test::Token::StructEnd,
                 ],
@@ -196,8 +193,6 @@ mod tests {
                     },
                     serde_test::Token::Str("cidr"),
                     serde_test::Token::Str("10.20.30.0/24"),
-                    serde_test::Token::Str("name"),
-                    serde_test::Token::None,
                     serde_test::Token::StructEnd,
                 ],
             );
