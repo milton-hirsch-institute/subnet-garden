@@ -60,6 +60,9 @@ pub(crate) fn free(subg: &SubgArgs, args: &FreeArgs) {
             None => match identifier.parse::<IpCidr>() {
                 Ok(cidr) => cidr,
                 Err(err) => {
+                    if args.ignore_missing {
+                        continue;
+                    }
                     show_error(
                         err,
                         format!("Could not parse arg IDENTIFIER: {}", identifier).as_str(),
@@ -68,7 +71,7 @@ pub(crate) fn free(subg: &SubgArgs, args: &FreeArgs) {
                 }
             },
         };
-        if !pool.free(&cidr) {
+        if !pool.free(&cidr) && !args.ignore_missing {
             eprintln!("Could not free subnet {}", cidr);
             exit(exitcode::SOFTWARE);
         }
@@ -336,6 +339,29 @@ mod tests {
             test.load();
             assert_eq!(test.pool.find_by_name("test1"), None);
             assert_eq!(test.pool.find_by_name("test2"), None);
+        }
+
+        #[test]
+        fn ignore_missing_name() {
+            let mut test = new_free_test("test{}");
+            test.subg.arg("%1..3");
+            test.subg.arg("--ignore-missing");
+            test.pool.allocate(4, Some("test1")).unwrap();
+            test.store();
+            test.subg.assert().success().stdout("").stderr("");
+            test.load();
+            assert_eq!(test.pool.find_by_name("test1"), None);
+            assert_eq!(test.pool.find_by_name("test2"), None);
+        }
+
+        #[test]
+        fn ignore_missing_cidr() {
+            let mut test = new_free_test("10.10.0.0/28");
+            test.subg.arg("--ignore-missing");
+            test.store();
+            test.subg.assert().success().stdout("").stderr("");
+            test.load();
+            assert_eq!(test.pool.find_by_name("test"), None);
         }
     }
 

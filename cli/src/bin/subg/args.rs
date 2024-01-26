@@ -50,6 +50,10 @@ pub(crate) struct FreeArgs {
     #[arg()]
     /// Parameters for subnet name format
     pub(crate) param: Option<Vec<String>>,
+
+    #[arg(short, long)]
+    /// Ignore missing subnets
+    pub(crate) ignore_missing: bool,
 }
 
 #[derive(Debug, clap::Args)]
