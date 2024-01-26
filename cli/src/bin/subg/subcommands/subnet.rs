@@ -41,17 +41,37 @@ pub(crate) fn allocate(subg: &SubgArgs, args: &AllocateArgs) {
 
 pub(crate) fn free(subg: &SubgArgs, args: &FreeArgs) {
     let mut pool = crate::load_pool(&subg.pool_path);
-    let cidr = match pool.find_by_name(args.identifier.as_str()) {
-        Some(cidr) => cidr,
-        None => crate::result(
-            args.identifier.parse::<IpCidr>(),
-            exitcode::USAGE,
-            "Could not parse arg IDENTIFIER",
-        ),
+    let identifier_list = match args.param {
+        None => vec![args.identifier_format.clone()],
+        Some(ref params) => {
+            let format = args.identifier_format.as_str();
+            let param_strs: param_str::format::Args = params.iter().map(|s| s.as_str()).collect();
+            match param_str::format::format_strings(format, &param_strs) {
+                Ok(names) => names,
+                Err(err) => {
+                    show_error(err, "Could not format subnet names", exitcode::SOFTWARE);
+                }
+            }
+        }
     };
-    if !pool.free(&cidr) {
-        eprintln!("Could not free subnet {}", cidr);
-        exit(exitcode::SOFTWARE);
+    for identifier in identifier_list {
+        let cidr = match pool.find_by_name(identifier.as_str()) {
+            Some(cidr) => cidr,
+            None => match identifier.parse::<IpCidr>() {
+                Ok(cidr) => cidr,
+                Err(err) => {
+                    show_error(
+                        err,
+                        format!("Could not parse arg IDENTIFIER: {}", identifier).as_str(),
+                        exitcode::USAGE,
+                    );
+                }
+            },
+        };
+        if !pool.free(&cidr) {
+            eprintln!("Could not free subnet {}", cidr);
+            exit(exitcode::SOFTWARE);
+        }
     }
     crate::store_pool(&subg.pool_path, &pool);
 }
@@ -268,7 +288,7 @@ mod tests {
                 .code(exitcode::USAGE)
                 .stdout("")
                 .stderr(
-                    "Could not parse arg IDENTIFIER\n\
+                    "Could not parse arg IDENTIFIER: test\n\
                 couldn\'t parse address in network: invalid IP address syntax\n",
                 );
         }
@@ -303,6 +323,19 @@ mod tests {
             test.subg.assert().success().stdout("").stderr("");
             test.load();
             assert_eq!(test.pool.find_by_name("test"), None);
+        }
+
+        #[test]
+        fn free_success_multiple() {
+            let mut test = new_free_test("test{}");
+            test.subg.arg("%1..3");
+            test.pool.allocate(4, Some("test1")).unwrap();
+            test.pool.allocate(4, Some("test2")).unwrap();
+            test.store();
+            test.subg.assert().success().stdout("").stderr("");
+            test.load();
+            assert_eq!(test.pool.find_by_name("test1"), None);
+            assert_eq!(test.pool.find_by_name("test2"), None);
         }
     }
 

@@ -44,8 +44,12 @@ pub(crate) struct AllocateArgs {
 /// Free subnet
 pub(crate) struct FreeArgs {
     #[arg()]
-    /// Name or CIDR of a subnet
-    pub(crate) identifier: String,
+    /// Name CIDR of a subnet or format for multiple subnets
+    pub(crate) identifier_format: String,
+
+    #[arg()]
+    /// Parameters for subnet name format
+    pub(crate) param: Option<Vec<String>>,
 }
 
 #[derive(Debug, clap::Args)]
