@@ -34,6 +34,7 @@ repos:
           - //
       - id: insert-license
         files: \.(md)
+        exclude: CHANGELOG.md
         args:
           - --use-current-year
           - --comment-style
