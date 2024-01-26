@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.2.3](https://github.com/milton-hirsch-institute/subnet-garden/compare/subg-v0.2.2...subg-v0.2.3) - 2024-01-26
+## [0.3.0](https://github.com/milton-hirsch-institute/subnet-garden/compare/subg-v0.2.2...subg-v0.3.0) - 2024-01-26
 
 ### Other
 - Do not update licensing in changelogs
