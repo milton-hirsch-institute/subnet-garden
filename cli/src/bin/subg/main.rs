@@ -13,6 +13,7 @@ use std::path::Path;
 use std::process::exit;
 use subcommands::init;
 use subcommands::subnet;
+use subcommands::subnet::listing;
 use subnet_garden_core::pool;
 
 mod args;
@@ -138,10 +139,10 @@ fn main() {
             subnet::free(&subg.args, &args);
         }
         SubgCommands::Cidrs(args) => {
-            subnet::cidrs(&subg.args, &args);
+            listing::cidrs(&subg.args, &args);
         }
         SubgCommands::Names(args) => {
-            subnet::names(&subg.args, &args);
+            listing::names(&subg.args, &args);
         }
         SubgCommands::Claim(args) => {
             subnet::claim(&subg.args, &args);
