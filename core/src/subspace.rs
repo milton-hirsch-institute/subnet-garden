@@ -63,24 +63,19 @@ impl Subspace {
     pub(crate) fn split(&mut self) {
         self.state = State::Unavailable;
         let new_network_length = self.record.cidr.network_length() + 1;
-        let low_cidr: IpCidr;
-        let high_cidr: IpCidr;
-        match self.record.cidr {
+        let cidrs: Vec<_> = (match self.record.cidr {
             IpCidr::V4(cidr) => {
-                let subnets = separator::Ipv4CidrSeparator::sub_networks(&cidr, new_network_length);
-                let subnets_vec = subnets.unwrap();
-                low_cidr = IpCidr::V4(*subnets_vec.first().unwrap());
-                high_cidr = IpCidr::V4(*subnets_vec.get(1).unwrap());
+                separator::Ipv4CidrSeparator::sub_networks(&cidr, new_network_length)
+                    .map(|vs| vs.into_iter().map(IpCidr::V4).collect())
             }
             IpCidr::V6(cidr) => {
-                let subnets = separator::Ipv6CidrSeparator::sub_networks(&cidr, new_network_length);
-                let subnets_vec = subnets.unwrap();
-                low_cidr = IpCidr::V6(*subnets_vec.first().unwrap());
-                high_cidr = IpCidr::V6(*subnets_vec.get(1).unwrap());
+                separator::Ipv6CidrSeparator::sub_networks(&cidr, new_network_length)
+                    .map(|vs| vs.into_iter().map(IpCidr::V6).collect())
             }
-        }
-        self.low = Some(Box::new(Subspace::new(low_cidr)));
-        self.high = Some(Box::new(Subspace::new(high_cidr)));
+        })
+        .expect("Vec of length 2");
+        self.low = Some(Box::new(Subspace::new(cidrs[0])));
+        self.high = Some(Box::new(Subspace::new(cidrs[1])));
     }
 
     pub(crate) fn allocate_free_space(
