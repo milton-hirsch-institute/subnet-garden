@@ -12,18 +12,16 @@ pub(crate) const TEST_CIDR: &str = "10.10.0.0/16";
 pub(crate) struct Test {
     pub(crate) subg: assert_cmd::Command,
     pub(crate) _dir: assert_fs::TempDir,
-    #[allow(dead_code)]
     pub(crate) pool_path: ChildPath,
-    #[allow(dead_code)]
     pub(crate) pool: pool::SubnetPool,
 }
 
 impl Test {
-    pub(crate) fn _store(&self) {
+    #[allow(dead_code)]
+    pub(crate) fn store(&self) {
         subg::store_pool(self.pool_path.to_str().unwrap(), &self.pool);
     }
 
-    #[allow(dead_code)]
     pub(crate) fn load(&mut self) {
         self.pool = subg::load_pool(self.pool_path.to_str().unwrap());
     }

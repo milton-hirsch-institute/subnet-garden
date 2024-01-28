@@ -51,8 +51,6 @@ mod tests {
     use assert_fs::fixture::PathChild;
     use subnet_garden_core as subg_core;
 
-    pub(crate) const HELP_EXIT_CODE: i32 = 2;
-
     pub(crate) const TEST_CIDR: &str = "10.10.0.0/16";
 
     pub(crate) struct Test {
