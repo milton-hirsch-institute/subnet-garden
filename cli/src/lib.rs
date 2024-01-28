@@ -10,6 +10,10 @@ use std::path::Path;
 use std::process::exit;
 use subnet_garden_core::pool;
 
+pub const DEFAULT_STORAGE_PATH: &str = "subnet-garden-pool.yaml";
+
+pub const SUBG_COMMAND: &str = "subg";
+
 fn show_error(err: impl Error, message: &str, exit_code: ExitCode) -> ! {
     eprintln!("{}", message);
     eprintln!("{}", err);

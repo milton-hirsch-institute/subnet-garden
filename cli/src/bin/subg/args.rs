@@ -4,10 +4,6 @@
 use cidr::IpCidr;
 use subnet_garden_core::Bits;
 
-pub(crate) const DEFAULT_STORAGE_PATH: &str = "subnet-garden-pool.yaml";
-
-pub(crate) const SUBG_COMMAND: &str = "subg";
-
 pub(crate) mod init {
     use cidr::IpCidr;
 
@@ -119,13 +115,13 @@ pub(crate) enum SubgCommands {
 #[derive(Debug, clap::Args)]
 /// Subnet garden command line interface
 pub(crate) struct SubgArgs {
-    #[arg(short = 'p', long, default_value = DEFAULT_STORAGE_PATH, env = "SUBG_POOL_PATH")]
+    #[arg(short = 'p', long, default_value = subg::DEFAULT_STORAGE_PATH, env = "SUBG_POOL_PATH")]
     pub(crate) pool_path: String,
 }
 
 #[derive(Debug, clap::Parser)]
 #[command(
-    name = SUBG_COMMAND,
+    name = subg::SUBG_COMMAND,
     version = clap::crate_version!(),
     author = clap::crate_authors!(),
 )]

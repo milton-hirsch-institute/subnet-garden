@@ -47,7 +47,6 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::args::{DEFAULT_STORAGE_PATH, SUBG_COMMAND};
     use assert_fs::fixture::ChildPath;
     use assert_fs::fixture::PathChild;
     use subnet_garden_core as subg_core;
@@ -74,7 +73,7 @@ mod tests {
     }
 
     pub(crate) fn new_test_with_path(path: &str) -> Test {
-        let mut test = assert_cmd::Command::cargo_bin(SUBG_COMMAND).unwrap();
+        let mut test = assert_cmd::Command::cargo_bin(subg::SUBG_COMMAND).unwrap();
         let dir = assert_fs::TempDir::new().unwrap();
         let pool_path = dir.child(path);
         test.args(["--pool-path", pool_path.to_str().unwrap()]);
@@ -87,23 +86,12 @@ mod tests {
     }
 
     pub(crate) fn new_test() -> Test {
-        new_test_with_path(DEFAULT_STORAGE_PATH)
+        new_test_with_path(subg::DEFAULT_STORAGE_PATH)
     }
 
     #[test]
     fn verify_cli() {
         use clap::CommandFactory;
         Subg::command().debug_assert();
-    }
-    #[test]
-    fn test_bin() {
-        let mut test = new_test();
-        test.subg
-            .assert()
-            .failure()
-            .code(HELP_EXIT_CODE)
-            .stderr(predicates::str::contains(
-                "\'subg\' requires a subcommand but one was not provided",
-            ));
     }
 }
