@@ -5,7 +5,7 @@ use crate::args::{CidrsArgs, NamesArgs, SubgArgs};
 use crate::util;
 
 pub(crate) fn cidrs(subg: &SubgArgs, args: &CidrsArgs) {
-    let pool = crate::load_pool(&subg.pool_path);
+    let pool = subg::load_pool(&subg.pool_path);
 
     if args.long {
         println!("total {}", pool.allocated_count());
@@ -37,7 +37,7 @@ pub(crate) fn cidrs(subg: &SubgArgs, args: &CidrsArgs) {
 }
 
 pub(crate) fn names(subg: &SubgArgs, args: &NamesArgs) {
-    let pool = crate::load_pool(&subg.pool_path);
+    let pool = subg::load_pool(&subg.pool_path);
 
     if args.long {
         println!("total {} of {}", pool.named_count(), pool.allocated_count());

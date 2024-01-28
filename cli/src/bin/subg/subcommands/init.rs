@@ -19,7 +19,7 @@ pub(crate) fn init(subg: &SubgArgs, args: &InitArgs) {
             exit(exitcode::CANTCREAT);
         }
     }
-    crate::store_pool(&subg.pool_path, &pool::SubnetPool::new(args.cidr));
+    subg::store_pool(&subg.pool_path, &pool::SubnetPool::new(args.cidr));
 }
 
 #[cfg(test)]
