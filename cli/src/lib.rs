@@ -47,15 +47,16 @@ impl Display for PoolFormat {
 
 fn parse_pool_path(pool_path: &str) -> (&Path, crate::PoolFormat) {
     let path = Path::new(pool_path);
-    let format = match path.extension() {
-        Some(ext) => match ext.to_str().unwrap() {
-            "json" => PoolFormat::Json,
-            "yaml" | "yml" => PoolFormat::Yaml,
-            _ => {
-                eprintln!("Unknown pool file extension: {}", ext.to_str().unwrap());
-                exit(exitcode::USAGE);
-            }
-        },
+    let format = match path
+        .extension()
+        .map(|v| v.to_str().expect("str because path created from str"))
+    {
+        Some("json") => PoolFormat::Json,
+        Some("yaml" | "yml") => PoolFormat::Yaml,
+        Some(ext) => {
+            eprintln!("Unknown pool file extension: {ext}");
+            exit(exitcode::USAGE);
+        }
         None => {
             eprintln!("Pool file has no extension: {}", path.display());
             exit(exitcode::USAGE);
