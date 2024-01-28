@@ -66,16 +66,6 @@ fn parse_pool_path(pool_path: &str) -> (&Path, crate::PoolFormat) {
 }
 
 pub fn load_pool(pool_path: &str) -> pool::SubnetPool {
-    let (path, pool_format) = parse_pool_path(pool_path);
-    if !path.exists() {
-        eprintln!("Subnet pool file does not exist at {}", path.display());
-        exit(exitcode::NOINPUT);
-    }
-    if !path.is_file() {
-        eprintln!("Path is not a file at {}", path.display());
-        exit(exitcode::NOINPUT);
-    }
-    let pool_file = File::open(path).unwrap();
     fn from_reader<'a, E: Error>(
         reader: &'a File,
         from_reader: fn(&'a File) -> Result<pool::SubnetPool, E>,
@@ -87,6 +77,17 @@ pub fn load_pool(pool_path: &str) -> pool::SubnetPool {
         )
     }
 
+    let (path, pool_format) = parse_pool_path(pool_path);
+    if !path.exists() {
+        eprintln!("Subnet pool file does not exist at {}", path.display());
+        exit(exitcode::NOINPUT);
+    }
+    if !path.is_file() {
+        eprintln!("Path is not a file at {}", path.display());
+        exit(exitcode::NOINPUT);
+    }
+    let pool_file = File::open(path).unwrap();
+
     match pool_format {
         PoolFormat::Json => from_reader(&pool_file, serde_json::from_reader),
         PoolFormat::Yaml => from_reader(&pool_file, serde_yaml::from_reader),
@@ -94,13 +95,6 @@ pub fn load_pool(pool_path: &str) -> pool::SubnetPool {
 }
 
 pub fn store_pool(pool_path: &str, pool: &pool::SubnetPool) {
-    let (path, pool_format) = parse_pool_path(pool_path);
-
-    let pool_file = result(
-        File::create(path),
-        exitcode::CANTCREAT,
-        &format!("Could not create pool file at {}", path.display()),
-    );
     fn to_writer<'a, E: Error>(
         writer: &'a File,
         to_writer: fn(&'a File, &pool::SubnetPool) -> Result<(), E>,
@@ -112,6 +106,14 @@ pub fn store_pool(pool_path: &str, pool: &pool::SubnetPool) {
             "Could not store pool file",
         );
     }
+
+    let (path, pool_format) = parse_pool_path(pool_path);
+
+    let pool_file = result(
+        File::create(path),
+        exitcode::CANTCREAT,
+        &format!("Could not create pool file at {}", path.display()),
+    );
 
     match pool_format {
         PoolFormat::Json => to_writer(&pool_file, serde_json::to_writer_pretty, pool),
