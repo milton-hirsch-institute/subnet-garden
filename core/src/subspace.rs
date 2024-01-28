@@ -63,23 +63,19 @@ impl Subspace {
     pub(crate) fn split(&mut self) {
         self.state = State::Unavailable;
         let new_network_length = self.record.cidr.network_length() + 1;
-        let Some(cidrs) = (match self.record.cidr {
+        let cidrs: Vec<_> = (match self.record.cidr {
             IpCidr::V4(cidr) => {
                 separator::Ipv4CidrSeparator::sub_networks(&cidr, new_network_length)
-                    .and_then(|vs| vs.as_slice().try_into().ok())
-                    .map(|vs: [_; 2]| vs.map(IpCidr::V4))
+                    .map(|vs| vs.into_iter().map(IpCidr::V4).collect())
             }
             IpCidr::V6(cidr) => {
                 separator::Ipv6CidrSeparator::sub_networks(&cidr, new_network_length)
-                    .and_then(|vs| vs.as_slice().try_into().ok())
-                    .map(|vs: [_; 2]| vs.map(IpCidr::V6))
+                    .map(|vs| vs.into_iter().map(IpCidr::V6).collect())
             }
-        }) else {
-            panic!("Expected vec of length 2");
-        };
-        let [low, high] = cidrs.map(|v| Some(Box::new(Subspace::new(v))));
-        self.low = low;
-        self.high = high;
+        })
+        .expect("Vec of length 2");
+        self.low = Some(Box::new(Subspace::new(cidrs[0])));
+        self.high = Some(Box::new(Subspace::new(cidrs[1])));
     }
 
     pub(crate) fn allocate_free_space(
