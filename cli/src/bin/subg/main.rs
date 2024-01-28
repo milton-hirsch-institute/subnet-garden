@@ -64,10 +64,6 @@ mod tests {
         pub(crate) fn store(&self) {
             subg::store_pool(self.pool_path.to_str().unwrap(), &self.pool);
         }
-
-        pub(crate) fn load(&mut self) {
-            self.pool = subg::load_pool(self.pool_path.to_str().unwrap());
-        }
     }
 
     pub(crate) fn new_test_with_path(path: &str) -> Test {
