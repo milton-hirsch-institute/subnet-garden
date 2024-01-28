@@ -29,9 +29,9 @@ pub(crate) fn cidrs(subg: &SubgArgs, args: &CidrsArgs) {
         if args.long {
             util::right_pad(&mut cidr, max_cidr_width);
             let name = entry.name.clone().unwrap_or("-".to_string());
-            println!("{}  {}", cidr, name);
+            println!("{cidr}  {name}");
         } else {
-            println!("{}", cidr);
+            println!("{cidr}");
         }
     }
 }
@@ -55,9 +55,9 @@ pub(crate) fn names(subg: &SubgArgs, args: &NamesArgs) {
             let cidr = pool.find_by_name(&name).unwrap();
             let cidr_string = cidr.to_string();
             util::right_pad(&mut name, max_name_width);
-            println!("{}  {}", name, cidr_string);
+            println!("{name}  {cidr_string}");
         } else {
-            println!("{}", name);
+            println!("{name}");
         }
     }
 }

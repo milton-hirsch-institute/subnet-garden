@@ -30,7 +30,7 @@ pub(crate) fn allocate(subg: &SubgArgs, args: &AllocateArgs) {
                 subg::result(
                     pool.allocate(args.bits, Some(name.to_string().as_str())),
                     exitcode::SOFTWARE,
-                    format!("Could not allocate subnet {}", name).as_str(),
+                    format!("Could not allocate subnet {name}").as_str(),
                 );
             }
         }
@@ -63,12 +63,12 @@ pub(crate) fn free(subg: &SubgArgs, args: &FreeArgs) {
                 subg::result(
                     parse_result,
                     exitcode::USAGE,
-                    format!("Could not parse arg IDENTIFIER: {}", identifier).as_str(),
+                    format!("Could not parse arg IDENTIFIER: {identifier}").as_str(),
                 )
             }
         };
         if !pool.free(&cidr) && !args.ignore_missing {
-            eprintln!("Could not free subnet {}", cidr);
+            eprintln!("Could not free subnet {cidr}");
             exit(exitcode::SOFTWARE);
         }
     }
@@ -106,5 +106,5 @@ pub(crate) fn rename(subg: &SubgArgs, args: &RenameArgs) {
 pub(crate) fn max_bits(subg: &SubgArgs) {
     let pool = subg::load_pool(&subg.pool_path);
     let largest = pool.max_available_bits();
-    println!("{}", largest);
+    println!("{largest}");
 }

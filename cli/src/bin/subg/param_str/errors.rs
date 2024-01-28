@@ -12,7 +12,7 @@ pub(crate) enum ParseError {
 impl Display for ParseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ParseError::InvalidValue(message) => write!(f, "InvalidValue: {}", message),
+            ParseError::InvalidValue(message) => write!(f, "InvalidValue: {message}"),
         }
     }
 }
@@ -104,9 +104,9 @@ impl From<FormatError> for FormatStringError {
 impl Display for FormatStringError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            FormatStringError::Parse(error) => write!(f, "{}", error),
-            FormatStringError::Format(error) => write!(f, "{}", error),
-            FormatStringError::ArgumentParse(error) => write!(f, "{}", error),
+            FormatStringError::Parse(error) => write!(f, "{error}"),
+            FormatStringError::Format(error) => write!(f, "{error}"),
+            FormatStringError::ArgumentParse(error) => write!(f, "{error}"),
             FormatStringError::MissingArgument => write!(f, "Missing argument"),
         }
     }

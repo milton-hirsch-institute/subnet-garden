@@ -15,8 +15,8 @@ pub const DEFAULT_STORAGE_PATH: &str = "subnet-garden-pool.yaml";
 pub const SUBG_COMMAND: &str = "subg";
 
 fn show_error(err: impl Error, message: &str, exit_code: ExitCode) -> ! {
-    eprintln!("{}", message);
-    eprintln!("{}", err);
+    eprintln!("{message}");
+    eprintln!("{err}");
     exit(exit_code);
 }
 
@@ -40,7 +40,7 @@ enum PoolFormat {
 
 impl Display for PoolFormat {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        let s = format!("{:?}", self);
+        let s = format!("{self:?}");
         write!(f, "{}", s.to_lowercase())
     }
 }
