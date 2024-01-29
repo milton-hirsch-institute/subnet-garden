@@ -110,7 +110,7 @@ static PADDING_STATE: FormatState = state(|b, c| -> FormatResult {
         }
         '}' => VARIABLE_STATE.next(b, c),
         _ => Err(ParseError::InvalidValue(
-            format!("Expected 0-9, found {}", c).to_string(),
+            format!("Expected 0-9, found {c}").to_string(),
         )),
     }
 });
@@ -134,7 +134,7 @@ static VARIABLE_STATE: FormatState = state(|b, c| -> FormatResult {
         }
         ':' => Ok(START_PADDING_STATE),
         _ => Err(ParseError::InvalidValue(
-            format!("Expected }}, found {}", c).to_string(),
+            format!("Expected }}, found {c}").to_string(),
         )),
     }
 });

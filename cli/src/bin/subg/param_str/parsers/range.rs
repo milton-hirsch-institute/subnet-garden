@@ -47,7 +47,7 @@ static INIT_STATE: RangeState = state(|_b, c| -> RangeResult {
     match c {
         '%' => Ok(START_STATE),
         _ => Err(ParseError::InvalidValue(
-            format!("Expected %, found {}", c).to_string(),
+            format!("Expected %, found {c}").to_string(),
         )),
     }
 });
@@ -61,7 +61,7 @@ static START_STATE: RangeState = state(|b, c| -> RangeResult {
         '.' => {
             if b.current_text.is_empty() {
                 return Err(ParseError::InvalidValue(
-                    format!("Expected digit, found {}", c).to_string(),
+                    format!("Expected digit, found {c}").to_string(),
                 ));
             }
             let start = b.current_text.parse::<usize>().unwrap();
@@ -70,7 +70,7 @@ static START_STATE: RangeState = state(|b, c| -> RangeResult {
             Ok(DOT_1_STATE)
         }
         _ => Err(ParseError::InvalidValue(
-            format!("Expected digit or '.', found {}", c).to_string(),
+            format!("Expected digit or '.', found {c}").to_string(),
         )),
     }
 });
@@ -79,7 +79,7 @@ static DOT_1_STATE: RangeState = state(|_b, c| -> RangeResult {
     match c {
         '.' => Ok(END_STATE),
         _ => Err(ParseError::InvalidValue(
-            format!("Expected '.', found {}", c).to_string(),
+            format!("Expected '.', found {c}").to_string(),
         )),
     }
 });
@@ -91,7 +91,7 @@ static END_STATE: RangeState = state(|b, c| -> RangeResult {
             Ok(END_STATE)
         }
         _ => Err(ParseError::InvalidValue(
-            format!("Expected digit, found {}", c).to_string(),
+            format!("Expected digit, found {c}").to_string(),
         )),
     }
 });

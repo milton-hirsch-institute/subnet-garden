@@ -35,7 +35,7 @@ pub(crate) fn new_test_with_path(path: &str) -> Test {
     Test {
         subg: test,
         _dir: dir,
-        pool_path: pool_path,
+        pool_path,
         pool: pool::SubnetPool::new(TEST_CIDR.parse().unwrap()),
     }
 }
