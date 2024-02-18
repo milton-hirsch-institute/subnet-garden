@@ -58,7 +58,7 @@ static START_STATE: RangeState = state(|b, c| -> RangeResult {
             b.add_text(c);
             Ok(START_STATE)
         }
-        '.' => {
+        '-' => {
             if b.current_text.is_empty() {
                 return Err(ParseError::InvalidValue(
                     format!("Expected digit, found {c}").to_string(),
@@ -67,19 +67,10 @@ static START_STATE: RangeState = state(|b, c| -> RangeResult {
             let start = b.current_text.parse::<usize>().unwrap();
             b.set_start(start);
             b.current_text.clear();
-            Ok(DOT_1_STATE)
+            Ok(END_STATE)
         }
         _ => Err(ParseError::InvalidValue(
             format!("Expected digit or '.', found {c}").to_string(),
-        )),
-    }
-});
-
-static DOT_1_STATE: RangeState = state(|_b, c| -> RangeResult {
-    match c {
-        '.' => Ok(END_STATE),
-        _ => Err(ParseError::InvalidValue(
-            format!("Expected '.', found {c}").to_string(),
         )),
     }
 });
@@ -156,9 +147,9 @@ mod tests {
     #[test]
     fn missing_start() {
         assert_eq!(
-            parse_range("%..9"),
+            parse_range("%-9"),
             Err(ParseError::InvalidValue(
-                "Expected digit, found .".to_string()
+                "Expected digit, found -".to_string()
             ))
         );
     }
@@ -174,29 +165,9 @@ mod tests {
     }
 
     #[test]
-    fn missing_second_dot() {
+    fn unexpected_after_dash() {
         assert_eq!(
-            parse_range("%0.9"),
-            Err(ParseError::InvalidValue(
-                "Expected '.', found 9".to_string()
-            ))
-        );
-    }
-
-    #[test]
-    fn unexpected_after_first_dot() {
-        assert_eq!(
-            parse_range("%0.,9"),
-            Err(ParseError::InvalidValue(
-                "Expected '.', found ,".to_string()
-            ))
-        );
-    }
-
-    #[test]
-    fn unexpected_after_second_dot() {
-        assert_eq!(
-            parse_range("%0..,9"),
+            parse_range("%0-,9"),
             Err(ParseError::InvalidValue(
                 "Expected digit, found ,".to_string()
             ))
@@ -206,7 +177,7 @@ mod tests {
     #[test]
     fn missing_end() {
         assert_eq!(
-            parse_range("%0.."),
+            parse_range("%0-"),
             Err(ParseError::InvalidValue(
                 "Unexpected end of range".to_string()
             ))
@@ -216,7 +187,7 @@ mod tests {
     #[test]
     fn unexpected_after_end() {
         assert_eq!(
-            parse_range("%0..9,"),
+            parse_range("%0-9,"),
             Err(ParseError::InvalidValue(
                 "Expected digit, found ,".to_string()
             ))
@@ -226,7 +197,7 @@ mod tests {
     #[test]
     fn end_less_than_start() {
         assert_eq!(
-            parse_range("%9..0"),
+            parse_range("%9-0"),
             Err(ParseError::InvalidValue(
                 "End must be greater than start".to_string()
             ))
@@ -236,7 +207,7 @@ mod tests {
     #[test]
     fn success() {
         assert_eq!(
-            parse_range("%0..9"),
+            parse_range("%0-9"),
             Ok(vec![
                 "0".to_string(),
                 "1".to_string(),
@@ -254,7 +225,7 @@ mod tests {
     #[test]
     fn parse_double_digits() {
         assert_eq!(
-            parse_range("%10..19"),
+            parse_range("%10-19"),
             Ok(vec![
                 "10".to_string(),
                 "11".to_string(),

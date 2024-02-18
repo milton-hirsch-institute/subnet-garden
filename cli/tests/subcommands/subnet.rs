@@ -35,7 +35,7 @@ mod allocate {
     #[test]
     fn allocate_multi_failure() {
         let mut test = new_allocate_test("8", Some("name-{}"));
-        test.subg.arg("%0..129");
+        test.subg.arg("%0-129");
         test.pool.allocate(15, None).unwrap();
         test.store();
         test.subg
@@ -49,7 +49,7 @@ mod allocate {
     #[test]
     fn allocate_format_failure() {
         let mut test = new_allocate_test("8", Some("name-{}"));
-        test.subg.arg("%0..,");
+        test.subg.arg("%0-,");
         test.pool.allocate(15, None).unwrap();
         test.store();
         test.subg
@@ -59,7 +59,7 @@ mod allocate {
             .stdout("")
             .stderr(
                 "Could not format subnet names\n\
-                    arg: %0..,\n\
+                    arg: %0-,\n\
                     if range: InvalidValue: Expected digit, found ,\n\
                     if list: InvalidValue: Unexpected end of list\n",
             );
@@ -90,7 +90,7 @@ mod allocate {
     #[test]
     fn allocate_multiple() {
         let mut test = new_allocate_test("8", Some("name-{}-{}"));
-        test.subg.arg("%0..2");
+        test.subg.arg("%0-2");
         test.subg.arg("a,b");
         test.subg.assert().success().stdout("").stderr("");
         test.load();
@@ -166,7 +166,7 @@ mod free {
     #[test]
     fn free_success_multiple() {
         let mut test = new_free_test("test{}");
-        test.subg.arg("%1..3");
+        test.subg.arg("%1-3");
         test.pool.allocate(4, Some("test1")).unwrap();
         test.pool.allocate(4, Some("test2")).unwrap();
         test.store();
@@ -179,7 +179,7 @@ mod free {
     #[test]
     fn ignore_missing_name() {
         let mut test = new_free_test("test{}");
-        test.subg.arg("%1..3");
+        test.subg.arg("%1-3");
         test.subg.arg("--ignore-missing");
         test.pool.allocate(4, Some("test1")).unwrap();
         test.store();
