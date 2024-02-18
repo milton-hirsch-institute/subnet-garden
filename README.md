@@ -215,11 +215,10 @@ Range parameters are used to specify a range of numbers. For example, to
 generate a list of 6 subnets, run:
 
 ```shell
-subg allocate 8 rotifer-experiment-{} %0..6
+subg allocate 8 rotifer-experiment-{} %0-5
 ```
 
-Note that the range is exclusive of the last number. This will create
-6 subnets
+This will create 6 subnets
 
 ```text
 rotifer-experiment-0
