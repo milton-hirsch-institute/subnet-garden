@@ -109,14 +109,14 @@ pub fn parse_range(range_str: &str) -> Result<Vec<String>, ParseError> {
     };
     RANGE_STATE_MACHINE.run(&mut b, range_str.chars().collect::<Vec<char>>().iter())?;
 
-    if b.end <= b.start {
+    if b.end < b.start {
         return Err(ParseError::InvalidValue(
-            "End must be greater than start".to_string(),
+            "End must be greater than or equal to start".to_string(),
         ));
     }
 
     let mut result: Vec<String> = Vec::new();
-    for i in b.start.unwrap()..b.end.unwrap() {
+    for i in b.start.unwrap()..=b.end.unwrap() {
         result.push(i.to_string());
     }
     Ok(result)
@@ -199,7 +199,7 @@ mod tests {
         assert_eq!(
             parse_range("%9-0"),
             Err(ParseError::InvalidValue(
-                "End must be greater than start".to_string()
+                "End must be greater than or equal to start".to_string()
             ))
         );
     }
@@ -218,6 +218,7 @@ mod tests {
                 "6".to_string(),
                 "7".to_string(),
                 "8".to_string(),
+                "9".to_string(),
             ])
         );
     }
@@ -236,6 +237,7 @@ mod tests {
                 "16".to_string(),
                 "17".to_string(),
                 "18".to_string(),
+                "19".to_string(),
             ])
         );
     }

@@ -90,7 +90,7 @@ mod allocate {
     #[test]
     fn allocate_multiple() {
         let mut test = new_allocate_test("8", Some("name-{}-{}"));
-        test.subg.arg("%0-2");
+        test.subg.arg("%0-1");
         test.subg.arg("a,b");
         test.subg.assert().success().stdout("").stderr("");
         test.load();
@@ -166,7 +166,7 @@ mod free {
     #[test]
     fn free_success_multiple() {
         let mut test = new_free_test("test{}");
-        test.subg.arg("%1-3");
+        test.subg.arg("%1-2");
         test.pool.allocate(4, Some("test1")).unwrap();
         test.pool.allocate(4, Some("test2")).unwrap();
         test.store();
