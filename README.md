@@ -229,6 +229,34 @@ rotifer-experiment-4
 rotifer-experiment-5
 ```
 
+Range parameters may also have zero-padding. For example, to generate a
+list of 16 subnets with zero-padded numbers, run:
+
+```shell
+subg allocate 8 rotifer-experiment-{:02} %0-15
+```
+
+This will create 16 subnets
+
+```text
+rotifer-experiment-00
+rotifer-experiment-01
+rotifer-experiment-02
+rotifer-experiment-03
+rotifer-experiment-04
+rotifer-experiment-05
+rotifer-experiment-06
+rotifer-experiment-07
+rotifer-experiment-08
+rotifer-experiment-09
+rotifer-experiment-10
+rotifer-experiment-11
+rotifer-experiment-12
+rotifer-experiment-13
+rotifer-experiment-14
+rotifer-experiment-15
+```
+
 # Subnet garden pool format
 
 The subnet garden pool file is stored either as a YAML or JSON file.
